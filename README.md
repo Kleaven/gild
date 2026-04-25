@@ -1,4 +1,4 @@
-# Comy
+# Gild
 
 Premium community SaaS.
 

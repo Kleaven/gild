@@ -1,5 +1,5 @@
 {
-  "name": "comy",
+  "name": "gild",
   "version": "0.0.0",
   "private": true,
   "engines": {
@@ -13,7 +13,10 @@
     "typecheck:sw": "tsc --noEmit -p tsconfig.sw.json",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:status": "supabase status"
   },
   "dependencies": {
     "next": "^15.1.0",
@@ -25,6 +28,7 @@
     "@types/node": "^20.17.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "supabase": "^2.0.0",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   }
