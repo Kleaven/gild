@@ -63,7 +63,7 @@ Step 1: Repository scaffold — COMPLETE
 Step 2: Supabase project provisioning — COMPLETE
 Step 3: Environment variable contract + zod validator — COMPLETE
 Step 4: postgres-js client + Supabase types pipeline — COMPLETE
-Step 5: CI pipeline skeleton
+Step 5: CI pipeline skeleton — COMPLETE
 Step 6: ESLint + boundaries enforcement
 
 ### Phase 1 — Database
