@@ -67,7 +67,7 @@ Step 5: CI pipeline skeleton — COMPLETE
 Step 6: ESLint + boundaries enforcement — COMPLETE
 
 ### Phase 1 — Database
-Step 7: Migration 00000 extensions + schemas — COMPLETE
+Step 7: Migration 00000 extensions + schemas — COMPLETE — COMPLETE
 Step 8: Migrations 00001-00007 identity/tenancy/content
 Step 9: Migrations 00008-00012 votes/courses/quizzes
 Step 10: Migrations 00013-00021 enrollments/certs/admin/ops
