@@ -60,7 +60,7 @@ No Phase 4 work before all three gates closed.
 
 ### Phase 0 — Foundation
 Step 1: Repository scaffold — COMPLETE
-Step 2: Supabase project provisioning — IN PROGRESS
+Step 2: Supabase project provisioning — COMPLETE
 Step 3: Environment variable contract + zod validator
 Step 4: postgres-js client + Supabase types pipeline
 Step 5: CI pipeline skeleton
