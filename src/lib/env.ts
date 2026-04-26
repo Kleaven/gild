@@ -37,38 +37,58 @@ function formatIssues(label: string, issues: readonly z.ZodIssue[]): string[] {
   });
 }
 
+function reportAndExit(lines: string[]): never {
+  lines.push('Populate the missing keys in .env.local — see .env.example.');
+  console.error(lines.join('\n'));
+  process.exit(1);
+}
+
 function validateEnv(): Env {
-  const serverResult = serverSchema.safeParse(process.env);
   const clientResult = clientSchema.safeParse(process.env);
 
-  if (!serverResult.success || !clientResult.success) {
-    const lines: string[] = ['[Gild] Invalid environment variables:'];
-    if (!serverResult.success) {
-      lines.push(...formatIssues('server', serverResult.error.issues));
+  // Server bundle: validate both schemas. Browser bundle: skip server schema —
+  // those vars are intentionally not exposed to the client. The Proxy guard
+  // below still throws if any server key is read in the browser.
+  if (typeof window === 'undefined') {
+    const serverResult = serverSchema.safeParse(process.env);
+    if (!serverResult.success || !clientResult.success) {
+      const lines: string[] = ['[Gild] Invalid environment variables:'];
+      if (!serverResult.success) {
+        lines.push(...formatIssues('server', serverResult.error.issues));
+      }
+      if (!clientResult.success) {
+        lines.push(...formatIssues('client', clientResult.error.issues));
+      }
+      reportAndExit(lines);
     }
-    if (!clientResult.success) {
-      lines.push(...formatIssues('client', clientResult.error.issues));
-    }
-    lines.push('Populate the missing keys in .env.local — see .env.example.');
-    console.error(lines.join('\n'));
-    process.exit(1);
+    return { ...serverResult.data, ...clientResult.data };
   }
 
-  return { ...serverResult.data, ...clientResult.data };
+  if (!clientResult.success) {
+    reportAndExit([
+      '[Gild] Invalid environment variables:',
+      ...formatIssues('client', clientResult.error.issues),
+    ]);
+  }
+
+  // Browser-only return path. Server fields carry placeholder values that are
+  // never read — the Proxy intercepts every server-key access and throws.
+  return {
+    SUPABASE_SERVICE_ROLE_KEY: '',
+    SUPABASE_JWT_SECRET: '',
+    DATABASE_URL: '',
+    DIRECT_URL: '',
+    NODE_ENV: 'development',
+    ...clientResult.data,
+  };
 }
 
 const parsed = validateEnv();
 
 export const env = new Proxy(parsed, {
   get(target, key) {
-    if (
-      typeof window !== 'undefined' &&
-      typeof key === 'string' &&
-      SERVER_KEYS.has(key)
-    ) {
-      throw new Error(
-        `[Gild] Server-only env var "${key}" accessed on the client`,
-      );
+    if (typeof window !== 'undefined' && typeof key === 'string' && SERVER_KEYS.has(key)) {
+      throw new Error(`[Gild] Server-only env var "${key}" accessed on the client`);
     }
     return Reflect.get(target, key);
   },
