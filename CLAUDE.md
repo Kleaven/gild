@@ -145,3 +145,32 @@ Step 62: Launch readiness
 4. All code passes ESLint from day one
 5. TypeScript strict, zero any, no exceptions
 6. Secrets only in .env.local — never committed
+
+## Current Build Status (as of Step 12 complete)
+Steps 1-12 are COMPLETE and pushed to main.
+Currently starting Step 13 — RLS policies.
+Step 13 is being executed in 4 sub-batches (13A, 13B, 13C, 13D).
+Next action: Send Batch 13A prompt to Claude Code.
+
+## Key Decisions Made During Build
+- Cloudflare Stream DROPPED from v1 — video is embed-only (YouTube/Vimeo)
+- media.storage_path is NULL for video type
+- lessons.video_url text NULL stores embed URLs
+- Step 46 (Cloudflare Stream) removed from plan entirely
+- npm is the package manager — never pnpm
+- Zod v4 installed (^4.3.6)
+- src/app/ scaffold created (page.tsx + layout.tsx) during Step 3
+- env.ts gates server schema validation behind typeof window === 'undefined'
+- All migrations use SET search_path = public, extensions at top
+- CREATE OR REPLACE TRIGGER used (not CREATE TRIGGER IF NOT EXISTS)
+- member_role enum: owner, admin, moderator, tier2_member, tier1_member, free_member, banned
+- space_type enum: feed, course, events, members, chat
+- vote_target_type enum: post, comment
+- media_type enum: image, video, file
+- notification_type enum: 10 values
+- report_target_type enum: post, comment
+- report_status enum: pending, resolved_removed, resolved_dismissed
+- email_status enum: pending, sent, failed, cancelled
+- author_id in posts and uploader_id in media are NULL (Option A from Step 8)
+- Step 12 A3 fix: IS DISTINCT FROM + auth.uid() IS NULL guard in RPCs
+- Step 12 B1 fix: transfer_community_ownership validates p_new_owner_id directly
