@@ -70,7 +70,7 @@ Step 6: ESLint + boundaries enforcement — COMPLETE
 Step 7: Migration 00000 extensions + schemas — COMPLETE — COMPLETE
 Step 8: Migrations 00001-00007 identity/tenancy/content — COMPLETE
 Step 9: Migrations 00008-00012 votes/courses/quizzes — COMPLETE
-Step 10: Migrations 00013-00021 enrollments/certs/admin/ops
+Step 10: Migrations 00013-00021 enrollments/certs/admin/ops — COMPLETE
 Step 11: Migration 00022 app_auth helper functions
 Step 12: Migrations 00023-00026 security definer RPCs
 Step 13: Migrations 00027-00060 RLS policies
