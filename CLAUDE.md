@@ -72,7 +72,7 @@ Step 8: Migrations 00001-00007 identity/tenancy/content — COMPLETE
 Step 9: Migrations 00008-00012 votes/courses/quizzes — COMPLETE
 Step 10: Migrations 00013-00021 enrollments/certs/admin/ops — COMPLETE
 Step 11: Migration 00022 app_auth helper functions — COMPLETE
-Step 12: Migrations 00023-00026 security definer RPCs
+Step 12: Migrations 00023-00026 security definer RPCs — COMPLETE
 Step 13: Migrations 00027-00060 RLS policies
 Step 14: Migration 00061 tsvector search
 Step 15: Seed data
