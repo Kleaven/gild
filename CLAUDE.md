@@ -97,7 +97,7 @@ Step 25: GATE 1 part A positive RLS — COMPLETE
 Step 26: GATE 1 part B negative tests — COMPLETE
 Step 27: lib/billing/ + Stripe client — COMPLETE
 Step 28: GATE 2 webhook harness — COMPLETE
-Step 29: GATE 3 part A WebAuthn E2E
+Step 29: GATE 3 part A WebAuthn E2E — COMPLETE
 Step 30: GATE 3 part B bootstrap admin
 
 ### Phase 4 — Core Features
