@@ -8,7 +8,12 @@ const validEnv: Record<string, string> = {
   NEXT_PUBLIC_SUPABASE_URL: 'https://abc.supabase.co',
   NEXT_PUBLIC_SUPABASE_ANON_KEY: 'anon_test',
   NEXT_PUBLIC_APP_URL: 'http://localhost:3000',
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test_fake',
+  STRIPE_SECRET_KEY: 'sk_test_fake',
+  STRIPE_WEBHOOK_SECRET: 'whsec_test_fake',
   NODE_ENV: 'test',
+  UPSTASH_REDIS_REST_URL: 'https://fake.upstash.io',
+  UPSTASH_REDIS_REST_TOKEN: 'fake_token',
 };
 
 const ENV_KEYS = Object.keys(validEnv);

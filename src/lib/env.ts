@@ -11,6 +11,8 @@ const serverSchema = z.object({
   DIRECT_URL: z.string().min(1),
   UPSTASH_REDIS_REST_URL: z.string().url(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
+  STRIPE_SECRET_KEY: z.string().startsWith('sk_'),
+  STRIPE_WEBHOOK_SECRET: z.string().startsWith('whsec_'),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 });
 
@@ -18,6 +20,7 @@ const clientSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
   NEXT_PUBLIC_APP_URL: z.string().url(),
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().startsWith('pk_'),
 });
 
 type ServerEnv = z.infer<typeof serverSchema>;
@@ -31,6 +34,8 @@ const SERVER_KEYS = new Set<string>([
   'DIRECT_URL',
   'UPSTASH_REDIS_REST_URL',
   'UPSTASH_REDIS_REST_TOKEN',
+  'STRIPE_SECRET_KEY',
+  'STRIPE_WEBHOOK_SECRET',
   'NODE_ENV',
 ]);
 
@@ -84,6 +89,8 @@ function validateEnv(): Env {
     DIRECT_URL: '',
     UPSTASH_REDIS_REST_URL: '',
     UPSTASH_REDIS_REST_TOKEN: '',
+    STRIPE_SECRET_KEY: '',
+    STRIPE_WEBHOOK_SECRET: '',
     NODE_ENV: 'development',
     ...clientResult.data,
   };
