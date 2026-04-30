@@ -93,8 +93,8 @@ Step 23: lib/permissions/ scaffold
 
 ### Phase 3 — Security Gates
 Step 24: supabase/tests/ harness
-Step 25: GATE 1 part A positive RLS
-Step 26: GATE 1 part B negative tests
+Step 25: GATE 1 part A positive RLS — COMPLETE
+Step 26: GATE 1 part B negative tests — COMPLETE
 Step 27: lib/billing/ + Stripe client
 Step 28: GATE 2 webhook harness
 Step 29: GATE 3 part A WebAuthn E2E

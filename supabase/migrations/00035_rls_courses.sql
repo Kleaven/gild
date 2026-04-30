@@ -19,6 +19,7 @@ CREATE POLICY "courses_select_public"
         AND c.is_private = false
         AND c.deleted_at IS NULL
     )
+    AND current_user_role(community_id) IS DISTINCT FROM 'banned'
   );
 
 -- courses_select_member

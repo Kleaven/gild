@@ -11,7 +11,7 @@ DROP POLICY IF EXISTS "communities_select_public" ON public.communities;
 CREATE POLICY "communities_select_public"
   ON public.communities
   FOR SELECT
-  TO authenticated
+  TO authenticated, anon
   USING (is_private = false AND deleted_at IS NULL);
 
 -- communities_select_member
