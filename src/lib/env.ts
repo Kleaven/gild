@@ -1,6 +1,6 @@
 // Schema grows with the build — see CLAUDE.md migration sequence.
-// Add Stripe vars at Step 27, Upstash at Step 33,
-// Cloudflare at Step 46, Resend at Step 50.
+// Add Stripe vars at Step 27, Cloudflare at Step 46, Resend at Step 50.
+// Upstash vars added at Step 20 (WebAuthn challenge store) — reused at Step 33.
 
 import { z } from 'zod';
 
@@ -9,6 +9,8 @@ const serverSchema = z.object({
   SUPABASE_JWT_SECRET: z.string().min(1),
   DATABASE_URL: z.string().min(1),
   DIRECT_URL: z.string().min(1),
+  UPSTASH_REDIS_REST_URL: z.string().url(),
+  UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 });
 
@@ -27,6 +29,8 @@ const SERVER_KEYS = new Set<string>([
   'SUPABASE_JWT_SECRET',
   'DATABASE_URL',
   'DIRECT_URL',
+  'UPSTASH_REDIS_REST_URL',
+  'UPSTASH_REDIS_REST_TOKEN',
   'NODE_ENV',
 ]);
 
@@ -78,6 +82,8 @@ function validateEnv(): Env {
     SUPABASE_JWT_SECRET: '',
     DATABASE_URL: '',
     DIRECT_URL: '',
+    UPSTASH_REDIS_REST_URL: '',
+    UPSTASH_REDIS_REST_TOKEN: '',
     NODE_ENV: 'development',
     ...clientResult.data,
   };

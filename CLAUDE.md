@@ -73,18 +73,22 @@ Step 9: Migrations 00008-00012 votes/courses/quizzes — COMPLETE
 Step 10: Migrations 00013-00021 enrollments/certs/admin/ops — COMPLETE
 Step 11: Migration 00022 app_auth helper functions — COMPLETE
 Step 12: Migrations 00023-00026 security definer RPCs — COMPLETE
+Step 13A: Migrations 00027-00032 RLS policies — profiles, communities, community_members, membership_tiers, spaces, posts — COMPLETE
+Step 13B: Migrations 00033-00038 RLS policies — comments, votes, courses, modules, lessons, enrollments — COMPLETE
+Step 13C: Migrations 00039-00044 RLS policies — lesson_progress, certificates, quizzes, quiz_questions, quiz_attempts, notifications — COMPLETE
+Step 13D: Migrations 00045-00052 RLS policies — invitations, reports, webhook_events, feature_flags, platform_admins, webauthn_credentials, audit_logs, email_queue — COMPLETE
 Step 13: Migrations 00027-00060 RLS policies
-Step 14: Migration 00061 tsvector search
-Step 15: Seed data
-Step 16: Delete prisma/ and dev.db
+Step 14: Migration 00053 tsvector search — COMPLETE
+Step 15: Seed data — COMPLETE
+Step 16: Delete prisma/ and dev.db — COMPLETE (nothing present; already clean)
 
 ### Phase 2 — Auth
 Step 17: lib/auth/ skeleton
 Step 18: Supabase Auth + sign-in/sign-up/sign-out
 Step 19: Google OAuth
-Step 20: WebAuthn module
-Step 21: Atomic NextAuth to Supabase swap (18 files)
-Step 22: NextAuth removal
+Step 20: WebAuthn module — COMPLETE
+Step 21: Atomic NextAuth to Supabase swap — COMPLETE (no-op: NextAuth never present)
+Step 22: NextAuth removal — COMPLETE (no-op: nothing to remove)
 Step 23: lib/permissions/ scaffold
 
 ### Phase 3 — Security Gates
@@ -146,11 +150,8 @@ Step 62: Launch readiness
 5. TypeScript strict, zero any, no exceptions
 6. Secrets only in .env.local — never committed
 
-## Current Build Status (as of Step 12 complete)
-Steps 1-12 are COMPLETE and pushed to main.
-Currently starting Step 13 — RLS policies.
-Step 13 is being executed in 4 sub-batches (13A, 13B, 13C, 13D).
-Next action: Send Batch 13A prompt to Claude Code.
+## Current Build Status (as of Step 22 complete)
+Steps 1–22 COMPLETE and pushed to main. NEXT: Step 23 — lib/permissions/ scaffold.
 
 ## Key Decisions Made During Build
 - Cloudflare Stream DROPPED from v1 — video is embed-only (YouTube/Vimeo)
