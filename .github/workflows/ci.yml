@@ -46,6 +46,8 @@ jobs:
 
       - name: Setup Test Helpers
         run: cat supabase/tests/setup.sql | npx supabase db execute
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Run Supabase DB tests
         run: npx supabase test db --linked
