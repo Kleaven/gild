@@ -1,6 +1,6 @@
 import { config } from 'dotenv';
 import postgres from 'postgres';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
 // Load environment variables
@@ -71,7 +71,7 @@ async function runAudit() {
     if (postError) throw new Error(`Victim failed to create post: ${postError.message}`);
 
     // TEST 1.1: Attacker attempts to update Victim's post
-    const { error: updateError } = await attackerClient
+    const { error: _updateError } = await attackerClient
       .from('posts')
       .update({ title: 'Hacked by Attacker' })
       .eq('id', post.id);
@@ -79,22 +79,23 @@ async function runAudit() {
     // PGRST doesn't always return 42501 for UPDATE if no rows matched (RLS filtered)
     // We check if the title actually changed in the DB
     const postInDb = (await db`SELECT title FROM public.posts WHERE id = ${post.id}`)[0];
+    if (!postInDb) throw new Error('Post not found in database');
     const updateBlocked = postInDb.title === 'Victim Secret Post';
     console.log(`   ${updateBlocked ? '✅' : '❌'} Cross-user UPDATE blocked (Data Integrity)`);
     results['RLS_Update'] = !!updateBlocked;
 
     // TEST 1.2: Attacker attempts to delete Victim's post
-    const { error: deleteError } = await attackerClient
+    const { error: _deleteError } = await attackerClient
       .from('posts')
       .delete()
       .eq('id', post.id);
     
-    const postStillExists = (await db`SELECT count(*) FROM public.posts WHERE id = ${post.id}`)[0].count === '1';
+    const postStillExists = (await db`SELECT count(*) FROM public.posts WHERE id = ${post.id}`)[0]!.count === '1';
     console.log(`   ${postStillExists ? '✅' : '❌'} Cross-user DELETE blocked (Data Integrity)`);
     results['RLS_Delete'] = !!postStillExists;
 
     // TEST 1.3: Attacker attempts to read private data (platform_admins)
-    const { data: adminRows, error: adminReadError } = await attackerClient
+    const { data: adminRows, error: _adminReadError } = await attackerClient
       .from('platform_admins')
       .select('*');
     
@@ -132,7 +133,7 @@ async function runAudit() {
     results['Admin_OneShot'] = reuseBlocked;
 
     // TEST 2.3: Access check (Simulated via RLS)
-    const { data: adminAccess, error: adminAccErr } = await attackerClient
+    const { data: adminAccess, error: _adminAccErr } = await attackerClient
       .from('platform_admins')
       .select('*');
     
@@ -178,7 +179,9 @@ async function runAudit() {
       `;
       
       if (lastCursor) {
-        const [lastScore, lastId] = Buffer.from(lastCursor, 'base64').toString().split('|');
+        const parts = Buffer.from(lastCursor, 'base64').toString().split('|');
+        const lastScore = parts[0]!;
+        const lastId = parts[1]!;
         query = db`${query} AND (hot_score < ${lastScore} OR (hot_score = ${lastScore} AND id < ${lastId}))`;
       }
       
@@ -197,6 +200,7 @@ async function runAudit() {
 
     // TEST 3.2: Trigger Accuracy
     const samplePost = (await db`SELECT * FROM public.posts WHERE space_id = ${spaceId} AND title LIKE 'Stress Post%' LIMIT 1`)[0];
+    if (!samplePost) throw new Error('Sample post not found for math audit');
     const score = parseFloat(samplePost.hot_score);
     const scoreVal = samplePost.like_count + (samplePost.comment_count * 2);
     const order = Math.log10(Math.max(Math.abs(scoreVal), 1));
@@ -215,7 +219,7 @@ async function runAudit() {
     await db`UPDATE public.communities SET subscription_status = 'canceled' WHERE id = ${communityId}`;
     
     // 4.2: Attempt to create another community via RPC
-    const { data: newComm, error: walletError } = await victimClient.rpc('create_community', {
+    const { data: _newComm, error: walletError } = await victimClient.rpc('create_community', {
       p_name: 'N+1 Community',
       p_slug: `n-plus-one-${RUN_ID}`,
       p_description: 'Should fail'

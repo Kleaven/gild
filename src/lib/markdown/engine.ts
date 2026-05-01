@@ -5,7 +5,7 @@ import remarkRehype from 'remark-rehype';
 import rehypeRaw from 'rehype-raw';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeExternalLinks from 'rehype-external-links';
-import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
+import rehypeSanitize, { defaultSchema, type Options } from 'rehype-sanitize';
 import rehypeStringify from 'rehype-stringify';
 
 /**
@@ -13,7 +13,7 @@ import rehypeStringify from 'rehype-stringify';
  * Inherits from GitHub's schema but explicitly blocks iframes, objects, and embeds.
  * Also strictly limits protocols to prevent javascript: or data: URI attacks.
  */
-const securitySchema = {
+const securitySchema: Options = {
   ...defaultSchema,
   tagNames: [
     ...(defaultSchema.tagNames || []),
