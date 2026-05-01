@@ -1,6 +1,14 @@
 CREATE EXTENSION IF NOT EXISTS pgtap SCHEMA public;
 ALTER EXTENSION pgtap SET SCHEMA public;
 
+-- Grant permissions to allow tests to run
+GRANT USAGE ON SCHEMA pgtap_helpers TO PUBLIC;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA pgtap_helpers TO PUBLIC;
+GRANT EXECUTE ON ALL PROCEDURES IN SCHEMA pgtap_helpers TO PUBLIC;
+
+-- Ensure connection permissions if required
+GRANT CONNECT ON DATABASE postgres TO PUBLIC;
+
 -- ============================================================
 -- 00_helpers.sql — pgTAP harness: auth helpers + fixture table
 -- Run first (alphabetical order). Not wrapped in a transaction
