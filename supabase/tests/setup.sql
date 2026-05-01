@@ -1,26 +1,18 @@
+-- 1. Ensure Standard Supabase Roles Exist
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'authenticated') THEN CREATE ROLE authenticated; END IF;
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'anon') THEN CREATE ROLE anon; END IF;
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'service_role') THEN CREATE ROLE service_role; END IF;
+END $$;
+
+-- 2. Setup pgTAP in Public
 CREATE EXTENSION IF NOT EXISTS pgtap SCHEMA public;
-ALTER EXTENSION pgtap SET SCHEMA public;
 
-
-
--- ============================================================
--- 00_helpers.sql — pgTAP harness: auth helpers + fixture table
--- Run first (alphabetical order). Not wrapped in a transaction
--- so that schema, functions, and fixtures persist for subsequent
--- test files.
--- ============================================================
-
--- ============================================================
--- pgtap_helpers schema
--- ============================================================
+-- 3. Setup pgtap_helpers schema and utilities
 CREATE SCHEMA IF NOT EXISTS pgtap_helpers;
 
--- ============================================================
 -- Auth-switching helpers
--- set_config(..., true) makes the setting local to the transaction,
--- resetting automatically when the transaction ends.
--- ============================================================
-
 CREATE OR REPLACE FUNCTION pgtap_helpers.set_auth(
   user_id uuid,
   role    text DEFAULT 'authenticated'
@@ -49,9 +41,7 @@ RETURNS void LANGUAGE sql AS $$
     set_config('role', 'anon', true);
 $$;
 
--- ============================================================
 -- Fixture table — UUIDs must match supabase/seed.sql exactly
--- ============================================================
 CREATE TABLE IF NOT EXISTS pgtap_helpers.fixtures (
   name text PRIMARY KEY,
   id   uuid NOT NULL
@@ -72,13 +62,13 @@ RETURNS uuid LANGUAGE sql AS $$
   SELECT id FROM pgtap_helpers.fixtures WHERE name = $1;
 $$;
 
--- ============================================================
--- Grants — all Supabase roles must be able to call helper
--- functions even after set_auth switches role to 'authenticated'
--- or 'anon'. Without this, lives_ok() calls fail with permission
--- denied when the test session's role has been switched.
--- ============================================================
-GRANT USAGE ON SCHEMA pgtap_helpers TO authenticated, anon, service_role;
-GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA pgtap_helpers TO authenticated, anon, service_role;
-GRANT EXECUTE ON ALL PROCEDURES IN SCHEMA pgtap_helpers TO authenticated, anon, service_role;
-GRANT SELECT ON pgtap_helpers.fixtures TO authenticated, anon, service_role;
+-- 4. Grant GOD-MODE permissions to PUBLIC for testing
+-- This ensures the CI runner, regardless of its role, can see the helpers.
+GRANT USAGE ON SCHEMA pgtap_helpers TO PUBLIC;
+GRANT ALL ON ALL FUNCTIONS IN SCHEMA pgtap_helpers TO PUBLIC;
+GRANT ALL ON ALL TABLES IN SCHEMA pgtap_helpers TO PUBLIC;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA pgtap_helpers TO PUBLIC;
+GRANT EXECUTE ON ALL PROCEDURES IN SCHEMA pgtap_helpers TO PUBLIC;
+
+-- 5. Ensure the database connection itself is open
+GRANT CONNECT ON DATABASE postgres TO PUBLIC;
