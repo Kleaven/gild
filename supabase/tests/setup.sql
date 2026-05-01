@@ -10,11 +10,6 @@ ALTER EXTENSION pgtap SET SCHEMA public;
 -- test files.
 -- ============================================================
 
--- Confirm pgTAP is available on this instance.
-SELECT plan(1);
-SELECT pass('pgTAP harness loaded');
-SELECT * FROM finish();
-
 -- ============================================================
 -- pgtap_helpers schema
 -- ============================================================
