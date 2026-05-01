@@ -45,7 +45,7 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Setup Test Helpers
-        run: cat supabase/tests/setup.sql | npx supabase db execute
+        run: cat supabase/setup-ci.sql | npx supabase db execute
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 

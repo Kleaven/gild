@@ -6,7 +6,7 @@ BEGIN
   IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'service_role') THEN CREATE ROLE service_role; END IF;
 END $$;
 
--- 2. Setup pgTAP in Public
+-- 2. Setup pgTAP
 CREATE EXTENSION IF NOT EXISTS pgtap SCHEMA public;
 
 -- 3. Setup pgtap_helpers schema and utilities
@@ -62,8 +62,7 @@ RETURNS uuid LANGUAGE sql AS $$
   SELECT id FROM pgtap_helpers.fixtures WHERE name = $1;
 $$;
 
--- 4. Grant GOD-MODE permissions to PUBLIC for testing
--- This ensures the CI runner, regardless of its role, can see the helpers.
+-- 4. Grant Permissions to PUBLIC
 GRANT USAGE ON SCHEMA pgtap_helpers TO PUBLIC;
 GRANT ALL ON ALL FUNCTIONS IN SCHEMA pgtap_helpers TO PUBLIC;
 GRANT ALL ON ALL TABLES IN SCHEMA pgtap_helpers TO PUBLIC;
