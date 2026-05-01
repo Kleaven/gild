@@ -1,3 +1,6 @@
+CREATE EXTENSION IF NOT EXISTS pgtap SCHEMA public;
+ALTER EXTENSION pgtap SET SCHEMA public;
+
 -- ============================================================
 -- 00_helpers.sql — pgTAP harness: auth helpers + fixture table
 -- Run first (alphabetical order). Not wrapped in a transaction
