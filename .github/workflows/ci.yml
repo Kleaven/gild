@@ -39,6 +39,11 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Link Supabase project
+        run: npx supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
       - name: Run Supabase DB tests
         run: npx supabase test db --linked
 
