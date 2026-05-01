@@ -98,10 +98,10 @@ Step 26: GATE 1 part B negative tests — COMPLETE
 Step 27: lib/billing/ + Stripe client — COMPLETE
 Step 28: GATE 2 webhook harness — COMPLETE
 Step 29: GATE 3 part A WebAuthn E2E — COMPLETE
-Step 30: GATE 3 part B bootstrap admin
+Step 30: GATE 3 part B bootstrap admin — COMPLETE
 
 ### Phase 4 — Core Features
-Step 31: lib/ranking/ and lib/pagination/
+Step 31: lib/ranking/ and lib/pagination/ — COMPLETE
 Step 32: lib/markdown/
 Step 33: lib/rate-limit/ with Upstash
 Step 34: lib/feed/ and lib/comments/

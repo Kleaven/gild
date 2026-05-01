@@ -127,6 +127,7 @@ export type Database = {
           community_id: string
           created_at: string
           deleted_at: string | null
+          hot_score: number
           id: string
           is_flagged: boolean
           like_count: number
@@ -140,6 +141,7 @@ export type Database = {
           community_id: string
           created_at?: string
           deleted_at?: string | null
+          hot_score?: number
           id?: string
           is_flagged?: boolean
           like_count?: number
@@ -153,6 +155,7 @@ export type Database = {
           community_id?: string
           created_at?: string
           deleted_at?: string | null
+          hot_score?: number
           id?: string
           is_flagged?: boolean
           like_count?: number
@@ -841,18 +844,21 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          setup_token: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
           email: string
           id?: string
+          setup_token?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
           email?: string
           id?: string
+          setup_token?: string | null
           user_id?: string
         }
         Relationships: []
@@ -865,6 +871,7 @@ export type Database = {
           community_id: string
           created_at: string
           deleted_at: string | null
+          hot_score: number
           id: string
           is_locked: boolean
           is_pinned: boolean
@@ -881,6 +888,7 @@ export type Database = {
           community_id: string
           created_at?: string
           deleted_at?: string | null
+          hot_score?: number
           id?: string
           is_locked?: boolean
           is_pinned?: boolean
@@ -897,6 +905,7 @@ export type Database = {
           community_id?: string
           created_at?: string
           deleted_at?: string | null
+          hot_score?: number
           id?: string
           is_locked?: boolean
           is_pinned?: boolean
@@ -1347,6 +1356,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_hot_score: {
+        Args: { p_comments: number; p_created_at: string; p_likes: number }
+        Returns: number
+      }
       complete_lesson: {
         Args: { p_enrollment_id: string; p_lesson_id: string }
         Returns: undefined
