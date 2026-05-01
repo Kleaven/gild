@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type Stripe from 'stripe';
 import postgres from 'postgres';
+import type { processWebhookEvent as ProcessWebhookEvent } from './webhook';
 
 /**
  * Gate 2 — Webhook Idempotency Test Harness
@@ -47,7 +48,7 @@ function makeFakeEvent(
   } as Stripe.Event;
 }
 
-let processWebhookEvent: typeof import('./webhook').processWebhookEvent;
+let processWebhookEvent: typeof ProcessWebhookEvent;
 
 beforeAll(async () => {
   const webhookModule = await import('./webhook');

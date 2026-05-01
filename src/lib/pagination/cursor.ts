@@ -10,7 +10,7 @@ export interface PaginatedResult<T> {
 /**
  * Encodes an object payload into a URL-safe Base64 cursor string.
  */
-export function encodeCursor(payload: Record<string, any>): string {
+export function encodeCursor(payload: Record<string, unknown>): string {
   const json = JSON.stringify(payload);
   // URL-safe base64: replace + with -, / with _, and remove padding =
   return Buffer.from(json)
@@ -24,7 +24,7 @@ export function encodeCursor(payload: Record<string, any>): string {
  * Decodes a URL-safe Base64 cursor string back into its original payload.
  * Returns null if the cursor is invalid, null, or undefined.
  */
-export function decodeCursor<T = Record<string, any>>(cursor?: string | null): T | null {
+export function decodeCursor<T = Record<string, unknown>>(cursor?: string | null): T | null {
   if (!cursor) return null;
   
   try {

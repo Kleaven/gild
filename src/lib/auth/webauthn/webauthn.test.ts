@@ -9,8 +9,15 @@ import type {
   RegistrationResponseJSON,
   AuthenticationResponseJSON,
 } from '@simplewebauthn/server';
+import type * as SimpleWebAuthnServer from '@simplewebauthn/server';
 import { createClient } from '@supabase/supabase-js';
 import postgres from 'postgres';
+import type { 
+  generateAdminRegistrationOptions as GenerateAdminRegistrationOptions,
+  verifyAdminRegistration as VerifyAdminRegistration,
+  generateAdminAuthenticationOptions as GenerateAdminAuthenticationOptions,
+  verifyAdminAuthentication as VerifyAdminAuthentication 
+} from './index';
 
 /**
  * Gate 3 Part A — WebAuthn E2E Integration Tests
@@ -52,9 +59,7 @@ const mockVerifyRegistration = vi.fn();
 const mockVerifyAuthentication = vi.fn();
 
 vi.mock('@simplewebauthn/server', async (importOriginal) => {
-  const actual = await importOriginal<
-    typeof import('@simplewebauthn/server')
-  >();
+  const actual = await importOriginal<typeof SimpleWebAuthnServer>();
   return {
     ...actual,
     verifyRegistrationResponse: mockVerifyRegistration,
@@ -110,10 +115,10 @@ const anonClient = createClient(supabaseUrl, anonKey, {
 });
 
 // Dynamic imports (after mocks)
-let generateAdminRegistrationOptions: typeof import('./index').generateAdminRegistrationOptions;
-let verifyAdminRegistration: typeof import('./index').verifyAdminRegistration;
-let generateAdminAuthenticationOptions: typeof import('./index').generateAdminAuthenticationOptions;
-let verifyAdminAuthentication: typeof import('./index').verifyAdminAuthentication;
+let generateAdminRegistrationOptions: typeof GenerateAdminRegistrationOptions;
+let verifyAdminRegistration: typeof VerifyAdminRegistration;
+let generateAdminAuthenticationOptions: typeof GenerateAdminAuthenticationOptions;
+let verifyAdminAuthentication: typeof VerifyAdminAuthentication;
 
 // ── Setup & Teardown ───────────────────────────────────────────────────────
 
