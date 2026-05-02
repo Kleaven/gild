@@ -10,7 +10,7 @@ Gild is a premium community SaaS platform competing with Skool and Circle.
 
 ## Current Status
 - Product name: Gild
-- Local folder: /Users/ngzc/Documents/comy/
+- Local folder: /Users/ngzc/Documents/gild/
 - GitHub repo: github.com/Kleaven/gild
 - Active branch: main
 
@@ -83,16 +83,16 @@ Step 15: Seed data — COMPLETE
 Step 16: Delete prisma/ and dev.db — COMPLETE (nothing present; already clean)
 
 ### Phase 2 — Auth
-Step 17: lib/auth/ skeleton
-Step 18: Supabase Auth + sign-in/sign-up/sign-out
-Step 19: Google OAuth
+Step 17: lib/auth/ skeleton — COMPLETE
+Step 18: Supabase Auth + sign-in/sign-up/sign-out — COMPLETE
+Step 19: Google OAuth — COMPLETE
 Step 20: WebAuthn module — COMPLETE
 Step 21: Atomic NextAuth to Supabase swap — COMPLETE (no-op: NextAuth never present)
 Step 22: NextAuth removal — COMPLETE (no-op: nothing to remove)
-Step 23: lib/permissions/ scaffold
+Step 23: lib/permissions/ scaffold — COMPLETE
 
 ### Phase 3 — Security Gates
-Step 24: supabase/tests/ harness
+Step 24: supabase/tests/ harness — COMPLETE
 Step 25: GATE 1 part A positive RLS — COMPLETE
 Step 26: GATE 1 part B negative tests — COMPLETE
 Step 27: lib/billing/ + Stripe client — COMPLETE
@@ -102,7 +102,7 @@ Step 30: GATE 3 part B bootstrap admin — COMPLETE
 
 ### Phase 4 — Core Features
 Step 31: lib/ranking/ and lib/pagination/ — COMPLETE
-Step 32: lib/markdown/
+Step 32: lib/markdown/ — COMPLETE
 Step 33: lib/rate-limit/ with Upstash
 Step 34: lib/feed/ and lib/comments/
 Step 35: lib/search/
@@ -150,8 +150,8 @@ Step 62: Launch readiness
 5. TypeScript strict, zero any, no exceptions
 6. Secrets only in .env.local — never committed
 
-## Current Build Status (as of Step 22 complete)
-Steps 1–22 COMPLETE and pushed to main. NEXT: Step 23 — lib/permissions/ scaffold.
+## Current Build Status
+Steps 1–32 COMPLETE and pushed to main. NEXT: Step 33 — lib/rate-limit/ with Upstash.
 
 ## Key Decisions Made During Build
 - Cloudflare Stream DROPPED from v1 — video is embed-only (YouTube/Vimeo)
