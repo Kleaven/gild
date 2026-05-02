@@ -1,15 +1,15 @@
-/**
- * Generic keyset (cursor) pagination utilities.
- */
+// Generic keyset (cursor) pagination utilities.
+
+export interface CursorInput {
+  cursor?: string;
+  limit?: number;
+}
 
 export interface PaginatedResult<T> {
   data: T[];
   nextCursor: string | null;
 }
 
-/**
- * Encodes an object payload into a URL-safe Base64 cursor string.
- */
 export function encodeCursor(payload: Record<string, unknown>): string {
   const json = JSON.stringify(payload);
   // URL-safe base64: replace + with -, / with _, and remove padding =
@@ -20,10 +20,6 @@ export function encodeCursor(payload: Record<string, unknown>): string {
     .replace(/=+$/, '');
 }
 
-/**
- * Decodes a URL-safe Base64 cursor string back into its original payload.
- * Returns null if the cursor is invalid, null, or undefined.
- */
 export function decodeCursor<T = Record<string, unknown>>(cursor?: string | null): T | null {
   if (!cursor) return null;
   
@@ -43,18 +39,12 @@ export function decodeCursor<T = Record<string, unknown>>(cursor?: string | null
   }
 }
 
-/**
- * Builds a PostgREST filter string for symmetric keyset pagination.
- * 
- * For a sort order of (column DESC, id DESC), the keyset filter is:
- * (column < value) OR (column = value AND id < idValue)
- * 
- * Syntax used: .or('column.lt.value,and(column.eq.value,id.lt.idValue)')
- */
-export function getKeysetFilter(
-  column: string,
-  value: string | number,
-  id: string
-): string {
+// DESC sort: (column < value) OR (column = value AND id < id)
+export function getKeysetFilter(column: string, value: string | number, id: string): string {
   return `${column}.lt.${value},and(${column}.eq.${value},id.lt.${id})`;
+}
+
+// ASC sort: (column > value) OR (column = value AND id > id)
+export function getKeysetFilterAsc(column: string, value: string | number, id: string): string {
+  return `${column}.gt.${value},and(${column}.eq.${value},id.gt.${id})`;
 }
