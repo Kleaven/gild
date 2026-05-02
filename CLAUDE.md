@@ -105,7 +105,7 @@ Step 31: lib/ranking/ and lib/pagination/ — COMPLETE
 Step 32: lib/markdown/ — COMPLETE
 Step 33: lib/rate-limit/ with Upstash - COMPLETE
 Step 34: lib/feed/ and lib/comments/ — COMPLETE
-Step 35: lib/search/
+Step 35: lib/search/ — COMPLETE
 Step 36: lib/community/ modules
 Step 37: Server actions delegate to lib/community
 Step 38: Wire routes to lib/*
@@ -151,7 +151,7 @@ Step 62: Launch readiness
 6. Secrets only in .env.local — never committed
 
 ## Current Build Status
-Steps 1–34 COMPLETE and pushed to main. NEXT: Step 35 — lib/search/.
+Steps 1–35 COMPLETE and pushed to main. NEXT: Step 36 — lib/community/ modules.
 
 ## Key Decisions Made During Build
 - Cloudflare Stream DROPPED from v1 — video is embed-only (YouTube/Vimeo)
