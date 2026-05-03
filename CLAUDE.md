@@ -108,7 +108,7 @@ Step 34: lib/feed/ and lib/comments/ — COMPLETE
 Step 35: lib/search/ — COMPLETE
 Step 36: lib/community/ modules — COMPLETE
 Step 37: Server actions delegate to lib/* — COMPLETE (app/actions/ is sole owner of revalidatePath/revalidateTag)
-Step 38: Wire routes to lib/*
+Step 38: Wire routes to lib/* — COMPLETE
 Step 39: Remove Prisma package
 
 ### Phase 5 — Billing
@@ -151,7 +151,23 @@ Step 62: Launch readiness
 6. Secrets only in .env.local — never committed
 
 ## Current Build Status
-Steps 1–37 COMPLETE and pushed to main. NEXT: Step 38 — Wire routes to lib/*.
+Steps 1–38 COMPLETE and pushed to main. NEXT: Step 39 — Remove Prisma package.
+
+## Route Structure (Step 38)
+- src/middleware.ts — session refresh on every request; protects /c/* and /onboarding/*; redirects authed users away from /sign-in and /sign-up
+- src/lib/community/context.ts — React cache() wrapper: getCommunityContext(communityId) → no duplicate DB calls per request
+- app/(auth)/layout.tsx + sign-in/page.tsx + sign-up/page.tsx — unauthenticated route group
+- app/(marketing)/layout.tsx — public marketing route group
+- app/(app)/layout.tsx — authenticated shell with top nav; redirects to /sign-in if no session
+- app/(app)/c/[communityId]/layout.tsx — UUID validate → parallel fetch → is_private gate → sidebar
+- app/(app)/c/[communityId]/page.tsx — redirects to first space
+- app/(app)/c/[communityId]/s/[spaceId]/page.tsx — feed list + PostForm.tsx client component
+- app/(app)/c/[communityId]/s/[spaceId]/p/[postId]/page.tsx — post + comments; PostActions.tsx client component
+- app/(app)/c/[communityId]/members/page.tsx — member table
+- app/(app)/c/[communityId]/search/page.tsx — SearchInput.tsx client component + RSC results
+- app/(app)/c/[communityId]/join/page.tsx — JoinButton.tsx client component
+- app/(app)/communities/new/page.tsx — createCommunity form (client component)
+- app/page.tsx — root: if authed redirect to first community; else landing
 
 ## Key Decisions Made During Build
 - Cloudflare Stream DROPPED from v1 — video is embed-only (YouTube/Vimeo)
