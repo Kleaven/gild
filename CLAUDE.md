@@ -109,7 +109,7 @@ Step 35: lib/search/ — COMPLETE
 Step 36: lib/community/ modules — COMPLETE
 Step 37: Server actions delegate to lib/* — COMPLETE (app/actions/ is sole owner of revalidatePath/revalidateTag)
 Step 38: Wire routes to lib/* — COMPLETE
-Step 39: Remove Prisma package
+Step 39: Remove Prisma package — COMPLETE (was already absent; no-op)
 
 ### Phase 5 — Billing
 Step 40: Stripe webhook route
@@ -151,7 +151,7 @@ Step 62: Launch readiness
 6. Secrets only in .env.local — never committed
 
 ## Current Build Status
-Steps 1–38 COMPLETE and pushed to main. NEXT: Step 39 — Remove Prisma package.
+Steps 1–39 COMPLETE and pushed to main. NEXT: Step 40 — Stripe webhook route.
 
 ## Route Structure (Step 38)
 - src/middleware.ts — session refresh on every request; protects /c/* and /onboarding/*; redirects authed users away from /sign-in and /sign-up
