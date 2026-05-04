@@ -151,7 +151,13 @@ Step 62: Launch readiness
 6. Secrets only in .env.local — never committed
 
 ## Current Build Status
-Steps 1–45 COMPLETE and pushed to main. NEXT: Step 47 — Drip scheduler.
+Steps 1–47 COMPLETE and pushed to main. NEXT: Step 48 — Quiz engine.
+
+## Step 47 Notes
+- Drip gate enforced at read time in getLesson — no cron job, no DB unlock mechanism
+- isDripUnlocked is internal to queries.ts — not exported from barrel
+- Admin+ callers bypass drip gate entirely (always see all lessons)
+- getDripStatus returns [] for non-enrolled callers — never throws
 Note: Step 46 (Cloudflare Stream) removed from plan — video is embed-only (YouTube/Vimeo). lessons.video_url stores embed URLs.
 
 ## lib/courses/ structure (Step 45)
