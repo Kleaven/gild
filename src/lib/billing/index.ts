@@ -20,3 +20,10 @@ export {
   getPlanLabel,
 } from './gates';
 export type { CommunityBillingState, SubscriptionStatus } from './gates';
+export {
+  queueDunningEmail,
+  checkAndQueueExpiringTrials,
+  checkAndQueueExpiredTrials,
+  checkAndQueuePastDue,
+} from './dunning';
+export type { DunningEmailType } from './dunning';

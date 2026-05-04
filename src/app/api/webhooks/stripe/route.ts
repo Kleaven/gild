@@ -7,6 +7,7 @@ import { env } from '@/lib/env';
 import { resolvePlan, extractCustomerId } from '@/lib/billing/plans';
 import type { WebhookHandlerMap } from '@/lib/billing';
 import db from '@/lib/db';
+import { queueDunningEmail } from '@/lib/billing/dunning';
 
 // ─── Community lookup ────────────────────────────────────────────────────────
 
@@ -100,6 +101,27 @@ async function handleInvoicePaymentFailed(event: Stripe.Event): Promise<void> {
   `;
 }
 
+async function handleTrialWillEnd(event: Stripe.Event): Promise<void> {
+  const sub = event.data.object as Stripe.Subscription;
+  const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
+
+  const community = await db<{ id: string; owner_email: string }[]>`
+    SELECT c.id, p.email AS owner_email
+    FROM   public.communities c
+    JOIN   auth.users p ON p.id = c.owner_id
+    WHERE  c.stripe_customer_id = ${customerId}
+    LIMIT  1
+  `;
+
+  if (community[0]) {
+    await queueDunningEmail(
+      community[0].id,
+      community[0].owner_email,
+      'trial_ending_3_days',
+    );
+  }
+}
+
 // ─── Handler map ─────────────────────────────────────────────────────────────
 
 const handlers: WebhookHandlerMap = {
@@ -108,7 +130,7 @@ const handlers: WebhookHandlerMap = {
   'customer.subscription.deleted': handleSubscriptionDeleted,
   'invoice.payment_succeeded': handleInvoicePaymentSucceeded,
   'invoice.payment_failed': handleInvoicePaymentFailed,
-  // customer.subscription.trial_will_end: no DB update — email handled in Step 50
+  'customer.subscription.trial_will_end': handleTrialWillEnd,
   // Unknown event types are handled gracefully by processWebhookEvent (marks processed)
 };
 

@@ -15,6 +15,7 @@ const serverSchema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().startsWith('whsec_'),
   STRIPE_HOBBY_PRICE_ID: z.string().min(1),
   STRIPE_PRO_PRICE_ID: z.string().min(1),
+  CRON_SECRET: z.string().min(1),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 });
 
@@ -40,6 +41,7 @@ const SERVER_KEYS = new Set<string>([
   'STRIPE_WEBHOOK_SECRET',
   'STRIPE_HOBBY_PRICE_ID',
   'STRIPE_PRO_PRICE_ID',
+  'CRON_SECRET',
   'NODE_ENV',
 ]);
 
@@ -97,6 +99,7 @@ function validateEnv(): Env {
     STRIPE_WEBHOOK_SECRET: '',
     STRIPE_HOBBY_PRICE_ID: '',
     STRIPE_PRO_PRICE_ID: '',
+    CRON_SECRET: '',
     NODE_ENV: 'development',
     ...clientResult.data,
   };
