@@ -45,6 +45,11 @@ export async function queueDunningEmail(
       ${recipientEmail},
       ${SUBJECTS[type]},
       ${type}
+    // TODO(Step 50): email_queue has no community_id column — idempotency guard
+    // deduplicates on (to_email, template) only. Owners with multiple communities
+    // in the same dunning state will only receive one email within the 7-day window.
+    // Fix: add community_id column to email_queue in a future migration and update
+    // this guard to (to_email, template, community_id).
     WHERE NOT EXISTS (
       SELECT 1
       FROM public.email_queue
