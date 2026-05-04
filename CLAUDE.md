@@ -151,7 +151,7 @@ Step 62: Launch readiness
 6. Secrets only in .env.local — never committed
 
 ## Current Build Status
-Steps 1–42 COMPLETE and pushed to main. NEXT: Step 43 — Onboarding flow (7 steps).
+Steps 1–43 COMPLETE and pushed to main. NEXT: Step 44 — Trial expiry + dunning.
 
 ## Route Structure (Step 38)
 - src/middleware.ts — session refresh on every request; protects /c/* and /onboarding/*; redirects authed users away from /sign-in and /sign-up
