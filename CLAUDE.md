@@ -151,7 +151,12 @@ Step 62: Launch readiness
 6. Secrets only in .env.local — never committed
 
 ## Current Build Status
-Steps 1–43 COMPLETE and pushed to main. NEXT: Step 44 — Trial expiry + dunning.
+Steps 1–44 COMPLETE and pushed to main. NEXT: Step 45 — Course/module/lesson CRUD.
+
+## Step 44 Notes
+- email_queue is write-only until Step 50 (Resend); dunning.ts queues rows, nothing sends them yet
+- CRON_SECRET must be set in Vercel environment variables for the daily cron to fire
+- email_queue has no community_id/type columns; dunning uses template field for DunningEmailType, idempotency guard on (to_email, template) within 7 days
 
 ## Route Structure (Step 38)
 - src/middleware.ts — session refresh on every request; protects /c/* and /onboarding/*; redirects authed users away from /sign-in and /sign-up
