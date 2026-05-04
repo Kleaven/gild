@@ -12,6 +12,7 @@ import type { Plan } from '../../lib/billing/plans';
 export async function createCheckoutSession(
   communityId: string,
   plan: Plan,
+  returnBasePath?: string,
 ): Promise<{ url: string }> {
   const supabase = await getSupabaseServerClient();
   const {
@@ -27,7 +28,7 @@ export async function createCheckoutSession(
 
   // user.email comes from the verified JWT — not caller-supplied
   const ownerEmail = user.email ?? '';
-  return libCreateCheckoutSession(communityId, plan, ownerEmail);
+  return libCreateCheckoutSession(communityId, plan, ownerEmail, returnBasePath);
 }
 
 export async function createBillingPortalSession(

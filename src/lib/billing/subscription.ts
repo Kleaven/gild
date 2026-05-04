@@ -25,6 +25,10 @@ export async function createCheckoutSession(
   communityId: string,
   plan: Plan,
   ownerEmail: string,
+  // returnBasePath lets callers override the Stripe return destination.
+  // Defaults to /c/[communityId]/settings (post-onboarding management).
+  // Pass /onboarding/[communityId]/checkout from the onboarding flow.
+  returnBasePath = `/c/${communityId}/settings`,
 ): Promise<{ url: string }> {
   // Step 1 — Fetch community billing state
   const rows = await db<CommunityBillingRow[]>`
@@ -66,8 +70,8 @@ export async function createCheckoutSession(
     customer: customerId,
     mode: 'subscription',
     line_items: [{ price: PLANS[plan].priceId, quantity: 1 }],
-    success_url: `${APP_URL}/c/${communityId}/settings?checkout=success`,
-    cancel_url: `${APP_URL}/c/${communityId}/settings?checkout=cancelled`,
+    success_url: `${APP_URL}${returnBasePath}?checkout=success`,
+    cancel_url: `${APP_URL}${returnBasePath}?checkout=cancelled`,
     subscription_data: {
       trial_period_days: 14,
       metadata: { communityId, plan },
