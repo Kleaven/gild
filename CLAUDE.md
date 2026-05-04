@@ -170,6 +170,7 @@ Steps 1–40 COMPLETE and pushed to main. NEXT: Step 41 — Stripe catalog.
 - app/page.tsx — root: if authed redirect to first community; else landing
 
 ## Key Decisions Made During Build
+- plan enum is 'hobby'|'pro' — no free tier (renamed from 'starter' pre-Step 41)
 - Cloudflare Stream DROPPED from v1 — video is embed-only (YouTube/Vimeo)
 - media.storage_path is NULL for video type
 - lessons.video_url text NULL stores embed URLs
