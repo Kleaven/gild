@@ -1,5 +1,6 @@
 'use server';
 
+import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getSupabaseServerClient } from '../../lib/auth/server';
 import {
@@ -7,13 +8,20 @@ import {
   createBillingPortalSession as libCreateBillingPortalSession,
   cancelSubscription as libCancelSubscription,
 } from '../../lib/billing/subscription';
+import type { CheckoutReturnContext } from '../../lib/billing/subscription';
 import type { Plan } from '../../lib/billing/plans';
+
+const returnContextSchema = z.enum(['settings', 'onboarding']);
 
 export async function createCheckoutSession(
   communityId: string,
   plan: Plan,
-  returnBasePath?: string,
+  returnContext: CheckoutReturnContext = 'settings',
 ): Promise<{ url: string }> {
+  // Validate returnContext against the closed enum before delegating to lib.
+  // Rejects any value that isn't 'settings' or 'onboarding' at the action boundary.
+  const validatedContext = returnContextSchema.parse(returnContext);
+
   const supabase = await getSupabaseServerClient();
   const {
     data: { user },
@@ -28,7 +36,7 @@ export async function createCheckoutSession(
 
   // user.email comes from the verified JWT — not caller-supplied
   const ownerEmail = user.email ?? '';
-  return libCreateCheckoutSession(communityId, plan, ownerEmail, returnBasePath);
+  return libCreateCheckoutSession(communityId, plan, ownerEmail, validatedContext);
 }
 
 export async function createBillingPortalSession(

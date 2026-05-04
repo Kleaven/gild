@@ -19,16 +19,17 @@ type CommunityBillingRow = {
   plan: string;
 };
 
+// Closed enum — only two legal return destinations after Stripe checkout.
+// No caller-supplied string ever touches URL construction.
+export type CheckoutReturnContext = 'settings' | 'onboarding';
+
 // ─── createCheckoutSession ────────────────────────────────────────────────────
 
 export async function createCheckoutSession(
   communityId: string,
   plan: Plan,
   ownerEmail: string,
-  // returnBasePath lets callers override the Stripe return destination.
-  // Defaults to /c/[communityId]/settings (post-onboarding management).
-  // Pass /onboarding/[communityId]/checkout from the onboarding flow.
-  returnBasePath = `/c/${communityId}/settings`,
+  returnContext: CheckoutReturnContext = 'settings',
 ): Promise<{ url: string }> {
   // Step 1 — Fetch community billing state
   const rows = await db<CommunityBillingRow[]>`
@@ -65,13 +66,23 @@ export async function createCheckoutSession(
   }
 
   // Step 3 — Create checkout session
-  // success_url and cancel_url always constructed server-side — never from caller
+  // success_url and cancel_url constructed entirely server-side from hardcoded
+  // paths keyed on the closed CheckoutReturnContext enum — no caller string used.
+  const successPath =
+    returnContext === 'onboarding'
+      ? `/onboarding/${communityId}/checkout?checkout=success`
+      : `/c/${communityId}/settings?checkout=success`;
+  const cancelPath =
+    returnContext === 'onboarding'
+      ? `/onboarding/${communityId}/plan?checkout=cancelled`
+      : `/c/${communityId}/settings?checkout=cancelled`;
+
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: 'subscription',
     line_items: [{ price: PLANS[plan].priceId, quantity: 1 }],
-    success_url: `${APP_URL}${returnBasePath}?checkout=success`,
-    cancel_url: `${APP_URL}${returnBasePath}?checkout=cancelled`,
+    success_url: `${APP_URL}${successPath}`,
+    cancel_url: `${APP_URL}${cancelPath}`,
     subscription_data: {
       trial_period_days: 14,
       metadata: { communityId, plan },

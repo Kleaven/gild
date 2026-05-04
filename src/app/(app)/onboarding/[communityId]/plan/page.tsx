@@ -55,7 +55,7 @@ export default async function PlanPage({ params }: Props) {
               <li key={f} style={{ padding: '3px 0' }}>✓ {f}</li>
             ))}
           </ul>
-          <PlanSelector communityId={communityId} plan="hobby" label={hobby.name} />
+          <PlanSelector communityId={communityId} plan="hobby" label={hobby.name} returnContext="onboarding" />
         </div>
 
         {/* Pro */}
@@ -94,7 +94,7 @@ export default async function PlanPage({ params }: Props) {
               <li key={f} style={{ padding: '3px 0' }}>✓ {f}</li>
             ))}
           </ul>
-          <PlanSelector communityId={communityId} plan="pro" label={pro.name} />
+          <PlanSelector communityId={communityId} plan="pro" label={pro.name} returnContext="onboarding" />
         </div>
       </div>
     </>

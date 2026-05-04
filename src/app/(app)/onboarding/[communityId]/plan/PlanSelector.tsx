@@ -4,14 +4,16 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { createCheckoutSession } from '@/app/actions';
 import type { Plan } from '@/lib/billing/plans';
+import type { CheckoutReturnContext } from '@/lib/billing/subscription';
 
 type Props = {
   communityId: string;
   plan: Plan;
   label: string;
+  returnContext: CheckoutReturnContext;
 };
 
-export default function PlanSelector({ communityId, plan, label }: Props) {
+export default function PlanSelector({ communityId, plan, label, returnContext }: Props) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -20,11 +22,10 @@ export default function PlanSelector({ communityId, plan, label }: Props) {
     setError(null);
     startTransition(async () => {
       try {
-        // Pass onboarding return path so Stripe redirects back here, not to /settings
         const { url } = await createCheckoutSession(
           communityId,
           plan,
-          `/onboarding/${communityId}/checkout`,
+          returnContext,
         );
         router.push(url);
       } catch (err) {

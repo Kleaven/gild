@@ -12,6 +12,7 @@ export {
   createBillingPortalSession,
   cancelSubscription,
 } from './subscription';
+export type { CheckoutReturnContext } from './subscription';
 export {
   isAccessGranted,
   isPro,
