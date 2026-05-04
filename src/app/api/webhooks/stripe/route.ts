@@ -50,13 +50,13 @@ async function handleSubscriptionDeleted(event: Stripe.Event): Promise<void> {
     throw new Error(`Community not found for customer ${customerId}`);
   }
 
-  // plan column CHECK allows only 'starter'|'pro' — 'free' is not a valid value.
-  // Downgrade to 'starter' on cancellation; subscription_status = 'canceled'
+  // plan column CHECK allows only 'hobby'|'pro' — 'free' is not a valid value.
+  // Downgrade to 'hobby' on cancellation; subscription_status = 'canceled'
   // is the authoritative signal that billing is inactive.
   await db`
     UPDATE public.communities
     SET subscription_status = 'canceled',
-        plan                = 'starter'
+        plan                = 'hobby'
     WHERE id = ${communityId}
   `;
 }
