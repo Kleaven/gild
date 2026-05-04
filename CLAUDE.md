@@ -112,7 +112,7 @@ Step 38: Wire routes to lib/* — COMPLETE
 Step 39: Remove Prisma package — COMPLETE (was already absent; no-op)
 
 ### Phase 5 — Billing
-Step 40: Stripe webhook route
+Step 40: Stripe webhook route — COMPLETE
 Step 41: Stripe catalog
 Step 42: Subscription lifecycle
 Step 43: Onboarding flow (7 steps)
@@ -151,7 +151,7 @@ Step 62: Launch readiness
 6. Secrets only in .env.local — never committed
 
 ## Current Build Status
-Steps 1–39 COMPLETE and pushed to main. NEXT: Step 40 — Stripe webhook route.
+Steps 1–40 COMPLETE and pushed to main. NEXT: Step 41 — Stripe catalog.
 
 ## Route Structure (Step 38)
 - src/middleware.ts — session refresh on every request; protects /c/* and /onboarding/*; redirects authed users away from /sign-in and /sign-up
