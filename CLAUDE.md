@@ -151,7 +151,22 @@ Step 62: Launch readiness
 6. Secrets only in .env.local — never committed
 
 ## Current Build Status
-Steps 1–44 COMPLETE and pushed to main. NEXT: Step 45 — Course/module/lesson CRUD.
+Steps 1–45 COMPLETE and pushed to main. NEXT: Step 47 — Drip scheduler.
+Note: Step 46 (Cloudflare Stream) removed from plan — video is embed-only (YouTube/Vimeo). lessons.video_url stores embed URLs.
+
+## lib/courses/ structure (Step 45)
+- src/lib/courses/types.ts — Course, Module, Lesson, LessonMeta (no body), CourseWithModules, ModuleWithLessons, LessonWithContent, Enrollment, LessonProgress, all input types
+- src/lib/courses/queries.ts — getCourses, getCourse, getLesson (enrollment OR admin gate), getEnrollment, getLessonProgress
+- src/lib/courses/actions.ts — file-level 'use server', full CRUD + reorder + enroll + complete
+- src/lib/courses/index.ts — barrel (no db/supabase client exports)
+- src/app/actions/courses.ts — thin wrappers with revalidatePath/revalidateTag
+
+## Step 45 deviations
+- courses.space_id NOT NULL — added to CreateCourseInput (spec omitted it)
+- enroll_in_course RPC returns uuid; ignored in wrapper (spec said void)
+- complete_lesson RPC takes (p_enrollment_id, p_lesson_id); enrollment resolved from lesson chain
+- modules/lessons have no deleted_at — hard DELETE used
+- courses has deleted_at — soft delete used
 
 ## Step 44 Notes
 - email_queue is write-only until Step 50 (Resend); dunning.ts queues rows, nothing sends them yet
