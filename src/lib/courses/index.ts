@@ -4,6 +4,7 @@ export {
   getLesson,
   getEnrollment,
   getLessonProgress,
+  getDripStatus,
 } from './queries';
 
 export {
@@ -38,4 +39,5 @@ export type {
   UpdateModuleInput,
   CreateLessonInput,
   UpdateLessonInput,
+  DripStatus,
 } from './types';

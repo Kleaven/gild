@@ -5,12 +5,23 @@ import type { Database } from '../supabase/types';
 import type {
   Course,
   CourseWithModules,
+  DripStatus,
   Enrollment,
   LessonMeta,
   LessonProgress,
   LessonWithContent,
   ModuleWithLessons,
 } from './types';
+
+// ─── isDripUnlocked ───────────────────────────────────────────────────────────
+// Internal helper — not exported. drip_days null or 0 = immediately available.
+
+function isDripUnlocked(dripDays: number | null, enrolledAt: string): boolean {
+  if (!dripDays) return true;
+  const unlocksAt = new Date(enrolledAt);
+  unlocksAt.setDate(unlocksAt.getDate() + dripDays);
+  return new Date() >= unlocksAt;
+}
 
 // ─── getCourses ───────────────────────────────────────────────────────────────
 // Returns published + unpublished courses for community members (RLS enforces
@@ -117,17 +128,24 @@ export async function getLesson(
   if (modErr) throw new Error(modErr.message);
   if (!mod) return null;
 
-  // Check enrollment (enrollments RLS: users see their own rows)
+  // Check enrollment (enrollments RLS: users see their own rows).
+  // enrolled_at required for drip gate calculation.
   const { data: enrollment, error: enrollErr } = await supabase
     .from('enrollments')
-    .select('id')
+    .select('id, enrolled_at')
     .eq('course_id', mod.course_id)
     .maybeSingle();
   if (enrollErr) throw new Error(enrollErr.message);
 
-  if (enrollment) return lesson;
+  if (enrollment) {
+    // Drip gate: lesson exists but may not yet be available to this enrollee.
+    // Treat a locked lesson the same as not found — no content exposed.
+    if (!isDripUnlocked(lesson.drip_days, enrollment.enrolled_at)) return null;
+    return lesson;
+  }
 
-  // Fallback: check admin+ role in the community
+  // Fallback: check admin+ role in the community.
+  // Admins bypass the drip gate entirely — they always see all lessons.
   const { data: courseRow, error: courseErr } = await supabase
     .from('courses')
     .select('community_id')
@@ -158,6 +176,54 @@ export async function getEnrollment(
     .maybeSingle();
   if (error) throw new Error(error.message);
   return data;
+}
+
+// ─── getDripStatus ────────────────────────────────────────────────────────────
+// Returns locked/unlocked state per lesson for the enrolled caller.
+// Returns [] if the caller is not enrolled — never throws on missing enrollment.
+// Uses supabase client throughout so RLS scopes the enrollment join to the
+// current user — never exposes another user's enrollment data.
+
+export async function getDripStatus(
+  supabase: SupabaseClient<Database>,
+  courseId: string,
+): Promise<DripStatus[]> {
+  // Resolve current user's enrollment (RLS: only own rows visible)
+  const { data: enrollment, error: enrollErr } = await supabase
+    .from('enrollments')
+    .select('id, enrolled_at')
+    .eq('course_id', courseId)
+    .maybeSingle();
+  if (enrollErr) throw new Error(enrollErr.message);
+  if (!enrollment) return [];
+
+  // Fetch all lessons in the course via module join
+  const { data: rows, error: lessonsErr } = await supabase
+    .from('lessons')
+    .select('id, title, drip_days, modules!inner(course_id)')
+    .eq('modules.course_id', courseId);
+  if (lessonsErr) throw new Error(lessonsErr.message);
+
+  return (rows ?? []).map((row) => {
+    const dripDays = row.drip_days;
+    const unlocksAt =
+      dripDays
+        ? (() => {
+            const d = new Date(enrollment.enrolled_at);
+            d.setDate(d.getDate() + dripDays);
+            return d;
+          })()
+        : null;
+
+    return {
+      lessonId: row.id,
+      title: row.title,
+      dripDays,
+      enrolledAt: enrollment.enrolled_at,
+      isUnlocked: isDripUnlocked(dripDays, enrollment.enrolled_at),
+      unlocksAt,
+    };
+  });
 }
 
 // ─── getLessonProgress ────────────────────────────────────────────────────────

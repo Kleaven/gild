@@ -66,3 +66,15 @@ export type UpdateLessonInput = {
   videoUrl?: string;
   isPublished?: boolean;
 };
+
+// ─── Drip scheduling ──────────────────────────────────────────────────────────
+
+export type DripStatus = {
+  lessonId: string;
+  title: string;
+  dripDays: number | null;
+  enrolledAt: string;
+  isUnlocked: boolean;
+  // null when dripDays is 0 or null (immediately available)
+  unlocksAt: Date | null;
+};
