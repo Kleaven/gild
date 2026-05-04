@@ -7,3 +7,15 @@ export { resolvePlan, extractCustomerId } from './plans';
 export type { Plan } from './plans';
 export { PLANS, getPlanByPriceId } from './catalog';
 export type { PlanConfig } from './catalog';
+export {
+  createCheckoutSession,
+  createBillingPortalSession,
+  cancelSubscription,
+} from './subscription';
+export {
+  isAccessGranted,
+  isPro,
+  isHobby,
+  getPlanLabel,
+} from './gates';
+export type { CommunityBillingState, SubscriptionStatus } from './gates';
