@@ -113,7 +113,7 @@ Step 39: Remove Prisma package — COMPLETE (was already absent; no-op)
 
 ### Phase 5 — Billing
 Step 40: Stripe webhook route — COMPLETE
-Step 41: Stripe catalog
+Step 41: Stripe catalog — COMPLETE
 Step 42: Subscription lifecycle
 Step 43: Onboarding flow (7 steps)
 Step 44: Trial expiry + dunning
@@ -151,7 +151,7 @@ Step 62: Launch readiness
 6. Secrets only in .env.local — never committed
 
 ## Current Build Status
-Steps 1–40 COMPLETE and pushed to main. NEXT: Step 41 — Stripe catalog.
+Steps 1–41 COMPLETE and pushed to main. NEXT: Step 42 — Subscription lifecycle.
 
 ## Route Structure (Step 38)
 - src/middleware.ts — session refresh on every request; protects /c/* and /onboarding/*; redirects authed users away from /sign-in and /sign-up
@@ -171,6 +171,7 @@ Steps 1–40 COMPLETE and pushed to main. NEXT: Step 41 — Stripe catalog.
 
 ## Key Decisions Made During Build
 - plan enum is 'hobby'|'pro' — no free tier (renamed from 'starter' pre-Step 41)
+- STRIPE_HOBBY_PRICE_ID and STRIPE_PRO_PRICE_ID in env.ts server schema (Step 41)
 - Cloudflare Stream DROPPED from v1 — video is embed-only (YouTube/Vimeo)
 - media.storage_path is NULL for video type
 - lessons.video_url text NULL stores embed URLs
