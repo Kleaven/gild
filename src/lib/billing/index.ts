@@ -3,3 +3,4 @@
 export { stripe } from './stripe';
 export { processWebhookEvent } from './webhook';
 export type { WebhookHandlerMap } from './webhook';
+export { resolvePlan, extractCustomerId } from './plans';
