@@ -220,3 +220,4 @@ Note: Step 46 (Cloudflare Stream) removed from plan — video is embed-only (You
 - author_id in posts and uploader_id in media are NULL (Option A from Step 8)
 - Step 12 A3 fix: IS DISTINCT FROM + auth.uid() IS NULL guard in RPCs
 - Step 12 B1 fix: transfer_community_ownership validates p_new_owner_id directly
+- Step 49: supabase/types/database.types.ts manually patched to add verification_token to certificates table and issue_certificate / get_certificate_by_token RPC signatures. Running supabase gen types will overwrite these patches — re-apply or commit generated types after any future type regeneration.
