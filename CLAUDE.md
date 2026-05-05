@@ -128,7 +128,7 @@ Step 49: Certificates — COMPLETE
 ### Phase 7 — Polish
 Step 50: Resend + email templates — COMPLETE
 Step 51: Realtime subscriptions — COMPLETE
-Step 52: Creator dashboard
+Step 52: Creator dashboard — COMPLETE
 Step 53: PWA + service worker
 Step 54: Feature flags
 Step 55: Platform admin console
@@ -151,7 +151,13 @@ Step 62: Launch readiness
 6. Secrets only in .env.local — never committed
 
 ## Current Build Status
-Steps 1–51 COMPLETE and pushed to main. NEXT: Step 52 — Creator dashboard.
+Steps 1–52 COMPLETE and pushed to main. NEXT: Step 53 — PWA + service worker.
+
+## lib/community/dashboard.ts structure (Step 52)
+- src/lib/community/dashboard.ts — getDashboardStats(communityId): single round-trip correlated subcount query via postgres-js db; returns DashboardStats { memberCount, postCount, spaceCount, courseCount }
+- src/app/(app)/c/[communityId]/dashboard/page.tsx — RSC; admin/owner gate (notFound for others); stat cards + quick links + owner-only billing card
+- layout.tsx sidebar — admin section (Dashboard + Settings links) rendered only when role is owner or admin; inline SVG icons, no new packages
+- Settings link is a stub — no settings page exists yet
 
 ## src/hooks/ structure (Step 51)
 - src/hooks/useRealtimePosts.ts — subscribes to posts INSERT by spaceId; calls onNewPost callback
