@@ -3,6 +3,7 @@ import { getSupabaseServerClient } from '@/lib/auth/server';
 import { getPost } from '@/lib/feed';
 import { getComments } from '@/lib/comments';
 import PostActions from './PostActions';
+import CommentList from './CommentList';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -27,8 +28,6 @@ export default async function PostPage({ params }: Props) {
   if (!post) {
     notFound();
   }
-
-  const comments = commentsResult.data;
 
   return (
     <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 24px' }}>
@@ -64,33 +63,9 @@ export default async function PostPage({ params }: Props) {
       {/* Comments */}
       <section>
         <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>
-          {comments.length} comment{comments.length !== 1 ? 's' : ''}
+          {commentsResult.data.length} comment{commentsResult.data.length !== 1 ? 's' : ''}
         </h2>
-        {comments.length === 0 ? (
-          <p style={{ color: '#aaa', fontSize: 14 }}>No comments yet.</p>
-        ) : (
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {comments.map((comment) => (
-              <li
-                key={comment.id}
-                style={{
-                  border: '1px solid #f0f0f0',
-                  borderRadius: 8,
-                  padding: '14px 18px',
-                  background: '#fafafa',
-                }}
-              >
-                <div style={{ fontSize: 12, color: '#aaa', marginBottom: 6, display: 'flex', gap: 10 }}>
-                  <span>{comment.author?.display_name ?? 'Unknown'}</span>
-                  <span>{new Date(comment.created_at).toLocaleDateString()}</span>
-                </div>
-                <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: '#333', whiteSpace: 'pre-wrap' }}>
-                  {comment.body}
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
+        <CommentList initialComments={commentsResult.data} postId={postId} />
       </section>
     </div>
   );
