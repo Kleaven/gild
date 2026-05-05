@@ -129,7 +129,7 @@ Step 49: Certificates — COMPLETE
 Step 50: Resend + email templates — COMPLETE
 Step 51: Realtime subscriptions — COMPLETE
 Step 52: Creator dashboard — COMPLETE
-Step 53: PWA + service worker
+Step 53: PWA + service worker — COMPLETE
 Step 54: Feature flags
 Step 55: Platform admin console
 
@@ -151,7 +151,7 @@ Step 62: Launch readiness
 6. Secrets only in .env.local — never committed
 
 ## Current Build Status
-Steps 1–52 COMPLETE and pushed to main. NEXT: Step 53 — PWA + service worker.
+Steps 1–53 COMPLETE and pushed to main. NEXT: Step 54 — Feature flags.
 
 ## lib/community/dashboard.ts structure (Step 52)
 - src/lib/community/dashboard.ts — getDashboardStats(communityId): single round-trip correlated subcount query via postgres-js db; returns DashboardStats { memberCount, postCount, spaceCount, courseCount }
@@ -243,3 +243,7 @@ Note: Step 46 (Cloudflare Stream) removed from plan — video is embed-only (You
 - Step 12 A3 fix: IS DISTINCT FROM + auth.uid() IS NULL guard in RPCs
 - Step 12 B1 fix: transfer_community_ownership validates p_new_owner_id directly
 - Step 49: supabase/types/database.types.ts manually patched to add verification_token to certificates table and issue_certificate / get_certificate_by_token RPC signatures. Running supabase gen types will overwrite these patches — re-apply or commit generated types after any future type regeneration.
+- PWA: manual manifest + service worker (no next-pwa package)
+- public/icons/icon-192.png and icon-512.png are 1×1 placeholders — real branded icons required before Step 62 (launch readiness)
+- SW scope: cache-first for shell, network-first for pages, network-only for /api/, /auth/, supabase.co, stripe.com
+- CACHE_NAME = 'gild-shell-v1' — bump version string on any shell asset change
