@@ -1,6 +1,7 @@
 import 'server-only';
 import db from '../db';
 import { FEATURE_FLAGS, type FlagName } from './flags';
+export type { FlagName };
 
 export type FlagResult = {
   enabled: boolean;
