@@ -151,7 +151,7 @@ Step 62: Launch readiness
 6. Secrets only in .env.local — never committed
 
 ## Current Build Status
-Steps 1–57 COMPLETE and pushed to main. NEXT: Step 58 — PDPA export + erasure.
+Steps 1–56 COMPLETE and pushed to main. NEXT: Step 57 — Lighthouse 90+ mobile.
 
 ## src/lib/admin/ structure (Step 55)
 - index.ts — getAdminStats, getAdminCommunities, getGlobalFlags, getCommunityOverridesForFlag
@@ -277,7 +277,4 @@ Note: Step 46 (Cloudflare Stream) removed from plan — video is embed-only (You
 - getCommunityOverridesForFlag uses JOIN query — no N+1
 - G1-G24 gate definitions locked in Step 56
 - G21/G22 patched: assertFlag('quizzes') and assertFlag('certificates') added to course mutation actions
-- All 24 gates GREEN before advancing to Step 57 (G15/G16 blocked by local Supabase not running — pass on remote, confirmed Step 26)
-- Lighthouse 90+ confirmed on /sign-in and / (landing) — desktop preset, Playwright Chromium
-- All four scores passed baseline without any code changes: / scored 100/100/96/100, /sign-in scored 100/94/96/90
-- No fixes required: Next.js 15 App Router + Tailwind already yields optimal LCP, no render-blocking resources, correct lang attribute, and semantic HTML
+- All 24 gates GREEN — G15/G16 confirmed 61/61 tests pass locally (OrbStack + seed.sql pgcrypto fix + setup-ci.sql fixture/set_anon fixes applied)
