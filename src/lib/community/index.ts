@@ -17,6 +17,9 @@ export {
   reorderSpaces,
 } from './spaces';
 
+export { getDashboardStats } from './dashboard';
+export type { DashboardStats } from './dashboard';
+
 export type {
   Community,
   CommunityMember,
