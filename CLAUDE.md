@@ -126,7 +126,7 @@ Step 48: Quiz engine — COMPLETE
 Step 49: Certificates — COMPLETE
 
 ### Phase 7 — Polish
-Step 50: Resend + email templates
+Step 50: Resend + email templates — COMPLETE
 Step 51: Realtime subscriptions
 Step 52: Creator dashboard
 Step 53: PWA + service worker
@@ -151,7 +151,15 @@ Step 62: Launch readiness
 6. Secrets only in .env.local — never committed
 
 ## Current Build Status
-Steps 1–49 COMPLETE and pushed to main. NEXT: Step 50 — Resend + email templates.
+Steps 1–50 COMPLETE and pushed to main. NEXT: Step 51 — Realtime subscriptions.
+
+## lib/email/ structure (Step 50)
+- src/lib/email/client.ts — Resend client (server-only; NOT exported from barrel)
+- src/lib/email/templates.ts — renderTemplate(name, vars) → {subject, html, text}; never throws; 6 templates + fallback
+- src/lib/email/sender.ts — processPendingEmails(): claims batch via FOR UPDATE SKIP LOCKED, sends via Resend, updates status; never throws
+- src/lib/email/index.ts — barrel: exports processPendingEmails + renderTemplate only
+- processPendingEmails is called by cron/dunning route — NOT inline in Server Actions
+- email_status enum has no 'processing' value; claim-before-send achieved via transaction + FOR UPDATE SKIP LOCKED
 
 ## Step 47 Notes
 - Drip gate enforced at read time in getLesson — no cron job, no DB unlock mechanism
