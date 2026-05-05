@@ -12,11 +12,22 @@ BEGIN
 END $$;
 
 -- 3. Restore Helper Functions
-CREATE OR REPLACE FUNCTION pgtap_helpers.set_auth(role_name text, user_id uuid) 
+CREATE OR REPLACE FUNCTION pgtap_helpers.set_auth(user_id uuid)
 RETURNS void AS $$
 BEGIN
-  EXECUTE format('SET ROLE %I', role_name);
-  EXECUTE format('SET request.jwt.claims = %L', json_build_object('sub', user_id, 'role', role_name)::text);
+  EXECUTE format(
+    'SET request.jwt.claims = %L',
+    json_build_object('sub', user_id, 'role', 'authenticated')::text
+  );
+  SET LOCAL ROLE authenticated;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION pgtap_helpers.clear_auth()
+RETURNS void AS $$
+BEGIN
+  RESET request.jwt.claims;
+  RESET ROLE;
 END;
 $$ LANGUAGE plpgsql;
 
