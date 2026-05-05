@@ -1,3 +1,5 @@
+SET search_path = public, extensions;
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
 -- ============================================================
 -- Gild seed data
 -- Covers all RLS policy paths: public/private communities,
@@ -27,7 +29,7 @@ INSERT INTO auth.users (
   (
     '00000000-0000-0000-0000-000000000001',
     'admin@example.com',
-    crypt('password123', gen_salt('bf')),
+    extensions.crypt('password123', extensions.gen_salt('bf')),
     now(), '',
     '{"provider":"email","providers":["email"]}'::jsonb,
     '{}'::jsonb,
@@ -37,7 +39,7 @@ INSERT INTO auth.users (
   (
     '00000000-0000-0000-0000-000000000002',
     'owner@example.com',
-    crypt('password123', gen_salt('bf')),
+    extensions.crypt('password123', extensions.gen_salt('bf')),
     now(), '',
     '{"provider":"email","providers":["email"]}'::jsonb,
     '{}'::jsonb,
@@ -47,7 +49,7 @@ INSERT INTO auth.users (
   (
     '00000000-0000-0000-0000-000000000003',
     'paid@example.com',
-    crypt('password123', gen_salt('bf')),
+    extensions.crypt('password123', extensions.gen_salt('bf')),
     now(), '',
     '{"provider":"email","providers":["email"]}'::jsonb,
     '{}'::jsonb,
@@ -57,7 +59,7 @@ INSERT INTO auth.users (
   (
     '00000000-0000-0000-0000-000000000004',
     'free@example.com',
-    crypt('password123', gen_salt('bf')),
+    extensions.crypt('password123', extensions.gen_salt('bf')),
     now(), '',
     '{"provider":"email","providers":["email"]}'::jsonb,
     '{}'::jsonb,
@@ -67,7 +69,7 @@ INSERT INTO auth.users (
   (
     '00000000-0000-0000-0000-000000000005',
     'banned@example.com',
-    crypt('password123', gen_salt('bf')),
+    extensions.crypt('password123', extensions.gen_salt('bf')),
     now(), '',
     '{"provider":"email","providers":["email"]}'::jsonb,
     '{}'::jsonb,
