@@ -23,6 +23,10 @@ export {
   completeLesson,
 } from './actions';
 
+export { getQuiz, getQuizResult } from './quiz.queries';
+
+export { submitQuiz } from './quiz.actions';
+
 export type {
   Course,
   CourseWithModules,
@@ -41,3 +45,14 @@ export type {
   UpdateLessonInput,
   DripStatus,
 } from './types';
+
+export type {
+  Quiz,
+  QuizOption,
+  QuizQuestion,
+  QuizWithQuestions,
+  QuizAnswer,
+  SubmitQuizInput,
+  QuizAnswerBreakdown,
+  QuizAttemptResult,
+} from './quiz.types';

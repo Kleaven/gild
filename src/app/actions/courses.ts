@@ -16,6 +16,7 @@ import {
   reorderLessons as libReorderLessons,
   enrollInCourse as libEnrollInCourse,
   completeLesson as libCompleteLesson,
+  submitQuiz as libSubmitQuiz,
 } from '../../lib/courses';
 import type {
   CreateCourseInput,
@@ -24,6 +25,8 @@ import type {
   UpdateModuleInput,
   CreateLessonInput,
   UpdateLessonInput,
+  SubmitQuizInput,
+  QuizAttemptResult,
 } from '../../lib/courses';
 
 // ─── Auth guard ───────────────────────────────────────────────────────────────
@@ -173,4 +176,22 @@ export async function completeLesson(
   await requireUser();
   await libCompleteLesson(lessonId);
   revalidateTag(`course-progress-${courseId}`);
+}
+
+// ─── Quiz wrapper ─────────────────────────────────────────────────────────────
+
+export async function submitQuiz(input: SubmitQuizInput): Promise<QuizAttemptResult> {
+  await requireUser();
+  // Resolve courseId from enrollmentId before delegating — needed for revalidation
+  const supabase = await getSupabaseServerClient();
+  const { data: enrollment } = await supabase
+    .from('enrollments')
+    .select('course_id')
+    .eq('id', input.enrollmentId)
+    .maybeSingle();
+  const result = await libSubmitQuiz(input);
+  if (enrollment) {
+    revalidateTag(`course-progress-${enrollment.course_id}`);
+  }
+  return result;
 }
