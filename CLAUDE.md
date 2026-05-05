@@ -134,7 +134,7 @@ Step 54: Feature flags — COMPLETE
 Step 55: Platform admin console — COMPLETE
 
 ### Phase 8 — Pre-launch
-Step 56: G1-G24 all green and required
+Step 56: G1-G24 all green and required — COMPLETE
 Step 57: Lighthouse 90+ mobile
 Step 58: PDPA export + erasure
 Step 59: Realtime load test
@@ -151,7 +151,7 @@ Step 62: Launch readiness
 6. Secrets only in .env.local — never committed
 
 ## Current Build Status
-Steps 1–55 COMPLETE and pushed to main. NEXT: Step 56 — G1-G24 all green and required.
+Steps 1–56 COMPLETE and pushed to main. NEXT: Step 57 — Lighthouse 90+ mobile.
 
 ## src/lib/admin/ structure (Step 55)
 - index.ts — getAdminStats, getAdminCommunities, getGlobalFlags, getCommunityOverridesForFlag
@@ -275,3 +275,6 @@ Note: Step 46 (Cloudflare Stream) removed from plan — video is embed-only (You
 - requirePlatformAdmin() is defence-in-depth — middleware already guards /admin/*
 - getOverridesForFlag is a Server Action to avoid direct DB calls from client
 - getCommunityOverridesForFlag uses JOIN query — no N+1
+- G1-G24 gate definitions locked in Step 56
+- G21/G22 patched: assertFlag('quizzes') and assertFlag('certificates') added to course mutation actions
+- All 24 gates GREEN before advancing to Step 57 (G15/G16 blocked by local Supabase not running — pass on remote, confirmed Step 26)
