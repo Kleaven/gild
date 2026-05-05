@@ -16,6 +16,8 @@ const serverSchema = z.object({
   STRIPE_HOBBY_PRICE_ID: z.string().min(1),
   STRIPE_PRO_PRICE_ID: z.string().min(1),
   CRON_SECRET: z.string().min(1),
+  RESEND_API_KEY: z.string().min(1),
+  RESEND_FROM_EMAIL: z.string().email(),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 });
 
@@ -42,6 +44,8 @@ const SERVER_KEYS = new Set<string>([
   'STRIPE_HOBBY_PRICE_ID',
   'STRIPE_PRO_PRICE_ID',
   'CRON_SECRET',
+  'RESEND_API_KEY',
+  'RESEND_FROM_EMAIL',
   'NODE_ENV',
 ]);
 
@@ -100,6 +104,8 @@ function validateEnv(): Env {
     STRIPE_HOBBY_PRICE_ID: '',
     STRIPE_PRO_PRICE_ID: '',
     CRON_SECRET: '',
+    RESEND_API_KEY: '',
+    RESEND_FROM_EMAIL: '',
     NODE_ENV: 'development',
     ...clientResult.data,
   };
