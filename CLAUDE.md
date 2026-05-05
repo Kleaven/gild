@@ -131,7 +131,7 @@ Step 51: Realtime subscriptions — COMPLETE
 Step 52: Creator dashboard — COMPLETE
 Step 53: PWA + service worker — COMPLETE
 Step 54: Feature flags — COMPLETE
-Step 55: Platform admin console
+Step 55: Platform admin console — COMPLETE
 
 ### Phase 8 — Pre-launch
 Step 56: G1-G24 all green and required
@@ -151,7 +151,19 @@ Step 62: Launch readiness
 6. Secrets only in .env.local — never committed
 
 ## Current Build Status
-Steps 1–54 COMPLETE and pushed to main. NEXT: Step 55 — Platform admin console.
+Steps 1–55 COMPLETE and pushed to main. NEXT: Step 56 — G1-G24 all green and required.
+
+## src/lib/admin/ structure (Step 55)
+- index.ts — getAdminStats, getAdminCommunities, getGlobalFlags, getCommunityOverridesForFlag
+- guards.ts — requirePlatformAdmin() (server-only, redirects on failure)
+
+## app/admin/ routes (Step 55)
+- (console)/layout.tsx — dark shell, sidebar nav (Overview / Communities / Feature Flags)
+- (console)/page.tsx — operational stats grid
+- (console)/communities/page.tsx — searchable community table with plan/status badges
+- (console)/flags/page.tsx — two-panel flag manager (RSC shell + FlagManager client)
+- (console)/flags/FlagManager.tsx — full interactive flag manager client component
+- login/ and setup/ sit outside (console) route group — not wrapped by guarded layout
 
 ## src/lib/feature-flags/ structure (Step 54)
 - flags.ts — FEATURE_FLAGS const registry (13 flags), FlagName type
@@ -258,3 +270,8 @@ Note: Step 46 (Cloudflare Stream) removed from plan — video is embed-only (You
 - assertFlag() is the gating primitive for Server Actions
 - 13 flags registered: quizzes, certificates, drip_content, invitations, realtime, events_space, member_directory, chat_space, leaderboard, analytics, custom_domain, white_label, api_access
 - feature-flags lib NOT re-exported from any other lib barrel — always import directly from '@/lib/feature-flags'
+- Admin console: no revenue metrics — operational stats only (Stripe is source of truth)
+- Flag UI: two-panel pattern (global table + context panel with overrides)
+- requirePlatformAdmin() is defence-in-depth — middleware already guards /admin/*
+- getOverridesForFlag is a Server Action to avoid direct DB calls from client
+- getCommunityOverridesForFlag uses JOIN query — no N+1
