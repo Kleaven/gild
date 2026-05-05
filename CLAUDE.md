@@ -122,7 +122,7 @@ Step 44: Trial expiry + dunning
 Step 45: Course/module/lesson CRUD
 Step 46: Cloudflare Stream
 Step 47: Drip scheduler
-Step 48: Quiz engine
+Step 48: Quiz engine — COMPLETE
 Step 49: Certificates
 
 ### Phase 7 — Polish
@@ -151,7 +151,7 @@ Step 62: Launch readiness
 6. Secrets only in .env.local — never committed
 
 ## Current Build Status
-Steps 1–47 COMPLETE and pushed to main. NEXT: Step 48 — Quiz engine.
+Steps 1–48 COMPLETE and pushed to main. NEXT: Step 49 — Certificates.
 
 ## Step 47 Notes
 - Drip gate enforced at read time in getLesson — no cron job, no DB unlock mechanism
