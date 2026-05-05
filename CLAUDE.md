@@ -130,7 +130,7 @@ Step 50: Resend + email templates — COMPLETE
 Step 51: Realtime subscriptions — COMPLETE
 Step 52: Creator dashboard — COMPLETE
 Step 53: PWA + service worker — COMPLETE
-Step 54: Feature flags
+Step 54: Feature flags — COMPLETE
 Step 55: Platform admin console
 
 ### Phase 8 — Pre-launch
@@ -151,7 +151,13 @@ Step 62: Launch readiness
 6. Secrets only in .env.local — never committed
 
 ## Current Build Status
-Steps 1–53 COMPLETE and pushed to main. NEXT: Step 54 — Feature flags.
+Steps 1–54 COMPLETE and pushed to main. NEXT: Step 55 — Platform admin console.
+
+## src/lib/feature-flags/ structure (Step 54)
+- flags.ts — FEATURE_FLAGS const registry (13 flags), FlagName type
+- index.ts — getFlag, getAllFlagsForCommunity, assertFlag, FlagResult type
+- Evaluation: community row → global row → hardcoded default
+- server-only guarded — never import in client components
 
 ## lib/community/dashboard.ts structure (Step 52)
 - src/lib/community/dashboard.ts — getDashboardStats(communityId): single round-trip correlated subcount query via postgres-js db; returns DashboardStats { memberCount, postCount, spaceCount, courseCount }
@@ -247,3 +253,8 @@ Note: Step 46 (Cloudflare Stream) removed from plan — video is embed-only (You
 - public/icons/icon-192.png and icon-512.png are 1×1 placeholders — real branded icons required before Step 62 (launch readiness)
 - SW scope: cache-first for shell, network-first for pages, network-only for /api/, /auth/, supabase.co, stripe.com
 - CACHE_NAME = 'gild-shell-v1' — bump version string on any shell asset change
+- Feature flags: lib-only in Step 54 — platform admin UI deferred to Step 55
+- Flag evaluation order: per-community → global → hardcoded default
+- assertFlag() is the gating primitive for Server Actions
+- 13 flags registered: quizzes, certificates, drip_content, invitations, realtime, events_space, member_directory, chat_space, leaderboard, analytics, custom_domain, white_label, api_access
+- feature-flags lib NOT re-exported from any other lib barrel — always import directly from '@/lib/feature-flags'
