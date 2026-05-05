@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getSupabaseServerClient } from '@/lib/auth/server';
 import { getCommunityContext } from '../../../../../lib/community/context';
@@ -18,18 +18,9 @@ type StatCardProps = {
 
 function StatCard({ label, value }: StatCardProps) {
   return (
-    <div
-      style={{
-        background: '#fff',
-        border: '1px solid #eee',
-        borderRadius: 10,
-        padding: '24px 28px',
-        minWidth: 140,
-        flex: 1,
-      }}
-    >
-      <div style={{ fontSize: 28, fontWeight: 700, color: '#111' }}>{value.toLocaleString()}</div>
-      <div style={{ fontSize: 13, color: '#888', marginTop: 4 }}>{label}</div>
+    <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
+      <div className="text-3xl font-bold text-gray-900">{value.toLocaleString()}</div>
+      <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide">{label}</div>
     </div>
   );
 }
@@ -47,7 +38,7 @@ export default async function DashboardPage({ params }: Props) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    notFound();
+    redirect('/sign-in');
   }
 
   const { community, membership } = await getCommunityContext(communityId);
@@ -58,21 +49,21 @@ export default async function DashboardPage({ params }: Props) {
 
   const isAdminOrOwner = membership?.role === 'owner' || membership?.role === 'admin';
   if (!isAdminOrOwner) {
-    notFound();
+    redirect(`/c/${communityId}`);
   }
 
   const stats: DashboardStats = await getDashboardStats(communityId);
   const isOwner = membership?.role === 'owner';
 
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 24px' }}>
-      <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 4px' }}>Creator Dashboard</h1>
-        <p style={{ fontSize: 14, color: '#888', margin: 0 }}>{community.name}</p>
+    <div className="max-w-4xl mx-auto px-6 py-10">
+      <div className="mb-8">
+        <h1 className="text-xl font-bold">Creator Dashboard</h1>
+        <p className="text-sm text-gray-500 mt-1">{community.name}</p>
       </div>
 
-      {/* Stats row */}
-      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 40 }}>
+      {/* Stats grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
         <StatCard label="Members" value={stats.memberCount} />
         <StatCard label="Posts" value={stats.postCount} />
         <StatCard label="Spaces" value={stats.spaceCount} />
@@ -80,36 +71,18 @@ export default async function DashboardPage({ params }: Props) {
       </div>
 
       {/* Quick links */}
-      <div style={{ marginBottom: 40 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Manage</h2>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+      <div className="mb-10">
+        <h2 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Manage</h2>
+        <div className="flex flex-wrap gap-3">
           <Link
             href={`/c/${communityId}/members`}
-            style={{
-              display: 'inline-block',
-              padding: '10px 20px',
-              background: '#f5f5f5',
-              borderRadius: 8,
-              textDecoration: 'none',
-              color: '#333',
-              fontSize: 14,
-              fontWeight: 500,
-            }}
+            className="inline-block px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors no-underline"
           >
             Members
           </Link>
           <Link
             href={`/c/${communityId}/search`}
-            style={{
-              display: 'inline-block',
-              padding: '10px 20px',
-              background: '#f5f5f5',
-              borderRadius: 8,
-              textDecoration: 'none',
-              color: '#333',
-              fontSize: 14,
-              fontWeight: 500,
-            }}
+            className="inline-block px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors no-underline"
           >
             Search
           </Link>
@@ -118,23 +91,16 @@ export default async function DashboardPage({ params }: Props) {
 
       {/* Billing card — owner only */}
       {isOwner && (
-        <div
-          style={{
-            background: '#fff',
-            border: '1px solid #eee',
-            borderRadius: 10,
-            padding: '24px 28px',
-          }}
-        >
-          <h2 style={{ fontSize: 16, fontWeight: 600, margin: '0 0 8px' }}>Billing</h2>
-          <p style={{ fontSize: 14, color: '#555', margin: '0 0 16px' }}>
+        <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
+          <h2 className="text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">Billing</h2>
+          <p className="text-sm text-gray-600 mb-4">
             Plan:{' '}
-            <strong style={{ textTransform: 'capitalize' }}>{community.plan ?? 'None'}</strong>
+            <strong className="capitalize">{community.plan ?? 'None'}</strong>
             {community.subscription_status && (
               <>
                 {' '}
                 &mdash; Status:{' '}
-                <strong style={{ textTransform: 'capitalize' }}>
+                <strong className="capitalize">
                   {community.subscription_status.replace('_', ' ')}
                 </strong>
               </>
@@ -142,16 +108,7 @@ export default async function DashboardPage({ params }: Props) {
           </p>
           <Link
             href={`/onboarding/${communityId}/plan`}
-            style={{
-              display: 'inline-block',
-              padding: '10px 20px',
-              background: '#111',
-              color: '#fff',
-              borderRadius: 8,
-              textDecoration: 'none',
-              fontSize: 14,
-              fontWeight: 500,
-            }}
+            className="inline-block px-4 py-2 bg-gray-900 hover:bg-gray-700 text-white rounded-lg text-sm font-medium transition-colors no-underline"
           >
             Manage Subscription
           </Link>
