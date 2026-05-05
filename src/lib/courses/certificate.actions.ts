@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 import { getSupabaseServerClient } from '../auth/server';
+import { assertFlag } from '@/lib/feature-flags';
 import type { Certificate } from './certificate.types';
 
 // ─── issueCertificate ─────────────────────────────────────────────────────────
@@ -30,6 +31,24 @@ export async function issueCertificate(enrollmentId: string): Promise<Certificat
     error: authErr,
   } = await supabase.auth.getUser();
   if (authErr || !user) throw new Error('[gild] not authenticated');
+
+  // Resolve communityId for feature flag check before any write
+  const { data: enrollment, error: enrollErr } = await supabase
+    .from('enrollments')
+    .select('course_id')
+    .eq('id', parsed.data.enrollmentId)
+    .eq('user_id', user.id)
+    .maybeSingle();
+  if (enrollErr || !enrollment) throw new Error('[gild] enrollment not found');
+
+  const { data: course, error: courseErr } = await supabase
+    .from('courses')
+    .select('community_id')
+    .eq('id', enrollment.course_id)
+    .maybeSingle();
+  if (courseErr || !course) throw new Error('[gild] course not found');
+
+  await assertFlag('certificates', course.community_id);
 
   // Steps 2–6 delegated to SECURITY DEFINER RPC (migration 20260505000001):
   //   2. fetch + verify enrollment ownership

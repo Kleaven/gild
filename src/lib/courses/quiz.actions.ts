@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 import { getSupabaseServerClient } from '../auth/server';
+import { assertFlag } from '@/lib/feature-flags';
 import type { Json } from '../supabase/types';
 import type {
   SubmitQuizInput,
@@ -81,6 +82,15 @@ export async function submitQuiz(input: SubmitQuizInput): Promise<QuizAttemptRes
   if (!mod || mod.course_id !== enrollment.course_id) {
     throw new Error('[gild] quiz does not belong to this course');
   }
+
+  // Resolve communityId and gate on feature flag before any write
+  const { data: courseForFlag, error: courseErr } = await supabase
+    .from('courses')
+    .select('community_id')
+    .eq('id', enrollment.course_id)
+    .maybeSingle();
+  if (courseErr || !courseForFlag) throw new Error('[gild] course not found');
+  await assertFlag('quizzes', courseForFlag.community_id);
 
   // Step 4 — retryable: no unique constraint on quiz_attempts; new attempt always allowed
 
