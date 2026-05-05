@@ -127,7 +127,7 @@ Step 49: Certificates — COMPLETE
 
 ### Phase 7 — Polish
 Step 50: Resend + email templates — COMPLETE
-Step 51: Realtime subscriptions
+Step 51: Realtime subscriptions — COMPLETE
 Step 52: Creator dashboard
 Step 53: PWA + service worker
 Step 54: Feature flags
@@ -151,7 +151,15 @@ Step 62: Launch readiness
 6. Secrets only in .env.local — never committed
 
 ## Current Build Status
-Steps 1–50 COMPLETE and pushed to main. NEXT: Step 51 — Realtime subscriptions.
+Steps 1–51 COMPLETE and pushed to main. NEXT: Step 52 — Creator dashboard.
+
+## src/hooks/ structure (Step 51)
+- src/hooks/useRealtimePosts.ts — subscribes to posts INSERT by spaceId; calls onNewPost callback
+- src/hooks/useRealtimeComments.ts — subscribes to comments INSERT by postId; calls onNewComment callback
+- src/hooks/index.ts — barrel: exports hooks + RealtimePostPayload + RealtimeCommentPayload
+- Browser client created inside useEffect (never at module level)
+- Consumers call router.refresh() — no partial payload merging (realtime INSERT lacks author/counts)
+- PostList.tsx and CommentList.tsx are 'use client' components wrapping the realtime hooks
 
 ## lib/email/ structure (Step 50)
 - src/lib/email/client.ts — Resend client (server-only; NOT exported from barrel)
