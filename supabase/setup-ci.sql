@@ -31,11 +31,27 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION pgtap_helpers.fixture(fixture_name text) 
+CREATE OR REPLACE FUNCTION pgtap_helpers.fixture(fixture_name text)
 RETURNS uuid AS $$
 BEGIN
-  -- Basic fixture mock to allow tests to run
-  RETURN '00000000-0000-0000-0000-000000000000'::uuid; 
+  RETURN CASE fixture_name
+    WHEN 'platform_admin'    THEN '00000000-0000-0000-0000-000000000001'::uuid
+    WHEN 'owner'             THEN '00000000-0000-0000-0000-000000000002'::uuid
+    WHEN 'member_paid'       THEN '00000000-0000-0000-0000-000000000003'::uuid
+    WHEN 'member_free'       THEN '00000000-0000-0000-0000-000000000004'::uuid
+    WHEN 'member_banned'     THEN '00000000-0000-0000-0000-000000000005'::uuid
+    WHEN 'community_public'  THEN '00000000-0000-0000-0000-000000000010'::uuid
+    WHEN 'community_private' THEN '00000000-0000-0000-0000-000000000011'::uuid
+    ELSE NULL
+  END;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION pgtap_helpers.set_anon()
+RETURNS void AS $$
+BEGIN
+  RESET request.jwt.claims;
+  SET LOCAL ROLE anon;
 END;
 $$ LANGUAGE plpgsql;
 

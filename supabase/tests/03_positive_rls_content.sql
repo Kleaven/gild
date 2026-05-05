@@ -92,9 +92,9 @@ SAVEPOINT sp_post_insert;
 SELECT lives_ok(
   $$ INSERT INTO public.posts (community_id, space_id, author_id, title, body)
      VALUES (
-       '00000000-0000-0000-0000-000000000010',
-       '00000000-0000-0000-0000-000000000040',
-       '00000000-0000-0000-0000-000000000002',
+       pgtap_helpers.fixture('community_public'),
+       '00000000-0000-0000-0000-000000000040'::uuid,
+       pgtap_helpers.fixture('owner'),
        'RLS positive test post',
        'Inserted by owner in Gate 1 Part A test'
      ) $$,
