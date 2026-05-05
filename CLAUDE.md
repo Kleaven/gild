@@ -115,13 +115,13 @@ Step 39: Remove Prisma package — COMPLETE (was already absent; no-op)
 Step 40: Stripe webhook route — COMPLETE
 Step 41: Stripe catalog — COMPLETE
 Step 42: Subscription lifecycle — COMPLETE (gates.ts is sole owner of plan feature gate logic)
-Step 43: Onboarding flow (7 steps)
-Step 44: Trial expiry + dunning
+Step 43: Onboarding flow (7 steps) — COMPLETE
+Step 44: Trial expiry + dunning — COMPLETE
 
 ### Phase 6 — Courses
-Step 45: Course/module/lesson CRUD
+Step 45: Course/module/lesson CRUD — COMPLETE
 Step 46: Cloudflare Stream
-Step 47: Drip scheduler
+Step 47: Drip scheduler — COMPLETE
 Step 48: Quiz engine — COMPLETE
 Step 49: Certificates — COMPLETE
 
