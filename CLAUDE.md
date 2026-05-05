@@ -123,7 +123,7 @@ Step 45: Course/module/lesson CRUD
 Step 46: Cloudflare Stream
 Step 47: Drip scheduler
 Step 48: Quiz engine — COMPLETE
-Step 49: Certificates
+Step 49: Certificates — COMPLETE
 
 ### Phase 7 — Polish
 Step 50: Resend + email templates
@@ -151,7 +151,7 @@ Step 62: Launch readiness
 6. Secrets only in .env.local — never committed
 
 ## Current Build Status
-Steps 1–48 COMPLETE and pushed to main. NEXT: Step 49 — Certificates.
+Steps 1–49 COMPLETE and pushed to main. NEXT: Step 50 — Resend + email templates.
 
 ## Step 47 Notes
 - Drip gate enforced at read time in getLesson — no cron job, no DB unlock mechanism
