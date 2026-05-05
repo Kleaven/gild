@@ -77,6 +77,7 @@ export type Database = {
           id: string
           issued_at: string
           user_id: string
+          verification_token: string
         }
         Insert: {
           certificate_url?: string | null
@@ -86,6 +87,7 @@ export type Database = {
           id?: string
           issued_at?: string
           user_id: string
+          verification_token?: string
         }
         Update: {
           certificate_url?: string | null
@@ -95,6 +97,7 @@ export type Database = {
           id?: string
           issued_at?: string
           user_id?: string
+          verification_token?: string
         }
         Relationships: [
           {
@@ -1359,6 +1362,20 @@ export type Database = {
       calculate_hot_score: {
         Args: { p_comments: number; p_created_at: string; p_likes: number }
         Returns: number
+      }
+      get_certificate_by_token: {
+        Args: { p_token: string }
+        Returns: {
+          issued_at: string
+          certificate_url: string | null
+          recipient_name: string
+          course_title: string
+          community_name: string
+        }[]
+      }
+      issue_certificate: {
+        Args: { p_enrollment_id: string }
+        Returns: string
       }
       complete_lesson: {
         Args: { p_enrollment_id: string; p_lesson_id: string }

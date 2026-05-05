@@ -27,6 +27,10 @@ export { getQuiz, getQuizResult } from './quiz.queries';
 
 export { submitQuiz } from './quiz.actions';
 
+export { getCertificate, getCertificateByToken } from './certificate.queries';
+
+export { issueCertificate } from './certificate.actions';
+
 export type {
   Course,
   CourseWithModules,
@@ -56,3 +60,5 @@ export type {
   QuizAnswerBreakdown,
   QuizAttemptResult,
 } from './quiz.types';
+
+export type { Certificate, PublicCertificate } from './certificate.types';

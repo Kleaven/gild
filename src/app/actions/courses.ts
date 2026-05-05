@@ -17,6 +17,7 @@ import {
   enrollInCourse as libEnrollInCourse,
   completeLesson as libCompleteLesson,
   submitQuiz as libSubmitQuiz,
+  issueCertificate as libIssueCertificate,
 } from '../../lib/courses';
 import type {
   CreateCourseInput,
@@ -27,6 +28,7 @@ import type {
   UpdateLessonInput,
   SubmitQuizInput,
   QuizAttemptResult,
+  Certificate,
 } from '../../lib/courses';
 
 // ─── Auth guard ───────────────────────────────────────────────────────────────
@@ -176,6 +178,21 @@ export async function completeLesson(
   await requireUser();
   await libCompleteLesson(lessonId);
   revalidateTag(`course-progress-${courseId}`);
+}
+
+// ─── Certificate wrapper ──────────────────────────────────────────────────────
+
+// communityId + courseId are wrapper-only params for revalidation;
+// not part of the lib function signature.
+export async function issueCertificate(
+  enrollmentId: string,
+  communityId: string,
+  courseId: string,
+): Promise<Certificate> {
+  await requireUser();
+  const result = await libIssueCertificate(enrollmentId);
+  revalidatePath(`/c/${communityId}/courses/${courseId}`);
+  return result;
 }
 
 // ─── Quiz wrapper ─────────────────────────────────────────────────────────────
