@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getSupabaseServerClient } from '../lib/auth/server';
+import { StudioLanding } from '@/components/StudioLanding';
 
 export default async function RootPage() {
   const supabase = await getSupabaseServerClient();
@@ -47,43 +48,5 @@ export default async function RootPage() {
   }
 
   // Landing for unauthenticated visitors
-  return (
-    <main style={{ maxWidth: 640, margin: '80px auto', padding: '0 16px', textAlign: 'center' }}>
-      <h1 style={{ fontSize: 48, fontWeight: 800, marginBottom: 16 }}>Gild</h1>
-      <p style={{ fontSize: 20, color: '#555', marginBottom: 40 }}>
-        Build your premium community. 0% transaction fees. Forever.
-      </p>
-      <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-        <Link
-          href="/sign-up"
-          style={{
-            background: '#000',
-            color: '#fff',
-            padding: '12px 28px',
-            borderRadius: 8,
-            textDecoration: 'none',
-            fontWeight: 600,
-            fontSize: 16,
-          }}
-        >
-          Get started free
-        </Link>
-        <Link
-          href="/sign-in"
-          style={{
-            background: 'transparent',
-            color: '#000',
-            padding: '12px 28px',
-            borderRadius: 8,
-            textDecoration: 'none',
-            fontWeight: 600,
-            fontSize: 16,
-            border: '1.5px solid #000',
-          }}
-        >
-          Sign in
-        </Link>
-      </div>
-    </main>
-  );
+  return <StudioLanding />;
 }
