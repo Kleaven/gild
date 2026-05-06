@@ -38,3 +38,7 @@ supabase/.temp/
 
 # vercel
 .vercel
+
+# Local tooling and design references
+.claude/
+preferred_UI/
