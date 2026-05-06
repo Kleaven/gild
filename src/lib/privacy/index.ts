@@ -151,6 +151,19 @@ export async function exportUserData(userId: string): Promise<UserDataExport> {
 }
 
 export async function deleteUserAccount(userId: string): Promise<void> {
+  const ownedRows = await db<{ count: number }[]>`
+    SELECT count(*)::int AS count
+    FROM communities
+    WHERE owner_id = ${userId}
+      AND deleted_at IS NULL
+  `;
+  const ownedCount = Number(ownedRows[0]?.count ?? 0);
+  if (ownedCount > 0) {
+    throw new Error(
+      'You own one or more communities. Transfer ownership or delete your communities before deleting your account.',
+    );
+  }
+
   const serviceClient = getSupabaseServiceClient();
   const { error } = await serviceClient.auth.admin.deleteUser(userId);
   if (error) throw new Error(error.message);

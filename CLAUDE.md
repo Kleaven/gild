@@ -140,7 +140,7 @@ Step 58: PDPA export + erasure — COMPLETE
 Step 59: Realtime load test — COMPLETE
 Step 60: Penetration test — COMPLETE
 Step 61: Deploy pipeline — COMPLETE
-Step 62: Launch readiness
+Step 62: Launch readiness — COMPLETE (pending owner actions)
 
 ## Rules For Claude Code
 1. One step at a time — never start next step without explicit approval
@@ -151,7 +151,21 @@ Step 62: Launch readiness
 6. Secrets only in .env.local — never committed
 
 ## Current Build Status
-Steps 1–61 COMPLETE and pushed to main. NEXT: Step 62 — Launch readiness.
+Steps 1–62 COMPLETE and pushed to main. **READY FOR LAUNCH** (pending owner actions below).
+
+## Step 62 Notes
+- Owner deletion guard added to `src/lib/privacy/index.ts` `deleteUserAccount`: counts non-deleted communities owned by user; throws readable error before calling `auth.admin.deleteUser`. Replaces the silent FK RESTRICT 500.
+- Error message: "You own one or more communities. Transfer ownership or delete your communities before deleting your account."
+- `DeleteAccountButton.tsx` already surfaces server action errors via `{error && <p>}` — no UI changes needed.
+- Production smoke tests post-deploy: 6a /onboarding=307, 6b /api/cron/dunning=401, 6c /=200, 6d /sign-in=200.
+
+## NEEDS_OWNER_ACTION before launch
+1. **Real branded icons** — replace `public/icons/icon-192.png` and `icon-512.png` (currently 69-byte 1×1 placeholders). PWA install prompts and apple-touch-icon will look broken until done.
+2. **RESEND_FROM_EMAIL** — verify Vercel production env points to a real verified domain email (not a placeholder/sandbox address). Source of truth: `src/lib/email/sender.ts:64`.
+3. **Stripe webhook** — confirm endpoint registered at `https://gild-flax.vercel.app/api/webhooks/stripe` with the 6 subscription events (`customer.subscription.{created,updated,deleted}`, `invoice.payment_{succeeded,failed}`, `customer.subscription.trial_will_end`).
+4. **Custom domain** — current production is `gild-flax.vercel.app`. Configure marketing/branded domain in Vercel before public launch.
+5. **OAuth signup smoke test** — incognito sign-up with dotted-prefix email (e.g. `firstname.lastname@gmail.com`); confirm `/onboarding` loads and create-community returns no 409.
+6. **Owner deletion smoke test** — sign in as community owner → `/settings/privacy` → "Delete account" → confirm readable error appears (not 500).
 
 ## Step 61 Notes (commit 3e11479)
 - Minimal scope: moved `themeColor` from `metadata` export to a new `viewport` export in src/app/layout.tsx (Next.js 15 requirement)
