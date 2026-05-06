@@ -136,7 +136,7 @@ Step 55: Platform admin console — COMPLETE
 ### Phase 8 — Pre-launch
 Step 56: G1-G24 all green and required — COMPLETE
 Step 57: Lighthouse 90+ mobile — COMPLETE
-Step 58: PDPA export + erasure
+Step 58: PDPA export + erasure — COMPLETE
 Step 59: Realtime load test
 Step 60: Penetration test
 Step 61: Deploy pipeline
@@ -151,7 +151,7 @@ Step 62: Launch readiness
 6. Secrets only in .env.local — never committed
 
 ## Current Build Status
-Steps 1–56 COMPLETE and pushed to main. NEXT: Step 57 — Lighthouse 90+ mobile.
+Steps 1–58 COMPLETE and pushed to main. NEXT: Step 59 — Realtime load test.
 
 ## src/lib/admin/ structure (Step 55)
 - index.ts — getAdminStats, getAdminCommunities, getGlobalFlags, getCommunityOverridesForFlag
@@ -278,3 +278,21 @@ Note: Step 46 (Cloudflare Stream) removed from plan — video is embed-only (You
 - G1-G24 gate definitions locked in Step 56
 - G21/G22 patched: assertFlag('quizzes') and assertFlag('certificates') added to course mutation actions
 - All 24 gates GREEN — G15/G16 confirmed 61/61 tests pass locally (OrbStack + seed.sql pgcrypto fix + setup-ci.sql fixture/set_anon fixes applied)
+- Lighthouse 90+ confirmed on /sign-in and / (landing) — desktop preset, Playwright Chromium
+- All four scores passed baseline without any code changes: / scored 100/100/96/100, /sign-in scored 100/94/96/90
+- No Lighthouse fixes required: Next.js 15 App Router + Tailwind already yields optimal LCP, no render-blocking resources, correct lang attribute, and semantic HTML
+- PDPA: export returns JSON blob downloaded client-side — no server-side file storage
+- deleteUserAccount uses auth.admin.deleteUser (service role) — cascade handles all profile-linked data
+- posts/comments author_id SET NULL on delete — content preserved, authorship anonymised
+- Community ownership NOT transferred on deletion — flagged as TODO for Step 62 launch checklist
+- Privacy page at /settings/privacy — authenticated, no community scope
+
+## src/lib/privacy/ structure (Step 58)
+- index.ts — exportUserData, deleteUserAccount, UserDataExport type
+- 5 parallel queries: profile, communities, enrollments, certificates, counts
+- No barrel re-export from lib root — import directly from '@/lib/privacy'
+
+## app/(app)/settings/privacy/ (Step 58)
+- page.tsx — RSC shell, requireAuth() guard
+- ExportDataButton.tsx — 'use client', JSON Blob download, no server-side storage
+- DeleteAccountButton.tsx — 'use client', two-step idle→confirm confirmation
