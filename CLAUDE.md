@@ -139,7 +139,7 @@ Step 57: Lighthouse 90+ mobile — COMPLETE
 Step 58: PDPA export + erasure — COMPLETE
 Step 59: Realtime load test — COMPLETE
 Step 60: Penetration test — COMPLETE
-Step 61: Deploy pipeline
+Step 61: Deploy pipeline — COMPLETE
 Step 62: Launch readiness
 
 ## Rules For Claude Code
@@ -151,7 +151,22 @@ Step 62: Launch readiness
 6. Secrets only in .env.local — never committed
 
 ## Current Build Status
-Steps 1–60 COMPLETE and pushed to main. NEXT: Step 61 — Deploy pipeline.
+Steps 1–61 COMPLETE and pushed to main. NEXT: Step 62 — Launch readiness.
+
+## Step 61 Notes (commit 3e11479)
+- Minimal scope: moved `themeColor` from `metadata` export to a new `viewport` export in src/app/layout.tsx (Next.js 15 requirement)
+- Single source-of-truth fix: root layout silenced themeColor warnings on all 8 routes (/, /sign-in, /sign-up, /onboarding, /communities/new, /admin, /admin/communities, /admin/flags)
+- vercel.json cron preserved from earlier work: `0 9 * * *` → `/api/cron/dunning`
+- Production smoke tests (post-deploy):
+  - GET /onboarding → 307 (redirect to /sign-in)
+  - GET /c/00000000-0000-0000-0000-000000000010 → 307 (no sandbox bypass)
+  - GET /api/cron/dunning (no auth) → 401
+  - GET / → 200
+  - GET /sign-in → 200
+- Earlier Step 61 attempt (commits 8b6ffb1 → 82db0e4) reverted via 0b8a5bd → 8a5cbe3 due to auth bypass leakage during UI work
+- MANUAL STEPS OUTSTANDING (owner action required for Step 62):
+  - Confirm Stripe webhook endpoint registered at https://gild-flax.vercel.app/api/webhooks/stripe with 6 subscription events
+  - Run incognito OAuth signup test with dotted-prefix email (e.g. firstname.lastname@gmail.com); confirm /onboarding loads and create-community returns no 409
 
 ## src/lib/admin/ structure (Step 55)
 - index.ts — getAdminStats, getAdminCommunities, getGlobalFlags, getCommunityOverridesForFlag
