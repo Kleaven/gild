@@ -138,7 +138,7 @@ Step 56: G1-G24 all green and required — COMPLETE
 Step 57: Lighthouse 90+ mobile — COMPLETE
 Step 58: PDPA export + erasure — COMPLETE
 Step 59: Realtime load test — COMPLETE
-Step 60: Penetration test
+Step 60: Penetration test — COMPLETE
 Step 61: Deploy pipeline
 Step 62: Launch readiness
 
@@ -151,7 +151,7 @@ Step 62: Launch readiness
 6. Secrets only in .env.local — never committed
 
 ## Current Build Status
-Steps 1–59 COMPLETE and pushed to main. NEXT: Step 60 — Penetration test.
+Steps 1–60 COMPLETE and pushed to main. NEXT: Step 61 — Deploy pipeline.
 
 ## src/lib/admin/ structure (Step 55)
 - index.ts — getAdminStats, getAdminCommunities, getGlobalFlags, getCommunityOverridesForFlag
@@ -307,3 +307,8 @@ Note: Step 46 (Cloudflare Stream) removed from plan — video is embed-only (You
 - Pass thresholds: ≥95% success rate, p95 < 3000ms
 - Results: 20/20 established (100%), p50=753ms p95=779ms max=779ms — PASS
 - Channel pattern matches useRealtimePosts: posts:${spaceId} + space_id=eq.${spaceId} filter
+- Step 60: all 14 security checks passed — no vulnerabilities found
+- No vulnerabilities found in auth bypass, IDOR, webhook security, cron security, RLS, or erasure cascade
+- communities.owner_id → RESTRICT (by design): deleteUserAccount fails for community owners — surfaces as error to UI, not silent failure; ownership transfer is Step 62 TODO
+- lesson_progress cascades transitively via enrollment_id → enrollments → user_id (no direct profile FK needed)
+- Sign-in uses Supabase Auth directly (signInWithPassword) — no custom API route; Supabase Auth rate limiting applies (check 6.1 N/A)
