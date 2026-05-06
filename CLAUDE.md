@@ -139,7 +139,7 @@ Step 57: Lighthouse 90+ mobile — COMPLETE
 Step 58: PDPA export + erasure — COMPLETE
 Step 59: Realtime load test — COMPLETE
 Step 60: Penetration test — COMPLETE
-Step 61: Deploy pipeline
+Step 61: Deploy pipeline — COMPLETE
 Step 62: Launch readiness
 
 ## Rules For Claude Code
@@ -151,7 +151,18 @@ Step 62: Launch readiness
 6. Secrets only in .env.local — never committed
 
 ## Current Build Status
-Steps 1–60 COMPLETE and pushed to main. NEXT: Step 61 — Deploy pipeline.
+Steps 1–61 COMPLETE and pushed to main. NEXT: Step 62 — Launch readiness.
+
+## Step 61 Notes
+- vercel.json already present with correct cron: `0 9 * * *` → `/api/cron/dunning`
+- All 17 Vercel production env vars confirmed present (no missing vars)
+- themeColor already in separate `viewport` export in app/layout.tsx — no changes needed
+- UI overhaul (Studio design system) shipped alongside: src/components/gild/ barrel, 8 new components
+- All TypeScript strict errors from UI changes resolved: consistent-type-imports, no-unused-vars, no-explicit-any
+- Mock sandbox community at UUID 00000000-0000-0000-0000-000000000010 for public demo routing
+- MANUAL STEPS OUTSTANDING (owner action required):
+  - Confirm Stripe webhook endpoint registered at https://gild-flax.vercel.app/api/webhooks/stripe
+  - Smoke test production: sign-up → create community → onboarding → /api/cron/dunning 401 check
 
 ## src/lib/admin/ structure (Step 55)
 - index.ts — getAdminStats, getAdminCommunities, getGlobalFlags, getCommunityOverridesForFlag
