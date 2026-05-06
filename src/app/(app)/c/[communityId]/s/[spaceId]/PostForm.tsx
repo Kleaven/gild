@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { createPost } from '@/app/actions';
+import { GILD_FONTS } from '@/components/gild';
 
 type Props = {
   communityId: string;
@@ -32,14 +33,15 @@ export default function PostForm({ communityId, spaceId }: Props) {
     <form
       onSubmit={handleSubmit}
       style={{
-        background: '#f9f9f9',
-        border: '1px solid #eee',
-        borderRadius: 10,
-        padding: 20,
-        marginBottom: 24,
+        background: 'oklch(0.985 0.003 250)',
+        border: '1px solid oklch(0.92 0.01 250)',
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 20,
         display: 'flex',
         flexDirection: 'column',
         gap: 10,
+        fontFamily: GILD_FONTS.sans,
       }}
     >
       <input
@@ -48,7 +50,15 @@ export default function PostForm({ communityId, spaceId }: Props) {
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         maxLength={300}
-        style={inputStyle}
+        style={{
+          padding: '10px 14px', 
+          border: '1px solid oklch(0.90 0.01 250)',
+          borderRadius: 8, 
+          fontSize: 14, 
+          outline: 'none', 
+          background: '#fff',
+          fontFamily: 'inherit',
+        }}
       />
       <textarea
         placeholder="What's on your mind?"
@@ -56,34 +66,42 @@ export default function PostForm({ communityId, spaceId }: Props) {
         onChange={(e) => setBody(e.target.value)}
         required
         rows={3}
-        style={{ ...inputStyle, resize: 'vertical' }}
+        style={{
+          padding: '10px 14px', 
+          border: '1px solid oklch(0.90 0.01 250)',
+          borderRadius: 8, 
+          fontSize: 14, 
+          outline: 'none', 
+          background: '#fff',
+          fontFamily: 'inherit',
+          resize: 'vertical',
+          minHeight: 80,
+        }}
       />
       {error && <p style={{ color: '#c00', fontSize: 13, margin: 0 }}>{error}</p>}
-      <button type="submit" disabled={isPending} style={btnStyle}>
-        {isPending ? 'Posting…' : 'Post'}
-      </button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <p style={{ fontSize: 11, color: 'oklch(0.55 0.02 250)', margin: 0 }}>
+          Markdown supported
+        </p>
+        <button 
+          type="submit" 
+          disabled={isPending} 
+          style={{
+            padding: '8px 18px', 
+            borderRadius: 8,
+            background: 'oklch(0.20 0.02 250)', 
+            color: '#fff', 
+            border: 'none',
+            fontSize: 13, 
+            fontWeight: 600, 
+            cursor: isPending ? 'default' : 'pointer',
+            opacity: isPending ? 0.7 : 1,
+            transition: 'opacity 0.2s ease',
+          }}
+        >
+          {isPending ? 'Posting…' : 'Post'}
+        </button>
+      </div>
     </form>
   );
 }
-
-const inputStyle: React.CSSProperties = {
-  padding: '9px 11px',
-  border: '1.5px solid #ddd',
-  borderRadius: 7,
-  fontSize: 14,
-  outline: 'none',
-  width: '100%',
-  boxSizing: 'border-box',
-};
-
-const btnStyle: React.CSSProperties = {
-  alignSelf: 'flex-end',
-  background: '#000',
-  color: '#fff',
-  border: 'none',
-  borderRadius: 7,
-  padding: '9px 20px',
-  fontSize: 14,
-  fontWeight: 600,
-  cursor: 'pointer',
-};
