@@ -159,10 +159,18 @@ Steps 1–61 COMPLETE and pushed to main. NEXT: Step 62 — Launch readiness.
 - themeColor already in separate `viewport` export in app/layout.tsx — no changes needed
 - UI overhaul (Studio design system) shipped alongside: src/components/gild/ barrel, 8 new components
 - All TypeScript strict errors from UI changes resolved: consistent-type-imports, no-unused-vars, no-explicit-any
-- Mock sandbox community at UUID 00000000-0000-0000-0000-000000000010 for public demo routing
-- MANUAL STEPS OUTSTANDING (owner action required):
-  - Confirm Stripe webhook endpoint registered at https://gild-flax.vercel.app/api/webhooks/stripe
-  - Smoke test production: sign-up → create community → onboarding → /api/cron/dunning 401 check
+- HOTFIX (commit ed1f032): removed sandbox auth/DB bypass that leaked into context.ts during UI work — three sites stripped (context.ts mock branch, layout.tsx auth-guard hole + mock-user fallback, actions/community.ts createCommunity bypass)
+- getCommunityContext now resolves all communityIds through the same DB path; auth guard unconditional; createCommunity throws on missing session
+- Sandbox UUID 00000000-0000-0000-0000-000000000010 remains in supabase/seed.sql + setup-ci.sql only (local dev/CI seed row, not production code)
+- Production smoke test results (post-hotfix deploy):
+  - GET / → 200
+  - GET /c/00000000-0000-0000-0000-000000000010 → 307 (redirect to /sign-in — bypass dead)
+  - GET /api/cron/dunning (no auth) → 401
+  - GET /api/cron/dunning (wrong secret) → 401
+  - Manual OAuth signup (firstname.lastname@gmail.com) → DEFERRED, owner to verify
+- MANUAL STEPS OUTSTANDING (owner action required for full Step 62 readiness):
+  - Confirm Stripe webhook endpoint registered at https://gild-flax.vercel.app/api/webhooks/stripe with 6 subscription events
+  - Run manual OAuth signup test with dotted-prefix email; confirm /onboarding loads and create-community returns no 409
 
 ## src/lib/admin/ structure (Step 55)
 - index.ts — getAdminStats, getAdminCommunities, getGlobalFlags, getCommunityOverridesForFlag
