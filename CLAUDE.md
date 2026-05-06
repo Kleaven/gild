@@ -137,7 +137,7 @@ Step 55: Platform admin console — COMPLETE
 Step 56: G1-G24 all green and required — COMPLETE
 Step 57: Lighthouse 90+ mobile — COMPLETE
 Step 58: PDPA export + erasure — COMPLETE
-Step 59: Realtime load test
+Step 59: Realtime load test — COMPLETE
 Step 60: Penetration test
 Step 61: Deploy pipeline
 Step 62: Launch readiness
@@ -151,7 +151,7 @@ Step 62: Launch readiness
 6. Secrets only in .env.local — never committed
 
 ## Current Build Status
-Steps 1–58 COMPLETE and pushed to main. NEXT: Step 59 — Realtime load test.
+Steps 1–59 COMPLETE and pushed to main. NEXT: Step 60 — Penetration test.
 
 ## src/lib/admin/ structure (Step 55)
 - index.ts — getAdminStats, getAdminCommunities, getGlobalFlags, getCommunityOverridesForFlag
@@ -286,6 +286,10 @@ Note: Step 46 (Cloudflare Stream) removed from plan — video is embed-only (You
 - posts/comments author_id SET NULL on delete — content preserved, authorship anonymised
 - Community ownership NOT transferred on deletion — flagged as TODO for Step 62 launch checklist
 - Privacy page at /settings/privacy — authenticated, no community scope
+- Realtime load test: 20 concurrent subscribers, 15s hold, anon key against staging
+- Test script: scripts/realtime-load-test.mjs
+- Pass thresholds: ≥95% success rate, p95 < 3000ms
+- Actual results: 100% success rate, p50=753ms, p95=779ms, max=779ms — PASS
 
 ## src/lib/privacy/ structure (Step 58)
 - index.ts — exportUserData, deleteUserAccount, UserDataExport type
@@ -296,3 +300,10 @@ Note: Step 46 (Cloudflare Stream) removed from plan — video is embed-only (You
 - page.tsx — RSC shell, requireAuth() guard
 - ExportDataButton.tsx — 'use client', JSON Blob download, no server-side storage
 - DeleteAccountButton.tsx — 'use client', two-step idle→confirm confirmation
+
+## Realtime load test (Step 59)
+- Script: scripts/realtime-load-test.mjs — standalone ES module, no src/ imports
+- 20 concurrent subscribers, 15s hold, anon key against staging Supabase
+- Pass thresholds: ≥95% success rate, p95 < 3000ms
+- Results: 20/20 established (100%), p50=753ms p95=779ms max=779ms — PASS
+- Channel pattern matches useRealtimePosts: posts:${spaceId} + space_id=eq.${spaceId} filter
