@@ -2,6 +2,9 @@ import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getCommunityContext } from '../../../../lib/community/context';
 import { isAccessGranted } from '@/lib/billing';
+import { requireAuth } from '@/lib/auth';
+import { StudioSidebar } from '@/components/gild';
+import type { Person } from '@/components/gild';
 import type { CommunityBillingState, SubscriptionStatus } from '@/lib/billing';
 import type { Plan } from '@/lib/billing';
 
@@ -20,6 +23,15 @@ export default async function CommunityLayout({ children, params }: Props) {
   }
 
   const { community, membership, spaces } = await getCommunityContext(communityId);
+  const { profile } = await requireAuth();
+
+  const currentUser: Person = {
+    id: profile.id,
+    name: profile.display_name,
+    role: (membership?.role ?? 'free_member') as Person['role'],
+    hue: profile.id.charCodeAt(0) * 10 % 360,
+    online: true,
+  };
 
   if (!community) {
     notFound();
@@ -114,117 +126,16 @@ export default async function CommunityLayout({ children, params }: Props) {
         </div>
       )}
     <div style={{ display: 'flex', minHeight: 'calc(100vh - 49px)' }}>
-      {/* Sidebar */}
-      <aside
-        style={{
-          width: 220,
-          borderRight: '1px solid #eee',
-          padding: '24px 0',
-          flexShrink: 0,
-          background: '#fafafa',
+      <StudioSidebar
+        community={{
+          id: communityId,
+          name: community.name,
+          member_count: community.member_count,
+          plan: community.plan,
         }}
-      >
-        <div style={{ padding: '0 16px 16px', borderBottom: '1px solid #eee' }}>
-          <h2 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>{community.name}</h2>
-          <p style={{ fontSize: 12, color: '#888', margin: '4px 0 0' }}>
-            {community.member_count} members
-          </p>
-        </div>
-        <nav style={{ padding: '12px 8px' }}>
-          {feedSpaces.map((space) => (
-            <Link
-              key={space.id}
-              href={`/c/${communityId}/s/${space.id}`}
-              style={{
-                display: 'block',
-                padding: '8px 10px',
-                borderRadius: 6,
-                textDecoration: 'none',
-                color: '#333',
-                fontSize: 14,
-                marginBottom: 2,
-              }}
-            >
-              {space.name}
-            </Link>
-          ))}
-          <div style={{ borderTop: '1px solid #eee', marginTop: 12, paddingTop: 12 }}>
-            <Link
-              href={`/c/${communityId}/members`}
-              style={{
-                display: 'block',
-                padding: '8px 10px',
-                borderRadius: 6,
-                textDecoration: 'none',
-                color: '#555',
-                fontSize: 13,
-              }}
-            >
-              Members
-            </Link>
-            <Link
-              href={`/c/${communityId}/search`}
-              style={{
-                display: 'block',
-                padding: '8px 10px',
-                borderRadius: 6,
-                textDecoration: 'none',
-                color: '#555',
-                fontSize: 13,
-              }}
-            >
-              Search
-            </Link>
-          </div>
-          {(membership?.role === 'owner' || membership?.role === 'admin') && (
-            <div style={{ borderTop: '1px solid #eee', marginTop: 12, paddingTop: 12 }}>
-              <p style={{ fontSize: 11, fontWeight: 600, color: '#aaa', padding: '0 10px 6px', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Admin
-              </p>
-              <Link
-                href={`/c/${communityId}/dashboard`}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '8px 10px',
-                  borderRadius: 6,
-                  textDecoration: 'none',
-                  color: '#555',
-                  fontSize: 13,
-                }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <rect x="3" y="3" width="7" height="7" />
-                  <rect x="14" y="3" width="7" height="7" />
-                  <rect x="3" y="14" width="7" height="7" />
-                  <rect x="14" y="14" width="7" height="7" />
-                </svg>
-                Dashboard
-              </Link>
-              <Link
-                href={`/c/${communityId}/settings`}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '8px 10px',
-                  borderRadius: 6,
-                  textDecoration: 'none',
-                  color: '#555',
-                  fontSize: 13,
-                }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="3" />
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                </svg>
-                Settings
-              </Link>
-            </div>
-          )}
-        </nav>
-      </aside>
+        spaces={feedSpaces}
+        currentUser={currentUser}
+      />
 
       {/* Main content */}
       <main style={{ flex: 1, overflow: 'auto' }}>{children}</main>
