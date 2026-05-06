@@ -1,11 +1,10 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 
 export const metadata: Metadata = {
   title: 'Gild',
   description: 'Premium community platform',
   manifest: '/manifest.json',
-  themeColor: '#111111',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -14,6 +13,10 @@ export const metadata: Metadata = {
   icons: {
     apple: '/icons/icon-192.png',
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#111111',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
