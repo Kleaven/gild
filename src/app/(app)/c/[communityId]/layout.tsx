@@ -4,9 +4,6 @@ import { getCommunityContext } from '../../../../lib/community/context';
 import { isAccessGranted } from '@/lib/billing';
 import type { CommunityBillingState, SubscriptionStatus } from '@/lib/billing';
 import type { Plan } from '@/lib/billing';
-import { getSupabaseServerClient } from '@/lib/auth/server';
-import { StudioSidebar } from '@/components/gild/StudioSidebar';
-import { GILD_FONTS, Person } from '@/components/gild';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -22,25 +19,7 @@ export default async function CommunityLayout({ children, params }: Props) {
     notFound();
   }
 
-  const supabase = await getSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user && communityId !== '00000000-0000-0000-0000-000000000010') {
-    redirect('/sign-in');
-  }
-
-  // Use a mock user for the sandbox if no real user exists
-  const activeUser = user || {
-    id: 'mock-user-id',
-    email: 'sandbox@gild.app',
-  };
-
-  const [{ community, membership, spaces }, { data: profile }] = await Promise.all([
-    getCommunityContext(communityId),
-    supabase.from('profiles').select('*').eq('id', activeUser.id).single(),
-  ]);
+  const { community, membership, spaces } = await getCommunityContext(communityId);
 
   if (!community) {
     notFound();
@@ -51,15 +30,7 @@ export default async function CommunityLayout({ children, params }: Props) {
     redirect(`/c/${communityId}/join`);
   }
 
-  const activeSpaces = spaces.filter((s) => s.deleted_at === null);
-
-  const currentUser: Person = {
-    id: activeUser.id,
-    name: profile?.display_name || 'Member',
-    role: (membership?.role as any) || 'free_member',
-    hue: (activeUser.id.charCodeAt(0) * 10) % 360,
-    online: true,
-  };
+  const feedSpaces = spaces.filter((s) => s.deleted_at === null);
 
   // ─── Billing banner (owner-only) ──────────────────────────────────────────
   const isOwner = membership?.role === 'owner';
@@ -69,6 +40,7 @@ export default async function CommunityLayout({ children, params }: Props) {
     subscriptionStatus: community.subscription_status as SubscriptionStatus | null,
   };
 
+  // Show "trial ending soon" warning even while access is still granted.
   const trialEndingSoon =
     community.subscription_status === 'trialing' &&
     community.trial_ends_at !== null &&
@@ -126,40 +98,137 @@ export default async function CommunityLayout({ children, params }: Props) {
   }
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      minHeight: '100vh',
-      fontFamily: GILD_FONTS.sans,
-    }}>
+    <>
       {billingBannerContent && (
         <div
           role="alert"
           style={{
-            background: 'oklch(0.55 0.18 20)',
+            background: '#b91c1c',
             color: '#fff',
             fontSize: 14,
             padding: '10px 20px',
             textAlign: 'center',
-            fontWeight: 500,
           }}
         >
           {billingBannerContent}
         </div>
       )}
-      <div style={{ display: 'flex', flex: 1 }}>
-        <StudioSidebar 
-          community={{
-            id: community.id,
-            name: community.name,
-            member_count: community.member_count,
-            plan: community.plan,
-          }}
-          spaces={activeSpaces}
-          currentUser={currentUser}
-        />
-        <main style={{ flex: 1, overflow: 'auto', background: '#fff' }}>{children}</main>
-      </div>
+    <div style={{ display: 'flex', minHeight: 'calc(100vh - 49px)' }}>
+      {/* Sidebar */}
+      <aside
+        style={{
+          width: 220,
+          borderRight: '1px solid #eee',
+          padding: '24px 0',
+          flexShrink: 0,
+          background: '#fafafa',
+        }}
+      >
+        <div style={{ padding: '0 16px 16px', borderBottom: '1px solid #eee' }}>
+          <h2 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>{community.name}</h2>
+          <p style={{ fontSize: 12, color: '#888', margin: '4px 0 0' }}>
+            {community.member_count} members
+          </p>
+        </div>
+        <nav style={{ padding: '12px 8px' }}>
+          {feedSpaces.map((space) => (
+            <Link
+              key={space.id}
+              href={`/c/${communityId}/s/${space.id}`}
+              style={{
+                display: 'block',
+                padding: '8px 10px',
+                borderRadius: 6,
+                textDecoration: 'none',
+                color: '#333',
+                fontSize: 14,
+                marginBottom: 2,
+              }}
+            >
+              {space.name}
+            </Link>
+          ))}
+          <div style={{ borderTop: '1px solid #eee', marginTop: 12, paddingTop: 12 }}>
+            <Link
+              href={`/c/${communityId}/members`}
+              style={{
+                display: 'block',
+                padding: '8px 10px',
+                borderRadius: 6,
+                textDecoration: 'none',
+                color: '#555',
+                fontSize: 13,
+              }}
+            >
+              Members
+            </Link>
+            <Link
+              href={`/c/${communityId}/search`}
+              style={{
+                display: 'block',
+                padding: '8px 10px',
+                borderRadius: 6,
+                textDecoration: 'none',
+                color: '#555',
+                fontSize: 13,
+              }}
+            >
+              Search
+            </Link>
+          </div>
+          {(membership?.role === 'owner' || membership?.role === 'admin') && (
+            <div style={{ borderTop: '1px solid #eee', marginTop: 12, paddingTop: 12 }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#aaa', padding: '0 10px 6px', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Admin
+              </p>
+              <Link
+                href={`/c/${communityId}/dashboard`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '8px 10px',
+                  borderRadius: 6,
+                  textDecoration: 'none',
+                  color: '#555',
+                  fontSize: 13,
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="3" y="3" width="7" height="7" />
+                  <rect x="14" y="3" width="7" height="7" />
+                  <rect x="3" y="14" width="7" height="7" />
+                  <rect x="14" y="14" width="7" height="7" />
+                </svg>
+                Dashboard
+              </Link>
+              <Link
+                href={`/c/${communityId}/settings`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '8px 10px',
+                  borderRadius: 6,
+                  textDecoration: 'none',
+                  color: '#555',
+                  fontSize: 13,
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+                Settings
+              </Link>
+            </div>
+          )}
+        </nav>
+      </aside>
+
+      {/* Main content */}
+      <main style={{ flex: 1, overflow: 'auto' }}>{children}</main>
     </div>
+    </>
   );
 }

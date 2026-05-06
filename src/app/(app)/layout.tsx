@@ -8,16 +8,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     data: { user },
   } = await supabase.auth.getUser();
 
-  const activeUser = user || {
-    id: 'mock-user-id',
-    email: 'sandbox@gild.app',
-  };
+  if (!user) {
+    redirect('/sign-in');
+  }
 
-  const { data: profile } = user 
-    ? await supabase.from('profiles').select('display_name').eq('id', user.id).maybeSingle()
-    : { data: { display_name: 'Sandbox User' } };
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('display_name')
+    .eq('id', user.id)
+    .maybeSingle();
 
-  const displayName = profile?.display_name ?? activeUser.email ?? 'Account';
+  const displayName = profile?.display_name ?? user.email ?? 'Account';
 
   return (
     <>
