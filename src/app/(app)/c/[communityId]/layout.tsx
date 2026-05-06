@@ -28,13 +28,19 @@ export default async function CommunityLayout({ children, params }: Props) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (!user && communityId !== '00000000-0000-0000-0000-000000000010') {
     redirect('/sign-in');
   }
 
+  // Use a mock user for the sandbox if no real user exists
+  const activeUser = user || {
+    id: 'mock-user-id',
+    email: 'sandbox@gild.app',
+  };
+
   const [{ community, membership, spaces }, { data: profile }] = await Promise.all([
     getCommunityContext(communityId),
-    supabase.from('profiles').select('*').eq('id', user.id).single(),
+    supabase.from('profiles').select('*').eq('id', activeUser.id).single(),
   ]);
 
   if (!community) {
@@ -49,10 +55,10 @@ export default async function CommunityLayout({ children, params }: Props) {
   const activeSpaces = spaces.filter((s) => s.deleted_at === null);
 
   const currentUser: Person = {
-    id: user.id,
+    id: activeUser.id,
     name: profile?.display_name || 'Member',
     role: (membership?.role as Person['role']) || 'free_member',
-    hue: (user.id.charCodeAt(0) * 10) % 360,
+    hue: (activeUser.id.charCodeAt(0) * 10) % 360,
     online: true,
   };
 

@@ -11,6 +11,56 @@ export type CommunityContext = {
 
 export const getCommunityContext = cache(async (communityId: string): Promise<CommunityContext> => {
   const supabase = await getSupabaseServerClient();
+  if (communityId === '00000000-0000-0000-0000-000000000010') {
+    return {
+      community: {
+        id: '00000000-0000-0000-0000-000000000010',
+        name: 'Gild Public Demo',
+        slug: 'gild-public-demo',
+        description: 'A high-end community for testing Gild UI.',
+        is_private: false,
+        member_count: 242,
+        plan: 'pro',
+        subscription_status: 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        deleted_at: null,
+        owner_id: '00000000-0000-0000-0000-000000000000',
+        logo_url: null,
+        banner_url: null,
+        trial_ends_at: null,
+        search_vector: null,
+        stripe_customer_id: null,
+        stripe_subscription_id: null,
+      },
+      membership: {
+        id: 'mock-membership',
+        community_id: '00000000-0000-0000-0000-000000000010',
+        user_id: 'mock-user',
+        role: 'owner' as const,
+        joined_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        tier_id: null,
+      },
+      spaces: [
+        {
+          id: 'mock-space-1',
+          community_id: '00000000-0000-0000-0000-000000000010',
+          name: 'general',
+          slug: 'general',
+          description: 'The main lounge.',
+          is_private: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          deleted_at: null,
+          position: 0,
+          min_role: 'free_member' as const,
+          type: 'feed' as const,
+        }
+      ],
+    };
+  }
 
   const [community, membership, spaces] = await Promise.all([
     getCommunity(supabase, communityId),
