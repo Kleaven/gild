@@ -24,6 +24,9 @@ export default async function OnboardingPage() {
       // Resume from the plan step — they already have a community
       redirect(`/onboarding/${existing.community_id}/plan`);
     }
+  } else {
+    // Sandbox Mode: Allow access without a real user object
+    console.log('Sandbox: Rendering onboarding without a real Supabase session.');
   }
 
   return (
