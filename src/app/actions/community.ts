@@ -20,10 +20,7 @@ export async function createCommunity(
     error,
   } = await supabase.auth.getUser();
 
-  if (error || !user) {
-    // Sandbox Bypass: Allow creating a community without a real session
-    return { communityId: '00000000-0000-0000-0000-000000000010' };
-  }
+  if (error || !user) throw new Error('[gild] not authenticated');
 
   const result = await libCreateCommunity(input);
 
