@@ -6,8 +6,7 @@ import type { CommunityBillingState, SubscriptionStatus } from '@/lib/billing';
 import type { Plan } from '@/lib/billing';
 import { getSupabaseServerClient } from '@/lib/auth/server';
 import { StudioSidebar } from '@/components/gild/StudioSidebar';
-import { GILD_FONTS } from '@/components/gild';
-import type { Person } from '@/components/gild';
+import { GILD_FONTS, Person } from '@/components/gild';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -57,7 +56,7 @@ export default async function CommunityLayout({ children, params }: Props) {
   const currentUser: Person = {
     id: activeUser.id,
     name: profile?.display_name || 'Member',
-    role: (membership?.role as Person['role']) || 'free_member',
+    role: (membership?.role as any) || 'free_member',
     hue: (activeUser.id.charCodeAt(0) * 10) % 360,
     online: true,
   };

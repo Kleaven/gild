@@ -2,10 +2,10 @@
 
 import React from 'react';
 import Link from 'next/link';
-import {
-  Wordmark,
-  Avatar,
-  Reactions,
+import { 
+  Wordmark, 
+  Avatar, 
+  Reactions, 
   GILD_FONTS,
   DoodleStar,
   DoodleSpark,
@@ -15,8 +15,8 @@ import {
   DoodleUnderline,
   DoodleSquiggleArrow,
   DOODLE_COLORS,
+  Person
 } from '@/components/gild';
-import type { Person } from '@/components/gild';
 
 export function StudioLanding() {
   const mockSpaces = [
@@ -35,10 +35,10 @@ export function StudioLanding() {
     initial: 'JL'
   };
 
-  const mockOnline: Person[] = [
-    { id: 'mira', name: 'Mira Patel', hue: 280, online: true, initial: 'MP', role: 'free_member' },
-    { id: 'sasha', name: 'Sasha Wu', hue: 150, online: true, initial: 'SW', role: 'free_member' },
-    { id: 'reza', name: 'Reza Khan', hue: 200, online: true, initial: 'RK', role: 'free_member' },
+  const mockOnline = [
+    { id: 'mira', name: 'Mira Patel', hue: 280, online: true, initial: 'MP' },
+    { id: 'sasha', name: 'Sasha Wu', hue: 150, online: true, initial: 'SW' },
+    { id: 'reza', name: 'Reza Khan', hue: 200, online: true, initial: 'RK' },
   ];
 
   return (
@@ -121,7 +121,7 @@ export function StudioLanding() {
           fontWeight: 800,
           margin: '0 auto 22px', 
           letterSpacing: '-0.045em',
-          ...({'textWrap': 'balance'} as React.CSSProperties),
+          textWrap: 'balance' as any, 
           maxWidth: 920,
           position: 'relative',
         }}>
@@ -267,7 +267,7 @@ export function StudioLanding() {
               </div>
               {mockOnline.map(p => (
                 <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0' }}>
-                  <Avatar person={p} size={20} presence />
+                  <Avatar person={p as any} size={20} presence />
                   <span style={{ fontSize: 12, color: 'oklch(0.30 0.02 250)' }}>{p.name.split(' ')[0]}</span>
                 </div>
               ))}

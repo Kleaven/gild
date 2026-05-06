@@ -1,8 +1,11 @@
 'use client';
 
 import React from 'react';
-import { Avatar, GILD_FONTS } from '@/components/gild';
-import type { Person } from '@/components/gild';
+import { 
+  Avatar, 
+  GILD_FONTS, 
+  Person,
+} from '@/components/gild';
 
 interface StudioRightRailProps {
   onlinePeople: Person[];

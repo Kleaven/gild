@@ -2,8 +2,13 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Avatar, Reactions, GILD_FONTS } from '@/components/gild';
-import type { Person } from '@/components/gild';
+import { 
+  Avatar, 
+  Reactions, 
+  GILD_FONTS, 
+  Person,
+  PostImage
+} from '@/components/gild';
 
 interface StudioPostCardProps {
   post: {

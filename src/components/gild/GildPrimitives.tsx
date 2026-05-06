@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import type { Person, Space } from './types';
+import { Person, Space } from './types';
 import { GILD_FONTS } from './styles';
 
 // Avatar — a soft gradient disc using the person's hue, with optional presence dot.

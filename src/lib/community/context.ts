@@ -29,19 +29,13 @@ export const getCommunityContext = cache(async (communityId: string): Promise<Co
         logo_url: null,
         banner_url: null,
         trial_ends_at: null,
-        search_vector: null,
-        stripe_customer_id: null,
-        stripe_subscription_id: null,
       },
       membership: {
         id: 'mock-membership',
         community_id: '00000000-0000-0000-0000-000000000010',
         user_id: 'mock-user',
-        role: 'owner' as const,
+        role: 'owner',
         joined_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        tier_id: null,
       },
       spaces: [
         {
@@ -55,8 +49,6 @@ export const getCommunityContext = cache(async (communityId: string): Promise<Co
           updated_at: new Date().toISOString(),
           deleted_at: null,
           position: 0,
-          min_role: 'free_member' as const,
-          type: 'feed' as const,
         }
       ],
     };

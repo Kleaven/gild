@@ -4,8 +4,7 @@ import { getPost } from '@/lib/feed';
 import { getComments } from '@/lib/comments';
 import PostActions from './PostActions';
 import CommentList from './CommentList';
-import { Avatar, GILD_FONTS } from '@/components/gild';
-import type { Person } from '@/components/gild';
+import { Avatar, GILD_FONTS, Person } from '@/components/gild';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -32,7 +31,7 @@ export default async function PostPage({ params }: Props) {
   }
 
   const authorPerson: Person = {
-    id: post.author_id ?? 'unknown',
+    id: post.author_id,
     name: post.author?.display_name || 'Member',
     role: 'free_member',
     hue: (post.author?.display_name?.charCodeAt(0) || 0) * 10 % 360,
