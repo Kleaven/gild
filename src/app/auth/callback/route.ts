@@ -19,12 +19,6 @@ function deriveDisplayName(meta: Record<string, unknown>, emailPrefix: string): 
   return emailPrefix;
 }
 
-function deriveUsername(meta: Record<string, unknown>, emailPrefix: string): string {
-  if (typeof meta.preferred_username === 'string' && meta.preferred_username.trim()) {
-    return meta.preferred_username.trim().toLowerCase().replace(/\s+/g, '_');
-  }
-  return emailPrefix.toLowerCase().replace(/\s+/g, '_');
-}
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams } = request.nextUrl;
@@ -56,14 +50,30 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const emailPrefix = email.split('@')[0] ?? 'user';
     const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
 
+    // display_name CHECK: char_length BETWEEN 2 AND 50. Pad if the derived
+    // name is shorter than 2 (e.g. single-char email prefix like a@gmail.com).
+    const rawDisplayName = deriveDisplayName(meta, emailPrefix);
+    const displayName =
+      rawDisplayName.length >= 2 ? rawDisplayName.slice(0, 50) : rawDisplayName.padEnd(2, '_');
+
     const serviceClient = getSupabaseServiceClient();
-    await serviceClient.from('profiles').insert({
+    // username is intentionally omitted: derived usernames from email prefixes
+    // often contain '.' or '-' which violate the CHECK constraint
+    // (^[a-zA-Z0-9_]{3,30}$). Leaving it NULL lets the user set it later.
+    // A missing username never blocks core flows; a missing profile does.
+    const { error: profileError } = await serviceClient.from('profiles').insert({
       id: user.id,
-      display_name: deriveDisplayName(meta, emailPrefix),
-      username: deriveUsername(meta, emailPrefix),
+      display_name: displayName,
     });
-    // Profile insert errors are non-fatal here — the session is valid.
-    // A missing profile will surface at the next getAuthenticatedUser() call.
+
+    if (profileError) {
+      // Profile is required for community creation and other core flows.
+      // Redirect to sign-in with an error rather than leaving the user
+      // in a profileless state that produces cryptic 409s downstream.
+      return NextResponse.redirect(
+        new URL('/sign-in?error=profile_setup_failed', request.url),
+      );
+    }
   }
 
   return NextResponse.redirect(new URL(next, request.url));
