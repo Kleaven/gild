@@ -2,16 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { 
-  Wordmark, 
-  Avatar, 
-  LivePill, 
-  GILD_FONTS, 
-  Person, 
-  Space, 
-  Post, 
-  DashboardStats 
-} from '@/components/gild';
+import { Wordmark, Avatar, GILD_FONTS } from '@/components/gild';
+import type { Person } from '@/components/gild';
+import type { DashboardStats } from '@/lib/community';
 
 interface StudioDashboardProps {
   community: {
@@ -24,7 +17,7 @@ interface StudioDashboardProps {
     role: string;
   };
   stats: DashboardStats;
-  recentPosts: any[];
+  recentPosts: Record<string, unknown>[];
   user: {
     id: string;
     display_name?: string | null;
@@ -43,7 +36,7 @@ export function StudioDashboard({
   const currentUser: Person = {
     id: user.id,
     name: user.display_name || 'Member',
-    role: membership.role as any,
+    role: membership.role as Person['role'],
     hue: 220, // Default hue
     online: true,
   };
@@ -179,53 +172,61 @@ export function StudioDashboard({
               </p>
             ) : (
               recentPosts.slice(0, 5).map((post) => {
+                const authorId = String(post.author_id ?? '');
+                const author = post.author as { display_name?: string | null } | undefined;
                 const postPerson: Person = {
-                  id: post.author_id,
-                  name: post.author?.display_name || 'Member',
-                  role: 'free_member', // Placeholder
-                  hue: (post.author_id.charCodeAt(0) * 10) % 360,
+                  id: authorId,
+                  name: author?.display_name || 'Member',
+                  role: 'free_member',
+                  hue: (authorId.charCodeAt(0) * 10) % 360,
                   online: false,
                 };
                 
+                const postId = String(post.id ?? '');
+                const postSpace = post.space as { name?: string } | undefined;
+                const postTitle = post.title as string | null | undefined;
+                const postBody = String(post.body ?? '');
+                const postCreatedAt = String(post.created_at ?? '');
+
                 return (
-                  <div key={post.id} style={{
-                    display: 'grid', 
-                    gridTemplateColumns: '24px 1fr auto', 
+                  <div key={postId} style={{
+                    display: 'grid',
+                    gridTemplateColumns: '24px 1fr auto',
                     gap: 12,
-                    alignItems: 'center', 
+                    alignItems: 'center',
                     padding: '10px 0',
                     borderTop: '1px solid oklch(0.95 0.005 250)',
                   }}>
                     <Avatar person={postPerson} size={22} />
                     <div style={{ minWidth: 0 }}>
                       <p style={{
-                        fontSize: 13, 
-                        margin: 0, 
+                        fontSize: 13,
+                        margin: 0,
                         whiteSpace: 'nowrap',
-                        overflow: 'hidden', 
+                        overflow: 'hidden',
                         textOverflow: 'ellipsis',
                       }}>
                         <span style={{ fontWeight: 600 }}>{postPerson.name}</span>{' '}
                         <span style={{ color: 'oklch(0.50 0.02 250)' }}>posted in </span>
                         <span style={{ color: `oklch(0.42 0.10 220)`, fontWeight: 500 }}>
-                          {post.space?.name || 'General'}
+                          {postSpace?.name || 'General'}
                         </span>
                       </p>
                       <p style={{
-                        fontSize: 12, 
-                        color: 'oklch(0.45 0.02 250)', 
+                        fontSize: 12,
+                        color: 'oklch(0.45 0.02 250)',
                         margin: 0,
-                        whiteSpace: 'nowrap', 
-                        overflow: 'hidden', 
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                      }}>{post.title || post.body}</p>
+                      }}>{postTitle || postBody}</p>
                     </div>
                     <span style={{
-                      fontFamily: GILD_FONTS.mono, 
-                      fontSize: 11, 
+                      fontFamily: GILD_FONTS.mono,
+                      fontSize: 11,
                       color: 'oklch(0.50 0.02 250)',
                     }}>
-                      {new Date(post.created_at).toLocaleDateString()}
+                      {new Date(postCreatedAt).toLocaleDateString()}
                     </span>
                   </div>
                 );

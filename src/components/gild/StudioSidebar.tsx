@@ -3,13 +3,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  Wordmark, 
-  Avatar, 
-  GILD_FONTS, 
-  Person, 
-  Space 
-} from '@/components/gild';
+import { Avatar, GILD_FONTS } from '@/components/gild';
+import type { Person } from '@/components/gild';
 
 interface StudioSidebarProps {
   community: {
@@ -18,7 +13,7 @@ interface StudioSidebarProps {
     member_count: number;
     plan: string | null;
   };
-  spaces: any[];
+  spaces: { id: string; name: string; hue?: number; [key: string]: unknown }[];
   currentUser: Person;
 }
 

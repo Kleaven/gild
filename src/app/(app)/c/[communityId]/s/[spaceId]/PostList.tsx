@@ -37,7 +37,7 @@ export default function PostList({ initialPosts, communityId, spaceId, hue }: Pr
       {initialPosts.map((post) => (
         <StudioPostCard
           key={post.id}
-          post={post}
+          post={{ ...post, author: post.author ?? undefined }}
           communityId={communityId}
           spaceId={spaceId}
           hue={hue}

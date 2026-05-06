@@ -4,7 +4,8 @@ import { getSpace } from '@/lib/community';
 import { getFeedPosts } from '@/lib/feed';
 import PostForm from './PostForm';
 import PostList from './PostList';
-import { StudioRightRail, GILD_FONTS, Person } from '@/components/gild';
+import { StudioRightRail, GILD_FONTS } from '@/components/gild';
+import type { Person } from '@/components/gild';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -30,10 +31,12 @@ export default async function SpacePage({ params }: Props) {
     notFound();
   }
 
+  const spaceHue = (space.name.charCodeAt(0) * 37) % 360;
+
   // Mock online people for right rail
   const mockOnline: Person[] = [
-    { id: 'mira', name: 'Mira Patel', hue: 320, online: true },
-    { id: 'sam', name: 'Sam Okafor', hue: 150, online: true },
+    { id: 'mira', name: 'Mira Patel', hue: 320, online: true, role: 'free_member' },
+    { id: 'sam', name: 'Sam Okafor', hue: 150, online: true, role: 'free_member' },
   ];
 
   return (
@@ -44,8 +47,8 @@ export default async function SpacePage({ params }: Props) {
             width: 10, 
             height: 10, 
             borderRadius: 3, 
-            background: `oklch(0.62 0.16 ${space.hue || 220})`,
-            boxShadow: `0 0 0 4px oklch(0.62 0.16 ${space.hue || 220} / 0.1)` 
+            background: `oklch(0.62 0.16 ${spaceHue})`,
+            boxShadow: `0 0 0 4px oklch(0.62 0.16 ${spaceHue} / 0.1)`
           }}/>
           <h1 style={{ 
             fontFamily: GILD_FONTS.display,
@@ -62,7 +65,7 @@ export default async function SpacePage({ params }: Props) {
           initialPosts={postsResult.data}
           communityId={communityId}
           spaceId={spaceId}
-          hue={space.hue}
+          hue={spaceHue}
         />
       </div>
       

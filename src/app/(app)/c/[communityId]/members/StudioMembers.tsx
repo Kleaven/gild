@@ -1,12 +1,8 @@
 'use client';
 
 import React from 'react';
-import { 
-  Avatar, 
-  GILD_FONTS, 
-  Person, 
-  MemberRole 
-} from '@/components/gild';
+import { Avatar, GILD_FONTS } from '@/components/gild';
+import type { Person, MemberRole } from '@/components/gild';
 
 interface StudioMembersProps {
   community: {
@@ -14,7 +10,7 @@ interface StudioMembersProps {
     name: string;
     member_count: number;
   };
-  members: any[];
+  members: { user_id: string; display_name: string; role: string; joined_at: string; username?: string | null }[];
 }
 
 export function StudioMembers({ community, members }: StudioMembersProps) {
