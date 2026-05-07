@@ -57,15 +57,7 @@ export function StudioLanding() {
         padding: '14px 28px', 
         borderBottom: '1px solid oklch(0.95 0.005 250)',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
-          <Wordmark size={22} />
-          <nav style={{ display: 'flex', gap: 18, fontSize: 13 }}>
-            <a href="#" style={{ color: 'oklch(0.30 0.02 250)', textDecoration: 'none', fontWeight: 500 }}>Product</a>
-            <a href="#" style={{ color: 'oklch(0.30 0.02 250)', textDecoration: 'none', fontWeight: 500 }}>Pricing</a>
-            <a href="#" style={{ color: 'oklch(0.30 0.02 250)', textDecoration: 'none', fontWeight: 500 }}>Customers</a>
-            <a href="#" style={{ color: 'oklch(0.30 0.02 250)', textDecoration: 'none', fontWeight: 500 }}>Changelog</a>
-          </nav>
-        </div>
+        <Wordmark size={22} />
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
           <Link href="/sign-in" style={{ color: 'oklch(0.30 0.02 250)', textDecoration: 'none' }}>Sign in</Link>
           <Link href="/sign-up" style={{
