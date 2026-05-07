@@ -1,4 +1,3 @@
-// server-only — do not import from client components
 import type { Database } from '../supabase/types';
 
 type PostRow = Database['public']['Tables']['posts']['Row'];
