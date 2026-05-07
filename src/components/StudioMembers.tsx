@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
+import Link from 'next/link';
 import { Avatar, GILD_FONTS } from '@/components/gild';
 import type { Person, MemberRole } from '@/components/gild';
 
@@ -14,6 +15,17 @@ interface StudioMembersProps {
 }
 
 export function StudioMembers({ community, members }: StudioMembersProps) {
+  const [filter, setFilter] = useState('');
+  const filteredMembers = filter.trim() === ''
+    ? members
+    : members.filter((m) => {
+        const q = filter.trim().toLowerCase();
+        return (
+          m.display_name.toLowerCase().includes(q) ||
+          (m.username?.toLowerCase().includes(q) ?? false)
+        );
+      });
+
   return (
     <div style={{
       fontFamily: GILD_FONTS.sans,
@@ -32,38 +44,48 @@ export function StudioMembers({ community, members }: StudioMembersProps) {
         }}>Members</h1>
         
         <span style={{
-          padding: '2px 8px', 
-          borderRadius: 4, 
-          fontSize: 11, 
+          padding: '2px 8px',
+          borderRadius: 4,
+          fontSize: 11,
           fontWeight: 600,
-          background: 'oklch(0.96 0.005 250)', 
+          background: 'oklch(0.96 0.005 250)',
           color: 'oklch(0.40 0.02 250)',
-        }}>{community.member_count}</span>
-        
-        <input 
-          placeholder="Filter members…" 
+        }}>
+          {filter.trim() === '' ? community.member_count : `${filteredMembers.length} of ${community.member_count}`}
+        </span>
+
+        <input
+          type="search"
+          placeholder="Filter members…"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
           style={{
-            marginLeft: 'auto', 
-            padding: '6px 12px', 
+            marginLeft: 'auto',
+            padding: '6px 12px',
             fontSize: 13,
-            border: '1px solid oklch(0.90 0.01 250)', 
-            borderRadius: 6, 
+            border: '1px solid oklch(0.90 0.01 250)',
+            borderRadius: 6,
             outline: 'none',
-            width: 220, 
+            width: 220,
             fontFamily: 'inherit',
           }}
         />
-        
-        <button style={{
-          padding: '7px 12px', 
-          borderRadius: 6, 
-          fontSize: 13, 
-          fontWeight: 500,
-          background: 'oklch(0.20 0.02 250)', 
-          color: '#fff', 
-          border: 'none', 
-          cursor: 'pointer',
-        }}>Invite</button>
+
+        <Link
+          href={`/onboarding/${community.id}/invite`}
+          style={{
+            padding: '7px 12px',
+            borderRadius: 6,
+            fontSize: 13,
+            fontWeight: 500,
+            background: 'oklch(0.20 0.02 250)',
+            color: '#fff',
+            border: 'none',
+            cursor: 'pointer',
+            textDecoration: 'none',
+            display: 'inline-block',
+          }}
+        >Invite</Link>
       </div>
 
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
@@ -84,7 +106,7 @@ export function StudioMembers({ community, members }: StudioMembersProps) {
           </tr>
         </thead>
         <tbody>
-          {members.map((member) => {
+          {filteredMembers.map((member) => {
             const person: Person = {
               id: member.user_id,
               name: member.display_name,
@@ -133,9 +155,9 @@ export function StudioMembers({ community, members }: StudioMembersProps) {
         </tbody>
       </table>
       
-      {members.length === 0 && (
+      {filteredMembers.length === 0 && (
         <div style={{ textAlign: 'center', padding: '40px 0', color: 'oklch(0.50 0.02 250)' }}>
-          No members found.
+          {members.length === 0 ? 'No members found.' : `No members match "${filter}".`}
         </div>
       )}
     </div>

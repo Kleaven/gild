@@ -263,7 +263,15 @@ export function Wordmark({ size = 28, color = '#0d0d0d' }: { size?: number; colo
 }
 
 // Reaction row
-export function Reactions({ items, hue = 220 }: { items?: [string, number][]; hue?: number }) {
+export function Reactions({
+  items,
+  hue = 220,
+  showAddButton = false,
+}: {
+  items?: [string, number][];
+  hue?: number;
+  showAddButton?: boolean;
+}) {
   if (!items) return null;
   return (
     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -285,15 +293,17 @@ export function Reactions({ items, hue = 220 }: { items?: [string, number][]; hu
           <span style={{ fontFamily: GILD_FONTS.mono, fontSize: 11 }}>{n}</span>
         </span>
       ))}
-      <button style={{
-        padding: '3px 8px', 
-        borderRadius: 999,
-        background: 'transparent', 
-        border: '1px dashed #d4d4d8',
-        color: '#71717a', 
-        fontSize: 12, 
-        cursor: 'pointer',
-      }}>+</button>
+      {showAddButton && (
+        <button style={{
+          padding: '3px 8px',
+          borderRadius: 999,
+          background: 'transparent',
+          border: '1px dashed #d4d4d8',
+          color: '#71717a',
+          fontSize: 12,
+          cursor: 'pointer',
+        }}>+</button>
+      )}
     </div>
   );
 }

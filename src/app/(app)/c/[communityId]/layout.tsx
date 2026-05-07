@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { getCommunityContext } from '../../../../lib/community/context';
 import { isAccessGranted } from '@/lib/billing';
 import { requireAuth } from '@/lib/auth';
+import { getFlag } from '@/lib/feature-flags';
 import { StudioSidebar } from '@/components/gild';
 import type { Person } from '@/components/gild';
 import type { CommunityBillingState, SubscriptionStatus } from '@/lib/billing';
@@ -43,6 +44,9 @@ export default async function CommunityLayout({ children, params }: Props) {
   }
 
   const feedSpaces = spaces.filter((s) => s.deleted_at === null);
+
+  const coursesFlag = await getFlag('courses_v1', communityId);
+  const showCourses = coursesFlag.enabled;
 
   // ─── Billing banner (owner-only) ──────────────────────────────────────────
   const isOwner = membership?.role === 'owner';
@@ -135,6 +139,7 @@ export default async function CommunityLayout({ children, params }: Props) {
         }}
         spaces={feedSpaces}
         currentUser={currentUser}
+        showCourses={showCourses}
       />
 
       {/* Main content */}

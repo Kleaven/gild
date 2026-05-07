@@ -15,12 +15,14 @@ interface StudioSidebarProps {
   };
   spaces: { id: string; name: string; hue?: number; [key: string]: unknown }[];
   currentUser: Person;
+  showCourses?: boolean;
 }
 
-export function StudioSidebar({ 
-  community, 
-  spaces, 
-  currentUser 
+export function StudioSidebar({
+  community,
+  spaces,
+  currentUser,
+  showCourses = false,
 }: StudioSidebarProps) {
   const pathname = usePathname();
 
@@ -122,7 +124,7 @@ export function StudioSidebar({
         }}>Library</p>
         {[
           { label: 'Members', href: `/c/${community.id}/members` },
-          { label: 'Courses', href: `#` },
+          ...(showCourses ? [{ label: 'Courses', href: `/c/${community.id}/courses` }] : []),
           { label: 'Search', href: `/c/${community.id}/search` },
         ].map((item) => {
           const isActive = pathname === item.href;

@@ -14,6 +14,8 @@ export const FEATURE_FLAGS = {
   custom_domain:    { default: false },
   white_label:      { default: false },
   api_access:       { default: false },
+  reactions:        { default: false },
+  courses_v1:       { default: false },
 } as const;
 
 export type FlagName = keyof typeof FEATURE_FLAGS;
