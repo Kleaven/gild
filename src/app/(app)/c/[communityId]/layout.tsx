@@ -43,7 +43,7 @@ export default async function CommunityLayout({ children, params }: Props) {
     redirect(`/c/${communityId}/join`);
   }
 
-  const feedSpaces = spaces.filter((s) => s.deleted_at === null);
+  const feedSpaces = spaces.filter((s) => s.deleted_at === null && s.type !== 'course');
 
   const coursesFlag = await getFlag('courses_v1', communityId);
   const showCourses = coursesFlag.enabled;
