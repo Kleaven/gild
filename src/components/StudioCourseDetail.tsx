@@ -256,68 +256,80 @@ export function StudioCourseDetail({
                   </div>
                 ) : (
                   <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-                    {visibleLessons.map((lesson, lIdx) => (
-                      <li
-                        key={lesson.id}
-                        style={{
-                          padding: '14px 20px',
-                          borderTop: lIdx === 0 ? 'none' : '1px solid oklch(0.96 0.005 250)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 12,
-                          color: '#111',
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: 11,
-                            color: 'oklch(0.55 0.02 250)',
-                            fontFamily: GILD_FONTS.mono,
-                            minWidth: 28,
-                          }}
-                        >
-                          {String(lIdx + 1).padStart(2, '0')}
-                        </span>
-                        <span
-                          style={{
-                            fontSize: 14,
-                            fontWeight: 500,
-                            flex: 1,
-                          }}
-                        >
-                          {lesson.title}
-                        </span>
-                        {!lesson.is_published && (
+                    {visibleLessons.map((lesson, lIdx) => {
+                      const canOpen = isEnrolled || isAdminOrOwner;
+                      const inner = (
+                        <>
                           <span
-                            style={{
-                              padding: '2px 7px',
-                              borderRadius: 999,
-                              fontSize: 9,
-                              fontWeight: 700,
-                              background: 'oklch(0.95 0.01 250)',
-                              color: 'oklch(0.45 0.02 250)',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.06em',
-                              fontFamily: GILD_FONTS.mono,
-                            }}
-                          >
-                            Draft
-                          </span>
-                        )}
-                        {lesson.video_url && (
-                          <span
-                            title="Has video"
                             style={{
                               fontSize: 11,
                               color: 'oklch(0.55 0.02 250)',
                               fontFamily: GILD_FONTS.mono,
+                              minWidth: 28,
                             }}
                           >
-                            ▶
+                            {String(lIdx + 1).padStart(2, '0')}
                           </span>
-                        )}
-                      </li>
-                    ))}
+                          <span style={{ fontSize: 14, fontWeight: 500, flex: 1 }}>
+                            {lesson.title}
+                          </span>
+                          {!lesson.is_published && (
+                            <span
+                              style={{
+                                padding: '2px 7px',
+                                borderRadius: 999,
+                                fontSize: 9,
+                                fontWeight: 700,
+                                background: 'oklch(0.95 0.01 250)',
+                                color: 'oklch(0.45 0.02 250)',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.06em',
+                                fontFamily: GILD_FONTS.mono,
+                              }}
+                            >
+                              Draft
+                            </span>
+                          )}
+                          {lesson.video_url && (
+                            <span
+                              title="Has video"
+                              style={{
+                                fontSize: 11,
+                                color: 'oklch(0.55 0.02 250)',
+                                fontFamily: GILD_FONTS.mono,
+                              }}
+                            >
+                              ▶
+                            </span>
+                          )}
+                        </>
+                      );
+
+                      const rowStyle: React.CSSProperties = {
+                        padding: '14px 20px',
+                        borderTop: lIdx === 0 ? 'none' : '1px solid oklch(0.96 0.005 250)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12,
+                        color: '#111',
+                        textDecoration: 'none',
+                      };
+
+                      return (
+                        <li key={lesson.id} style={{ margin: 0, padding: 0 }}>
+                          {canOpen ? (
+                            <Link
+                              href={`/c/${community.id}/courses/${course.id}/${lesson.id}`}
+                              style={rowStyle}
+                            >
+                              {inner}
+                            </Link>
+                          ) : (
+                            <div style={rowStyle}>{inner}</div>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </section>
