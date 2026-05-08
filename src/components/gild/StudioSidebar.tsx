@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Avatar, GILD_FONTS } from '@/components/gild';
@@ -18,6 +18,8 @@ interface StudioSidebarProps {
   showCourses?: boolean;
 }
 
+const MOBILE_BP = 768;
+
 export function StudioSidebar({
   community,
   spaces,
@@ -25,47 +27,66 @@ export function StudioSidebar({
   showCourses = false,
 }: StudioSidebarProps) {
   const pathname = usePathname();
+  const [isMobile, setIsMobile] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  return (
+  useEffect(() => {
+    function check() {
+      setIsMobile(window.innerWidth <= MOBILE_BP);
+    }
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  // Close drawer on route change
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [pathname]);
+
+  const sidebarContent = (
     <aside style={{
       background: 'oklch(0.985 0.003 250)',
       borderRight: '1px solid oklch(0.94 0.005 250)',
-      padding: '14px 10px', 
-      display: 'flex', 
-      flexDirection: 'column', 
+      padding: '14px 10px',
+      display: 'flex',
+      flexDirection: 'column',
       gap: 18,
       width: 240,
       flexShrink: 0,
       fontFamily: GILD_FONTS.sans,
+      height: '100%',
+      overflowY: 'auto',
     }}>
+      {/* Community header */}
       <div style={{
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: 10, 
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
         padding: '4px 8px',
       }}>
         <div style={{
-          width: 28, 
-          height: 28, 
+          width: 28,
+          height: 28,
           borderRadius: 7,
           background: 'linear-gradient(135deg, oklch(0.78 0.14 75), oklch(0.55 0.14 75))',
-          color: '#fff', 
-          display: 'flex', 
-          alignItems: 'center', 
+          color: '#fff',
+          display: 'flex',
+          alignItems: 'center',
           justifyContent: 'center',
           fontFamily: GILD_FONTS.display,
-          fontWeight: 800, 
-          fontSize: 14, 
+          fontWeight: 800,
+          fontSize: 14,
           letterSpacing: '-0.04em',
         }}>{community.name[0]}</div>
         <div style={{ lineHeight: 1.25, flex: 1, minWidth: 0 }}>
-          <p style={{ 
-            fontSize: 13, 
-            fontWeight: 600, 
+          <p style={{
+            fontSize: 13,
+            fontWeight: 600,
             margin: 0,
             whiteSpace: 'nowrap',
             overflow: 'hidden',
-            textOverflow: 'ellipsis' 
+            textOverflow: 'ellipsis',
           }}>{community.name}</p>
           <p style={{ fontSize: 11, color: 'oklch(0.50 0.02 250)', margin: 0 }}>
             {community.member_count} members · {community.plan || 'Free'}
@@ -73,38 +94,41 @@ export function StudioSidebar({
         </div>
       </div>
 
+      {/* Spaces */}
       <div>
         <p style={{
-          fontSize: 11, 
+          fontSize: 11,
           fontWeight: 600,
-          color: 'oklch(0.55 0.02 250)', 
-          padding: '0 10px 4px', 
+          color: 'oklch(0.55 0.02 250)',
+          padding: '0 10px 4px',
           margin: 0,
-          textTransform: 'uppercase', 
+          textTransform: 'uppercase',
           letterSpacing: '0.04em',
         }}>Spaces</p>
         {spaces.map(s => {
           const isActive = pathname.includes(`/s/${s.id}`);
           return (
             <Link key={s.id} href={`/c/${community.id}/s/${s.id}`} style={{
-              display: 'flex', 
-              alignItems: 'center', 
+              display: 'flex',
+              alignItems: 'center',
               gap: 10,
-              padding: '5px 10px', 
-              borderRadius: 6, 
+              padding: '5px 10px',
+              borderRadius: 6,
               marginBottom: 1,
-              textDecoration: 'none', 
+              textDecoration: 'none',
               fontSize: 14,
               background: isActive ? 'oklch(0.94 0.005 250)' : 'transparent',
               color: isActive ? '#202020' : 'oklch(0.30 0.02 250)',
               fontWeight: isActive ? 600 : 400,
             }}>
               <span style={{
-                width: 8, 
-                height: 8, 
+                width: 8,
+                height: 8,
                 borderRadius: 2,
                 background: `oklch(0.62 0.16 ${s.hue || 220})`,
-                boxShadow: isActive ? `0 0 0 3px oklch(0.62 0.16 ${s.hue || 220} / 0.18)` : 'none',
+                boxShadow: isActive
+                  ? `0 0 0 3px oklch(0.62 0.16 ${s.hue || 220} / 0.18)`
+                  : 'none',
               }}/>
               <span style={{ flex: 1 }}>{s.name}</span>
             </Link>
@@ -112,14 +136,15 @@ export function StudioSidebar({
         })}
       </div>
 
+      {/* Library */}
       <div>
         <p style={{
-          fontSize: 11, 
+          fontSize: 11,
           fontWeight: 600,
-          color: 'oklch(0.55 0.02 250)', 
-          padding: '0 10px 4px', 
+          color: 'oklch(0.55 0.02 250)',
+          padding: '0 10px 4px',
           margin: 0,
-          textTransform: 'uppercase', 
+          textTransform: 'uppercase',
           letterSpacing: '0.04em',
         }}>Library</p>
         {[
@@ -130,12 +155,12 @@ export function StudioSidebar({
           const isActive = pathname === item.href;
           return (
             <Link key={item.label} href={item.href} style={{
-              display: 'flex', 
+              display: 'flex',
               alignItems: 'center',
-              padding: '5px 10px', 
+              padding: '5px 10px',
               borderRadius: 6,
-              textDecoration: 'none', 
-              fontSize: 14, 
+              textDecoration: 'none',
+              fontSize: 14,
               color: isActive ? '#202020' : 'oklch(0.30 0.02 250)',
               background: isActive ? 'oklch(0.94 0.005 250)' : 'transparent',
               fontWeight: isActive ? 600 : 400,
@@ -146,39 +171,44 @@ export function StudioSidebar({
         })}
       </div>
 
+      {/* Admin */}
       {(currentUser.role === 'owner' || currentUser.role === 'admin') && (
         <div>
           <p style={{
-            fontSize: 11, 
+            fontSize: 11,
             fontWeight: 600,
-            color: 'oklch(0.55 0.02 250)', 
-            padding: '0 10px 4px', 
+            color: 'oklch(0.55 0.02 250)',
+            padding: '0 10px 4px',
             margin: 0,
-            textTransform: 'uppercase', 
+            textTransform: 'uppercase',
             letterSpacing: '0.04em',
           }}>Admin</p>
           <Link href={`/c/${community.id}/dashboard`} style={{
-            display: 'flex', 
+            display: 'flex',
             alignItems: 'center',
-            padding: '5px 10px', 
+            padding: '5px 10px',
             borderRadius: 6,
-            textDecoration: 'none', 
-            fontSize: 14, 
+            textDecoration: 'none',
+            fontSize: 14,
             color: pathname.includes('/dashboard') ? '#202020' : 'oklch(0.30 0.02 250)',
-            background: pathname.includes('/dashboard') ? 'oklch(0.94 0.005 250)' : 'transparent',
+            background: pathname.includes('/dashboard')
+              ? 'oklch(0.94 0.005 250)'
+              : 'transparent',
             fontWeight: pathname.includes('/dashboard') ? 600 : 400,
           }}>
             Dashboard
           </Link>
           <Link href={`/c/${community.id}/settings`} style={{
-            display: 'flex', 
+            display: 'flex',
             alignItems: 'center',
-            padding: '5px 10px', 
+            padding: '5px 10px',
             borderRadius: 6,
-            textDecoration: 'none', 
-            fontSize: 14, 
+            textDecoration: 'none',
+            fontSize: 14,
             color: pathname.includes('/settings') ? '#202020' : 'oklch(0.30 0.02 250)',
-            background: pathname.includes('/settings') ? 'oklch(0.94 0.005 250)' : 'transparent',
+            background: pathname.includes('/settings')
+              ? 'oklch(0.94 0.005 250)'
+              : 'transparent',
             fontWeight: pathname.includes('/settings') ? 600 : 400,
           }}>
             Settings
@@ -186,30 +216,125 @@ export function StudioSidebar({
         </div>
       )}
 
+      {/* User footer */}
       <div style={{
-        marginTop: 'auto', 
-        padding: 10, 
+        marginTop: 'auto',
+        padding: 10,
         borderRadius: 8,
         background: 'oklch(0.94 0.005 250)',
-        display: 'flex', 
-        alignItems: 'center', 
+        display: 'flex',
+        alignItems: 'center',
         gap: 10,
       }}>
         <Avatar person={currentUser} size={24} presence />
         <div style={{ flex: 1, lineHeight: 1.2, minWidth: 0 }}>
-          <p style={{ 
-            fontSize: 12, 
-            fontWeight: 600, 
+          <p style={{
+            fontSize: 12,
+            fontWeight: 600,
             margin: 0,
             whiteSpace: 'nowrap',
             overflow: 'hidden',
-            textOverflow: 'ellipsis' 
+            textOverflow: 'ellipsis',
           }}>{currentUser.name}</p>
-          <p style={{ fontSize: 11, color: 'oklch(0.50 0.02 250)', margin: 0, textTransform: 'capitalize' }}>
+          <p style={{
+            fontSize: 11,
+            color: 'oklch(0.50 0.02 250)',
+            margin: 0,
+            textTransform: 'capitalize',
+          }}>
             {currentUser.role.replace('_', ' ')}
           </p>
         </div>
       </div>
     </aside>
+  );
+
+  // ─── Desktop ───────────────────────────────────────────────────────────────
+  if (!isMobile) {
+    return sidebarContent;
+  }
+
+  // ─── Mobile ────────────────────────────────────────────────────────────────
+  return (
+    <>
+      {/* Hamburger button */}
+      <button
+        onClick={() => setDrawerOpen((o) => !o)}
+        aria-label={drawerOpen ? 'Close menu' : 'Open menu'}
+        style={{
+          position: 'fixed',
+          top: 12,
+          left: 12,
+          zIndex: 200,
+          width: 36,
+          height: 36,
+          borderRadius: 8,
+          border: '1px solid oklch(0.90 0.01 250)',
+          background: '#fff',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          gap: 4,
+          padding: 0,
+          boxShadow: '0 1px 4px oklch(0 0 0 / 0.08)',
+        }}
+      >
+        {drawerOpen ? (
+          // × close icon
+          <span style={{
+            fontSize: 18,
+            lineHeight: 1,
+            color: '#111',
+            fontFamily: GILD_FONTS.sans,
+          }}>×</span>
+        ) : (
+          // ☰ hamburger lines
+          <>
+            <span style={{
+              width: 16, height: 2, borderRadius: 1,
+              background: 'oklch(0.30 0.02 250)',
+            }}/>
+            <span style={{
+              width: 16, height: 2, borderRadius: 1,
+              background: 'oklch(0.30 0.02 250)',
+            }}/>
+            <span style={{
+              width: 16, height: 2, borderRadius: 1,
+              background: 'oklch(0.30 0.02 250)',
+            }}/>
+          </>
+        )}
+      </button>
+
+      {/* Backdrop */}
+      {drawerOpen && (
+        <div
+          onClick={() => setDrawerOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 150,
+            background: 'oklch(0 0 0 / 0.35)',
+          }}
+        />
+      )}
+
+      {/* Drawer */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        bottom: 0,
+        zIndex: 160,
+        width: 260,
+        transform: drawerOpen ? 'translateX(0)' : 'translateX(-100%)',
+        transition: 'transform 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
+        boxShadow: drawerOpen ? '4px 0 24px oklch(0 0 0 / 0.12)' : 'none',
+      }}>
+        {sidebarContent}
+      </div>
+    </>
   );
 }
