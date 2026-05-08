@@ -96,11 +96,17 @@ export default async function LessonPage({ params }: Props) {
   }
 
   async function submitQuizAction(
-    answers: QuizAnswer[],
+    answersJson: string,
   ): Promise<QuizAttemptResult> {
     'use server';
     if (!quizId || !enrollmentId) {
       throw new Error('[gild] quiz or enrollment unavailable');
+    }
+    let answers: Array<QuizAnswer>;
+    try {
+      answers = JSON.parse(answersJson) as Array<QuizAnswer>;
+    } catch {
+      throw new Error('[gild] invalid answers payload');
     }
     return submitQuiz({
       quizId,

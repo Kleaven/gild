@@ -23,7 +23,7 @@ interface StudioLessonPlayerProps {
   enrollmentId: string | null;
   completeAction: () => Promise<void>;
   submitQuizAction: (
-    answers: { questionId: string; selectedOptionId: string }[],
+    answersJson: string,
   ) => Promise<QuizAttemptResult>;
 }
 
@@ -275,9 +275,7 @@ function QuizPanel({
 }: {
   quiz: QuizWithQuestions;
   enrollmentId: string;
-  submitAction: (
-    answers: { questionId: string; selectedOptionId: string }[],
-  ) => Promise<QuizAttemptResult>;
+  submitAction: (answersJson: string) => Promise<QuizAttemptResult>;
 }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -296,7 +294,7 @@ function QuizPanel({
         questionId: q.id,
         selectedOptionId: answers[q.id] as string,
       }));
-      const r = await submitAction(payload);
+      const r = await submitAction(JSON.stringify(payload));
       setResult(r);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit quiz');
