@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { GILD_FONTS } from '@/components/gild';
 import type { Lesson } from '@/lib/courses';
@@ -45,6 +45,25 @@ export function StudioLessonPlayer({
   submitQuizAction,
 }: StudioLessonPlayerProps) {
   const videoEmbed = toEmbedUrl(lesson.video_url);
+
+  // Optimistic mark-complete: flip immediately, run server action in background,
+  // roll back + show inline error if it fails.
+  const [localCompleted, setLocalCompleted] = useState(isCompleted);
+  const [completeError, setCompleteError] = useState<string | null>(null);
+  const [, startCompleteTransition] = useTransition();
+
+  function handleMarkComplete() {
+    setLocalCompleted(true);
+    setCompleteError(null);
+    startCompleteTransition(async () => {
+      try {
+        await completeAction();
+      } catch {
+        setLocalCompleted(false);
+        setCompleteError('Failed, try again');
+      }
+    });
+  }
 
   return (
     <div
@@ -150,7 +169,7 @@ export function StudioLessonPlayer({
             flexWrap: 'wrap',
           }}
         >
-          {isCompleted ? (
+          {localCompleted ? (
             <div
               style={{
                 display: 'inline-flex',
@@ -168,9 +187,10 @@ export function StudioLessonPlayer({
               <span>✓</span> Completed
             </div>
           ) : quiz && quizAlreadyPassed ? null : (
-            <form action={completeAction}>
+            <div>
               <button
-                type="submit"
+                type="button"
+                onClick={handleMarkComplete}
                 style={{
                   appearance: 'none',
                   border: 'none',
@@ -186,7 +206,12 @@ export function StudioLessonPlayer({
               >
                 Mark complete
               </button>
-            </form>
+              {completeError && (
+                <p style={{ margin: '8px 0 0', fontSize: 12, color: '#c00', fontFamily: GILD_FONTS.sans }}>
+                  {completeError}
+                </p>
+              )}
+            </div>
           )}
 
           {/* Prev / Next */}
@@ -309,29 +334,30 @@ function QuizPanel({
   submitAction: (answersJson: string) => Promise<QuizAttemptResult>;
 }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [submitting, setSubmitting] = useState(false);
+  // useTransition: isPending covers the server round-trip; startTransition wraps
+  // the call so the subsequent revalidatePath page re-render is non-blocking.
+  const [isPending, startSubmitTransition] = useTransition();
   const [result, setResult] = useState<QuizAttemptResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const allAnswered = quiz.questions.every((q) => answers[q.id]);
 
-  async function onSubmit(e: React.FormEvent) {
+  function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!allAnswered || submitting) return;
-    setSubmitting(true);
+    if (!allAnswered || isPending) return;
     setError(null);
-    try {
-      const payload = quiz.questions.map((q) => ({
-        questionId: q.id,
-        selectedOptionId: answers[q.id] as string,
-      }));
-      const r = await submitAction(JSON.stringify(payload));
-      setResult(r);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to submit quiz');
-    } finally {
-      setSubmitting(false);
-    }
+    startSubmitTransition(async () => {
+      try {
+        const payload = quiz.questions.map((q) => ({
+          questionId: q.id,
+          selectedOptionId: answers[q.id] as string,
+        }));
+        const r = await submitAction(JSON.stringify(payload));
+        setResult(r);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to submit quiz');
+      }
+    });
   }
 
   function reset() {
@@ -560,21 +586,21 @@ function QuizPanel({
 
         <button
           type="submit"
-          disabled={!allAnswered || submitting}
+          disabled={!allAnswered || isPending}
           style={{
             appearance: 'none',
             border: 'none',
-            background: !allAnswered || submitting ? 'oklch(0.75 0.01 250)' : '#111',
+            background: !allAnswered || isPending ? 'oklch(0.75 0.01 250)' : '#111',
             color: '#fff',
             padding: '12px 22px',
             borderRadius: 14,
             fontSize: 14,
             fontWeight: 600,
-            cursor: !allAnswered || submitting ? 'default' : 'pointer',
+            cursor: !allAnswered || isPending ? 'default' : 'pointer',
             fontFamily: GILD_FONTS.sans,
           }}
         >
-          {submitting ? 'Submitting…' : 'Submit answers'}
+          {isPending ? 'Submitting…' : 'Submit answers'}
         </button>
 
         {/* Hidden field for enrollment context — included so the form has the
