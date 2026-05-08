@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { GILD_FONTS, CoverArt } from '@/components/gild';
 import type { CourseWithModules } from '@/lib/courses';
@@ -23,6 +23,25 @@ export function StudioCourseDetail({
   isAdminOrOwner,
   enrollAction,
 }: StudioCourseDetailProps) {
+  // Optimistic enroll: flip immediately on click, run server action in background,
+  // roll back + show inline error if it fails. Also gates canOpen for lesson links.
+  const [localEnrolled, setLocalEnrolled] = useState(isEnrolled);
+  const [enrollError, setEnrollError] = useState<string | null>(null);
+  const [isPending, startEnrollTransition] = useTransition();
+
+  function handleEnroll() {
+    setLocalEnrolled(true);
+    setEnrollError(null);
+    startEnrollTransition(async () => {
+      try {
+        await enrollAction();
+      } catch {
+        setLocalEnrolled(false);
+        setEnrollError('Failed, try again');
+      }
+    });
+  }
+
   const publishedLessons = course.modules.reduce(
     (sum, m) => sum + m.lessons.filter((l) => l.is_published).length,
     0,
@@ -137,7 +156,7 @@ export function StudioCourseDetail({
         )}
 
         {/* Enroll CTA */}
-        {isEnrolled ? (
+        {localEnrolled ? (
           <div
             style={{
               display: 'inline-flex',
@@ -156,25 +175,32 @@ export function StudioCourseDetail({
             Enrolled
           </div>
         ) : (
-          <form action={enrollAction}>
+          <div>
             <button
-              type="submit"
+              type="button"
+              onClick={handleEnroll}
+              disabled={isPending}
               style={{
                 appearance: 'none',
                 border: 'none',
-                background: '#111',
+                background: isPending ? 'oklch(0.75 0.01 250)' : '#111',
                 color: '#fff',
                 padding: '12px 22px',
                 borderRadius: 14,
                 fontSize: 14,
                 fontWeight: 600,
-                cursor: 'pointer',
+                cursor: isPending ? 'default' : 'pointer',
                 fontFamily: GILD_FONTS.sans,
               }}
             >
-              Enroll in course
+              {isPending ? 'Enrolling…' : 'Enroll in course'}
             </button>
-          </form>
+            {enrollError && (
+              <p style={{ margin: '8px 0 0', fontSize: 12, color: '#c00', fontFamily: GILD_FONTS.sans }}>
+                {enrollError}
+              </p>
+            )}
+          </div>
         )}
       </header>
 
@@ -257,7 +283,7 @@ export function StudioCourseDetail({
                 ) : (
                   <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
                     {visibleLessons.map((lesson, lIdx) => {
-                      const canOpen = isEnrolled || isAdminOrOwner;
+                      const canOpen = localEnrolled || isAdminOrOwner;
                       const inner = (
                         <>
                           <span
