@@ -99,6 +99,11 @@ export default async function LessonPage({ params }: Props) {
     quizAlreadyPassed = passingAttempt !== null;
   }
 
+  // Lock the next-lesson link when this lesson has a quiz that hasn't been
+  // passed yet. Admins/owners bypass the lock so they can preview freely.
+  const nextLessonLocked =
+    !isAdminOrOwner && quizRow !== null && !quizAlreadyPassed;
+
   // ─── Server actions (closures over IDs, never client-supplied) ───────────
 
   const enrollmentId = enrollment?.id ?? null;
@@ -142,6 +147,7 @@ export default async function LessonPage({ params }: Props) {
       lesson={lesson}
       prevLesson={prevLesson}
       nextLesson={nextLesson}
+      nextLessonLocked={nextLessonLocked}
       isCompleted={isCompleted}
       isEnrolled={isEnrolled}
       quiz={quiz}

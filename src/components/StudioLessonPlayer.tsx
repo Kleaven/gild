@@ -17,6 +17,7 @@ interface StudioLessonPlayerProps {
   lesson: Lesson;
   prevLesson: LessonNavStub | null;
   nextLesson: LessonNavStub | null;
+  nextLessonLocked: boolean;
   isCompleted: boolean;
   isEnrolled: boolean;
   quiz: QuizWithQuestions | null;
@@ -34,6 +35,7 @@ export function StudioLessonPlayer({
   lesson,
   prevLesson,
   nextLesson,
+  nextLessonLocked,
   isCompleted,
   isEnrolled,
   quiz,
@@ -199,7 +201,34 @@ export function StudioLessonPlayer({
             ) : (
               <span style={navLinkStyle(true)}>← Previous</span>
             )}
-            {nextLesson ? (
+            {nextLesson && nextLessonLocked ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                <span
+                  style={{
+                    padding: '10px 16px',
+                    borderRadius: 14,
+                    border: '1px solid oklch(0.90 0.01 250)',
+                    background: '#fff',
+                    color: 'oklch(0.60 0.02 250)',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    fontFamily: GILD_FONTS.sans,
+                    cursor: 'default',
+                  }}
+                >
+                  Next →
+                </span>
+                <span
+                  style={{
+                    fontSize: 12,
+                    color: 'oklch(0.60 0.02 250)',
+                    fontFamily: GILD_FONTS.mono,
+                  }}
+                >
+                  Complete quiz to unlock
+                </span>
+              </div>
+            ) : nextLesson ? (
               <Link
                 href={`/c/${community.id}/courses/${course.id}/${nextLesson.id}`}
                 style={navLinkStyle()}
