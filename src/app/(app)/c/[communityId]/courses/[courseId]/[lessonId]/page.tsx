@@ -84,6 +84,21 @@ export default async function LessonPage({ params }: Props) {
     quiz = await getQuiz(supabase, quizRow.id);
   }
 
+  // Check if the current user already has a passing attempt for this quiz.
+  // RLS on quiz_attempts scopes SELECT to the current user's own rows, so
+  // any row returned here belongs to them. Defensive false when no quiz.
+  let quizAlreadyPassed = false;
+  if (quizRow) {
+    const { data: passingAttempt, error: attemptErr } = await supabase
+      .from('quiz_attempts')
+      .select('id')
+      .eq('quiz_id', quizRow.id)
+      .eq('passed', true)
+      .maybeSingle();
+    if (attemptErr) throw new Error(attemptErr.message);
+    quizAlreadyPassed = passingAttempt !== null;
+  }
+
   // ─── Server actions (closures over IDs, never client-supplied) ───────────
 
   const enrollmentId = enrollment?.id ?? null;
@@ -130,6 +145,7 @@ export default async function LessonPage({ params }: Props) {
       isCompleted={isCompleted}
       isEnrolled={isEnrolled}
       quiz={quiz}
+      quizAlreadyPassed={quizAlreadyPassed}
       enrollmentId={enrollmentId}
       completeAction={completeAction}
       submitQuizAction={submitQuizAction}

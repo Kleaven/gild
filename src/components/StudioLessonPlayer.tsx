@@ -20,6 +20,7 @@ interface StudioLessonPlayerProps {
   isCompleted: boolean;
   isEnrolled: boolean;
   quiz: QuizWithQuestions | null;
+  quizAlreadyPassed: boolean;
   enrollmentId: string | null;
   completeAction: () => Promise<void>;
   submitQuizAction: (
@@ -36,6 +37,7 @@ export function StudioLessonPlayer({
   isCompleted,
   isEnrolled,
   quiz,
+  quizAlreadyPassed,
   enrollmentId,
   completeAction,
   submitQuizAction,
@@ -163,7 +165,7 @@ export function StudioLessonPlayer({
             >
               <span>✓</span> Completed
             </div>
-          ) : (
+          ) : quiz && quizAlreadyPassed ? null : (
             <form action={completeAction}>
               <button
                 type="submit"
