@@ -86,6 +86,9 @@ export default async function LessonPage({ params }: Props) {
 
   // ─── Server actions (closures over IDs, never client-supplied) ───────────
 
+  const enrollmentId = enrollment?.id ?? null;
+  const quizId = quiz?.id ?? null;
+
   async function completeAction() {
     'use server';
     await completeLesson(lessonId);
@@ -96,12 +99,12 @@ export default async function LessonPage({ params }: Props) {
     answers: QuizAnswer[],
   ): Promise<QuizAttemptResult> {
     'use server';
-    if (!quiz || !enrollment) {
+    if (!quizId || !enrollmentId) {
       throw new Error('[gild] quiz or enrollment unavailable');
     }
     return submitQuiz({
-      quizId: quiz.id,
-      enrollmentId: enrollment.id,
+      quizId,
+      enrollmentId,
       answers,
     });
   }
@@ -116,7 +119,7 @@ export default async function LessonPage({ params }: Props) {
       isCompleted={isCompleted}
       isEnrolled={isEnrolled}
       quiz={quiz}
-      enrollmentId={enrollment?.id ?? null}
+      enrollmentId={enrollmentId}
       completeAction={completeAction}
       submitQuizAction={submitQuizAction}
     />
