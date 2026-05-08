@@ -108,11 +108,16 @@ export default async function LessonPage({ params }: Props) {
     } catch {
       throw new Error('[gild] invalid answers payload');
     }
-    return submitQuiz({
+    const result = await submitQuiz({
       quizId,
       enrollmentId,
       answers,
     });
+    if (result.passed) {
+      await completeLesson(lessonId);
+      revalidatePath(`/c/${communityId}/courses/${courseId}/${lessonId}`);
+    }
+    return result;
   }
 
   return (
