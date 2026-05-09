@@ -1,32 +1,41 @@
 'use client';
 
-import { useState, useTransition } from 'react';
-import { createPost } from '@/app/actions';
+import { useState } from 'react';
 import { GILD_FONTS } from '@/components/gild';
 
 type Props = {
   communityId: string;
   spaceId: string;
+  /** Called with (title, body) when user submits. Caller owns the server action. */
+  onSubmit: (title: string, body: string) => Promise<void>;
+  /** Error injected from parent (e.g. after optimistic rollback). */
+  externalError?: string | null;
+  onClearError?: () => void;
 };
 
-export default function PostForm({ communityId, spaceId }: Props) {
+export default function PostForm({ onSubmit, externalError, onClearError }: Props) {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent) {
+  const error = externalError ?? localError;
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
-    startTransition(async () => {
-      try {
-        await createPost({ communityId, spaceId, title: title || undefined, body });
-        setTitle('');
-        setBody('');
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to create post');
-      }
-    });
+    if (!body.trim()) return;
+    setLocalError(null);
+    onClearError?.();
+    setIsPending(true);
+    try {
+      await onSubmit(title, body);
+      setTitle('');
+      setBody('');
+    } catch (err) {
+      setLocalError(err instanceof Error ? err.message : 'Failed to create post');
+    } finally {
+      setIsPending(false);
+    }
   }
 
   return (
@@ -51,11 +60,11 @@ export default function PostForm({ communityId, spaceId }: Props) {
         onChange={(e) => setTitle(e.target.value)}
         maxLength={300}
         style={{
-          padding: '10px 14px', 
+          padding: '10px 14px',
           border: '1px solid oklch(0.90 0.01 250)',
-          borderRadius: 8, 
-          fontSize: 14, 
-          outline: 'none', 
+          borderRadius: 8,
+          fontSize: 14,
+          outline: 'none',
           background: '#fff',
           fontFamily: 'inherit',
         }}
@@ -67,11 +76,11 @@ export default function PostForm({ communityId, spaceId }: Props) {
         required
         rows={3}
         style={{
-          padding: '10px 14px', 
+          padding: '10px 14px',
           border: '1px solid oklch(0.90 0.01 250)',
-          borderRadius: 8, 
-          fontSize: 14, 
-          outline: 'none', 
+          borderRadius: 8,
+          fontSize: 14,
+          outline: 'none',
           background: '#fff',
           fontFamily: 'inherit',
           resize: 'vertical',
@@ -83,17 +92,17 @@ export default function PostForm({ communityId, spaceId }: Props) {
         <p style={{ fontSize: 11, color: 'oklch(0.55 0.02 250)', margin: 0 }}>
           Markdown supported
         </p>
-        <button 
-          type="submit" 
-          disabled={isPending} 
+        <button
+          type="submit"
+          disabled={isPending}
           style={{
-            padding: '8px 18px', 
+            padding: '8px 18px',
             borderRadius: 8,
-            background: 'oklch(0.20 0.02 250)', 
-            color: '#fff', 
+            background: 'oklch(0.20 0.02 250)',
+            color: '#fff',
             border: 'none',
-            fontSize: 13, 
-            fontWeight: 600, 
+            fontSize: 13,
+            fontWeight: 600,
             cursor: isPending ? 'default' : 'pointer',
             opacity: isPending ? 0.7 : 1,
             transition: 'opacity 0.2s ease',
