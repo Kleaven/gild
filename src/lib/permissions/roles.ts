@@ -19,3 +19,10 @@ export function getRoleIndex(role: MemberRole): number {
 export function hasMinRole(userRole: MemberRole, minRole: MemberRole): boolean {
   return getRoleIndex(userRole) >= getRoleIndex(minRole);
 }
+
+export function normalizeRole(role: string | null | undefined): MemberRole {
+  if (!role) return 'free_member';
+  if (role === 'member') return 'free_member';
+  if (ROLE_HIERARCHY.includes(role as MemberRole)) return role as MemberRole;
+  return 'free_member';
+}

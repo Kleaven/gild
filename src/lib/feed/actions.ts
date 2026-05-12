@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { getSupabaseServerClient } from '../auth/server';
 import { rateLimit } from '../rate-limit/index';
+import { normalizeRole } from '../permissions/roles';
 import type { CreatePostInput } from './types';
 
 const createPostSchema = z.object({
@@ -53,14 +54,11 @@ export async function createPost(input: CreatePostInput): Promise<{ postId: stri
 
   // ─── Permission Check ──────────────────────────────────────────────────────
   const perms = (space.permissions as any) || {};
-  let requiredRoleForPost = perms.post || (space.allow_member_posts ? 'free_member' : 'moderator');
-  
-  // Map UI roles to database roles
-  if (requiredRoleForPost === 'member') requiredRoleForPost = 'free_member';
+  const requiredRoleForPost = normalizeRole(perms.post || (space.allow_member_posts ? 'free_member' : 'moderator'));
 
   const { data: hasPermission } = await supabase.rpc('user_has_min_role', {
     p_community_id: communityId,
-    p_min_role: requiredRoleForPost as any,
+    p_min_role: requiredRoleForPost,
   });
   if (!hasPermission) {
     throw new Error(`Insufficient permissions to post in this space. Required: ${requiredRoleForPost}`);
