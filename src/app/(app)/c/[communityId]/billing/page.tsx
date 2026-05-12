@@ -1,9 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getSupabaseServerClient } from '@/lib/auth/server';
-import { getCommunity } from '@/lib/community';
-import { getCommunityContext } from '@/lib/community/context';
-import { PLANS } from '@/lib/billing';
-import { GILD_FONTS, LivePill } from '@/components/gild';
+import { GILD_FONTS } from '@/components/gild';
 import PlanSelector from '@/app/(app)/onboarding/[communityId]/plan/PlanSelector';
 import { CreditCard, Check, Zap, Crown } from 'lucide-react';
 
@@ -15,7 +12,6 @@ export default async function BillingPage({ params }: Props) {
   const { communityId } = await params;
   if (!UUID_RE.test(communityId)) notFound();
 
-  const supabase = await getSupabaseServerClient();
   const { community, membership } = await getCommunityContext(communityId);
   if (!community) notFound();
 

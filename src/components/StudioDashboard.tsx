@@ -1,19 +1,12 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import Link from 'next/link';
-import { Wordmark, Avatar, GILD_FONTS } from '@/components/gild';
-import type { Person } from '@/components/gild';
+import { GILD_FONTS } from '@/components/gild';
 import type { DashboardStats } from '@/lib/community';
-import { useRealtimePresence } from '@/hooks';
 import { 
   Users, 
   MessageSquare, 
   Layers, 
-  BookOpen, 
-  Heart,
-  ChevronRight,
-  ExternalLink,
   DollarSign,
   TrendingUp as TrendingUpIcon,
   BarChart3
@@ -26,31 +19,15 @@ interface StudioDashboardProps {
     plan: string | null;
     subscription_status: string | null;
   };
-  membership: {
-    role: string;
-  };
   stats: DashboardStats;
-  user: {
-    id: string;
-    display_name?: string | null;
-    avatar_url?: string | null;
-  };
+  onlineUsers: any[];
 }
 
 export function StudioDashboard({ 
   community, 
-  membership, 
   stats,
-  user
+  onlineUsers
 }: StudioDashboardProps) {
-  const currentUserPresence = useMemo(() => ({
-    id: user.id,
-    name: user.display_name || 'Admin',
-    avatar_url: user.avatar_url || null,
-    online: true,
-  }), [user]);
-
-  const onlineUsers = useRealtimePresence(`community-${community.id}`, currentUserPresence as any);
 
   return (
     <div style={{
@@ -226,8 +203,6 @@ export function StudioDashboard({
                   <span style={{ fontSize: 10, opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.02em' }}>Active</span>
                 </div>
               </section>
-
-
             </div>
           </div>
         </div>
@@ -289,21 +264,6 @@ function StatCard({ label, value, icon, hue }: { label: string, value: string | 
     </div>
   );
 }
-
-const actionButtonStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: '12px 16px',
-  borderRadius: 12,
-  background: 'oklch(0.98 0.002 250)',
-  border: '1px solid oklch(0.95 0.005 250)',
-  textDecoration: 'none',
-  color: '#111',
-  fontSize: 14,
-  fontWeight: 600,
-  transition: 'all 0.2s ease',
-};
 
 function GodTierChart({ data }: { data: { date: string; posts: number; comments: number }[] }) {
   if (!data || data.length === 0) return null;
