@@ -20,13 +20,13 @@ interface StudioDashboardProps {
     subscription_status: string | null;
   };
   stats: DashboardStats;
-  onlineUsers: any[];
+  onlineUsers?: any[];
 }
 
 export function StudioDashboard({ 
   community, 
   stats,
-  onlineUsers
+  onlineUsers = []
 }: StudioDashboardProps) {
 
   return (

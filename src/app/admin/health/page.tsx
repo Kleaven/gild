@@ -38,13 +38,32 @@ export default async function HealthPage() {
   }
 
   // 3. Check Tables
-  const tables = ['profiles', 'communities', 'community_members', 'spaces', 'posts', 'comments'];
+  const tables = ['profiles', 'communities', 'community_members', 'spaces', 'posts', 'comments', 'community_revenue'];
   for (const table of tables) {
     try {
       await db.unsafe(`SELECT 1 FROM public.${table} LIMIT 1`);
       status.push({ name: `Table: ${table}`, ok: true, message: 'Exists', type: 'db' });
     } catch (err) {
       status.push({ name: `Table: ${table}`, ok: false, message: 'Missing or Error', type: 'db' });
+    }
+  }
+
+  // 3b. Check Critical Columns
+  const columnChecks = [
+    { table: 'profiles', column: 'subscription_status' },
+    { table: 'profiles', column: 'plan' },
+    { table: 'communities', column: 'plan' },
+    { table: 'communities', column: 'subscription_status' },
+    { table: 'spaces', column: 'allow_member_posts' },
+    { table: 'community_revenue', column: 'amount' }
+  ];
+
+  for (const check of columnChecks) {
+    try {
+      await db.unsafe(`SELECT ${check.column} FROM public.${check.table} LIMIT 1`);
+      status.push({ name: `Column: ${check.table}.${check.column}`, ok: true, message: 'Exists', type: 'db' });
+    } catch (err) {
+      status.push({ name: `Column: ${check.table}.${check.column}`, ok: false, message: 'Missing', type: 'db' });
     }
   }
 
