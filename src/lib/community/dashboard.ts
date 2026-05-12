@@ -87,7 +87,8 @@ export async function getDashboardStats(communityId: string): Promise<DashboardS
   `;
 
   const g = growth[0] || { total: 0, last30: 0 };
-  const growthRate = g.total > g.last30 ? (g.last30 / (g.total - g.last30)) * 100 : 0;
+  const denominator = Math.max(1, g.total - g.last30);
+  const growthRate = (g.last30 / denominator) * 100;
 
   return {
     memberCount: Number(basicStats.memberCount),
