@@ -126,6 +126,8 @@ const PostForm = forwardRef<HTMLFormElement, Props>(({ communityId, hue = 250, o
       </div>
 
       <input
+        id="post-title"
+        name="title"
         type="text"
         placeholder="Title (optional)"
         value={title}
@@ -143,6 +145,8 @@ const PostForm = forwardRef<HTMLFormElement, Props>(({ communityId, hue = 250, o
         }}
       />
       <textarea
+        id="post-body"
+        name="body"
         placeholder="Write a new post…"
         value={body}
         onChange={(e) => setBody(e.target.value)}
@@ -167,6 +171,8 @@ const PostForm = forwardRef<HTMLFormElement, Props>(({ communityId, hue = 250, o
           {pollOptions.map((opt, i) => (
             <div key={i} style={{ display: 'flex', gap: 8 }}>
               <input 
+                id={`poll-option-${i}`}
+                name={`option-${i}`}
                 type="text" 
                 value={opt} 
                 onChange={(e) => {
@@ -218,7 +224,7 @@ const PostForm = forwardRef<HTMLFormElement, Props>(({ communityId, hue = 250, o
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid oklch(0.96 0.005 250)', paddingTop: 10 }}>
         <div style={{ display: 'flex', gap: 8 }}>
           <label style={{ cursor: 'pointer', color: 'oklch(0.40 0.02 250)', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 500 }}>
-            <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} disabled={isUploading} />
+            <input id="post-image-upload" name="image" type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} disabled={isUploading} />
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
             {isUploading ? 'Uploading...' : 'Image'}
           </label>

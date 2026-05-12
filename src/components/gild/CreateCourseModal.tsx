@@ -86,6 +86,8 @@ export function CreateCourseModal({ communityId, isOpen, onClose }: Props) {
               Course Title
             </label>
             <input
+              id="course-title"
+              name="title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -109,6 +111,8 @@ export function CreateCourseModal({ communityId, isOpen, onClose }: Props) {
               Description
             </label>
             <textarea
+              id="course-description"
+              name="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="What will students learn?"

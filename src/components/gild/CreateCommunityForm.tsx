@@ -80,6 +80,8 @@ export function CreateCommunityForm({ onSuccess, submitLabel = 'Create community
           <label style={labelStyle}>
             Community name
             <input
+              id="community-name"
+              name="name"
               type="text"
               value={name}
               onChange={handleNameChange}
@@ -95,6 +97,8 @@ export function CreateCommunityForm({ onSuccess, submitLabel = 'Create community
           <label style={labelStyle}>
             URL slug
             <input
+              id="community-slug"
+              name="slug"
               type="text"
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
@@ -112,6 +116,8 @@ export function CreateCommunityForm({ onSuccess, submitLabel = 'Create community
             <label style={{ ...labelStyle, flex: 1 }}>
               Category
               <select
+                id="community-category"
+                name="category"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 required
@@ -128,6 +134,8 @@ export function CreateCommunityForm({ onSuccess, submitLabel = 'Create community
               Privacy
               <div style={{ position: 'relative' }}>
                 <select
+                  id="community-privacy"
+                  name="privacy"
                   value={isPrivate ? 'private' : 'public'}
                   onChange={(e) => setIsPrivate(e.target.value === 'private')}
                   style={{ ...inputStyle, paddingLeft: 36 }}
@@ -155,6 +163,8 @@ export function CreateCommunityForm({ onSuccess, submitLabel = 'Create community
             <label style={{ ...labelStyle, flex: 1 }}>
               Access Type
               <select
+                id="community-access-type"
+                name="access-type"
                 value={pricingType}
                 onChange={(e) => setPricingType(e.target.value as 'free' | 'paid')}
                 style={inputStyle}
@@ -170,6 +180,8 @@ export function CreateCommunityForm({ onSuccess, submitLabel = 'Create community
                   Price ({priceCurrency})
                   <div style={{ position: 'relative' }}>
                     <input
+                      id="community-price"
+                      name="price"
                       type="number"
                       value={priceAmount}
                       onChange={(e) => setPriceAmount(Number(e.target.value))}
@@ -187,6 +199,8 @@ export function CreateCommunityForm({ onSuccess, submitLabel = 'Create community
                 <label style={{ ...labelStyle, flex: 1 }}>
                   Billing Cycle
                   <select
+                    id="community-billing-cycle"
+                    name="billing-cycle"
                     value={pricingPeriod}
                     onChange={(e) => setPricingPeriod(e.target.value as any)}
                     style={inputStyle}
@@ -222,6 +236,8 @@ export function CreateCommunityForm({ onSuccess, submitLabel = 'Create community
               Welcome Message
             </div>
             <textarea
+              id="community-welcome-message"
+              name="welcome-message"
               value={welcomeMessage}
               onChange={(e) => setWelcomeMessage(e.target.value)}
               placeholder="Write a warm greeting for new members when they first join..."
@@ -236,6 +252,8 @@ export function CreateCommunityForm({ onSuccess, submitLabel = 'Create community
               Goodbye Message
             </div>
             <textarea
+              id="community-goodbye-message"
+              name="goodbye-message"
               value={goodbyeMessage}
               onChange={(e) => setGoodbyeMessage(e.target.value)}
               placeholder="A kind note to show when a member considers leaving..."

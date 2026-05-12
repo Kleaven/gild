@@ -29,6 +29,8 @@ export default function CommentForm({ postId }: { postId: string }) {
   return (
     <form onSubmit={handleSubmit} style={{ marginBottom: 24, fontFamily: GILD_FONTS.sans }}>
       <textarea
+        id="comment-body"
+        name="body"
         value={body}
         onChange={(e) => setBody(e.target.value)}
         placeholder="Write a comment..."

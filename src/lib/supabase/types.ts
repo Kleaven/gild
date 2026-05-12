@@ -7,10 +7,30 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -200,9 +220,11 @@ export type Database = {
       communities: {
         Row: {
           banner_url: string | null
+          category: string | null
           created_at: string
           deleted_at: string | null
           description: string | null
+          goodbye_message: string | null
           id: string
           is_private: boolean
           logo_url: string | null
@@ -210,6 +232,12 @@ export type Database = {
           name: string
           owner_id: string
           plan: string
+          platform_fee_percent: number
+          price_amount: number | null
+          price_currency: string
+          pricing_period: string
+          pricing_type: string
+          role_permissions: Json
           search_vector: unknown
           slug: string
           stripe_customer_id: string | null
@@ -219,17 +247,14 @@ export type Database = {
           trial_ends_at: string | null
           updated_at: string
           welcome_message: string | null
-          pricing_type: string | null
-          price_amount: number | null
-          price_currency: string | null
-          pricing_period: string | null
-          goodbye_message: string | null
         }
         Insert: {
           banner_url?: string | null
+          category?: string | null
           created_at?: string
           deleted_at?: string | null
           description?: string | null
+          goodbye_message?: string | null
           id?: string
           is_private?: boolean
           logo_url?: string | null
@@ -237,26 +262,29 @@ export type Database = {
           name: string
           owner_id: string
           plan?: string
+          platform_fee_percent?: number
+          price_amount?: number | null
+          price_currency?: string
+          pricing_period?: string
+          pricing_type?: string
+          role_permissions?: Json
           search_vector?: unknown
           slug: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_status?: string
+          theme_hue?: number | null
           trial_ends_at?: string | null
           updated_at?: string
-          theme_hue?: number | null
           welcome_message?: string | null
-          pricing_type?: string | null
-          price_amount?: number | null
-          price_currency?: string | null
-          pricing_period?: string | null
-          goodbye_message?: string | null
         }
         Update: {
           banner_url?: string | null
+          category?: string | null
           created_at?: string
           deleted_at?: string | null
           description?: string | null
+          goodbye_message?: string | null
           id?: string
           is_private?: boolean
           logo_url?: string | null
@@ -264,25 +292,74 @@ export type Database = {
           name?: string
           owner_id?: string
           plan?: string
+          platform_fee_percent?: number
+          price_amount?: number | null
+          price_currency?: string
+          pricing_period?: string
+          pricing_type?: string
+          role_permissions?: Json
           search_vector?: unknown
           slug?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_status?: string
+          theme_hue?: number | null
           trial_ends_at?: string | null
           updated_at?: string
-          theme_hue?: number | null
           welcome_message?: string | null
-          pricing_type?: string | null
-          price_amount?: number | null
-          price_currency?: string | null
-          pricing_period?: string | null
-          goodbye_message?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "communities_owner_id_fkey"
             columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_invite_links: {
+        Row: {
+          community_id: string
+          created_at: string
+          creator_id: string
+          expires_at: string | null
+          id: string
+          max_uses: number | null
+          token: string
+          uses: number
+        }
+        Insert: {
+          community_id: string
+          created_at?: string
+          creator_id: string
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          token?: string
+          uses?: number
+        }
+        Update: {
+          community_id?: string
+          created_at?: string
+          creator_id?: string
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          token?: string
+          uses?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_invite_links_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_invite_links_creator_id_fkey"
+            columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -295,33 +372,33 @@ export type Database = {
           created_at: string
           id: string
           joined_at: string
+          permissions: Json
           role: Database["public"]["Enums"]["member_role"]
           tier_id: string | null
           updated_at: string
           user_id: string
-          permissions: Json
         }
         Insert: {
           community_id: string
           created_at?: string
           id?: string
           joined_at?: string
+          permissions?: Json
           role?: Database["public"]["Enums"]["member_role"]
           tier_id?: string | null
           updated_at?: string
           user_id: string
-          permissions?: Json
         }
         Update: {
           community_id?: string
           created_at?: string
           id?: string
           joined_at?: string
+          permissions?: Json
           role?: Database["public"]["Enums"]["member_role"]
           tier_id?: string | null
           updated_at?: string
           user_id?: string
-          permissions?: Json
         }
         Relationships: [
           {
@@ -347,6 +424,57 @@ export type Database = {
           },
         ]
       }
+      community_revenue: {
+        Row: {
+          amount: number
+          community_id: string
+          created_at: string
+          currency: string
+          id: string
+          stripe_invoice_id: string | null
+          stripe_session_id: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          community_id: string
+          created_at?: string
+          currency?: string
+          id?: string
+          stripe_invoice_id?: string | null
+          stripe_session_id?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          community_id?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          stripe_invoice_id?: string | null
+          stripe_session_id?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_revenue_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_revenue_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courses: {
         Row: {
           community_id: string
@@ -354,6 +482,7 @@ export type Database = {
           deleted_at: string | null
           description: string | null
           id: string
+          image_url: string | null
           is_published: boolean
           position: number
           search_vector: unknown
@@ -367,6 +496,7 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           id?: string
+          image_url?: string | null
           is_published?: boolean
           position?: number
           search_vector?: unknown
@@ -380,6 +510,7 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           id?: string
+          image_url?: string | null
           is_published?: boolean
           position?: number
           search_vector?: unknown
@@ -627,10 +758,12 @@ export type Database = {
       }
       lessons: {
         Row: {
+          attachment_urls: string[] | null
           body: string | null
           created_at: string
           drip_days: number | null
           id: string
+          image_url: string | null
           is_published: boolean
           module_id: string
           position: number
@@ -639,10 +772,12 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
+          attachment_urls?: string[] | null
           body?: string | null
           created_at?: string
           drip_days?: number | null
           id?: string
+          image_url?: string | null
           is_published?: boolean
           module_id: string
           position?: number
@@ -651,10 +786,12 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
+          attachment_urls?: string[] | null
           body?: string | null
           created_at?: string
           drip_days?: number | null
           id?: string
+          image_url?: string | null
           is_published?: boolean
           module_id?: string
           position?: number
@@ -890,6 +1027,45 @@ export type Database = {
         }
         Relationships: []
       }
+      poll_votes: {
+        Row: {
+          created_at: string
+          id: string
+          option_id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          option_id: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          option_id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poll_votes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "poll_votes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       posts: {
         Row: {
           author_id: string | null
@@ -903,9 +1079,12 @@ export type Database = {
           is_locked: boolean
           is_pinned: boolean
           like_count: number
+          media_urls: string[] | null
+          poll_options: Json | null
           search_vector: unknown
           space_id: string
           title: string | null
+          type: string
           updated_at: string
         }
         Insert: {
@@ -920,9 +1099,12 @@ export type Database = {
           is_locked?: boolean
           is_pinned?: boolean
           like_count?: number
+          media_urls?: string[] | null
+          poll_options?: Json | null
           search_vector?: unknown
           space_id: string
           title?: string | null
+          type?: string
           updated_at?: string
         }
         Update: {
@@ -937,9 +1119,12 @@ export type Database = {
           is_locked?: boolean
           is_pinned?: boolean
           like_count?: number
+          media_urls?: string[] | null
+          poll_options?: Json | null
           search_vector?: unknown
           space_id?: string
           title?: string | null
+          type?: string
           updated_at?: string
         }
         Relationships: [
@@ -973,7 +1158,14 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          interests: string[] | null
+          occupation: string | null
+          persona: string | null
+          plan: string | null
           search_vector: unknown
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string
           updated_at: string
           username: string | null
         }
@@ -983,7 +1175,14 @@ export type Database = {
           created_at?: string
           display_name: string
           id: string
+          interests?: string[] | null
+          occupation?: string | null
+          persona?: string | null
+          plan?: string | null
           search_vector?: unknown
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string
           updated_at?: string
           username?: string | null
         }
@@ -993,7 +1192,14 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          interests?: string[] | null
+          occupation?: string | null
+          persona?: string | null
+          plan?: string | null
           search_vector?: unknown
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string
           updated_at?: string
           username?: string | null
         }
@@ -1196,6 +1402,7 @@ export type Database = {
       }
       spaces: {
         Row: {
+          allow_member_posts: boolean
           community_id: string
           created_at: string
           deleted_at: string | null
@@ -1204,12 +1411,15 @@ export type Database = {
           is_private: boolean
           min_role: Database["public"]["Enums"]["member_role"]
           name: string
+          permissions: Json
           position: number
+          role_permissions: Json
           slug: string
           type: Database["public"]["Enums"]["space_type"]
           updated_at: string
         }
         Insert: {
+          allow_member_posts?: boolean
           community_id: string
           created_at?: string
           deleted_at?: string | null
@@ -1218,12 +1428,15 @@ export type Database = {
           is_private?: boolean
           min_role?: Database["public"]["Enums"]["member_role"]
           name: string
+          permissions?: Json
           position?: number
+          role_permissions?: Json
           slug: string
           type?: Database["public"]["Enums"]["space_type"]
           updated_at?: string
         }
         Update: {
+          allow_member_posts?: boolean
           community_id?: string
           created_at?: string
           deleted_at?: string | null
@@ -1232,7 +1445,9 @@ export type Database = {
           is_private?: boolean
           min_role?: Database["public"]["Enums"]["member_role"]
           name?: string
+          permissions?: Json
           position?: number
+          role_permissions?: Json
           slug?: string
           type?: Database["public"]["Enums"]["space_type"]
           updated_at?: string
@@ -1387,28 +1602,44 @@ export type Database = {
         Args: { p_comments: number; p_created_at: string; p_likes: number }
         Returns: number
       }
-      get_certificate_by_token: {
-        Args: { p_token: string }
-        Returns: {
-          issued_at: string
-          certificate_url: string | null
-          recipient_name: string
-          course_title: string
-          community_name: string
-        }[]
+      check_community_permission: {
+        Args: {
+          p_community_id: string
+          p_permission: string
+          p_user_id: string
+        }
+        Returns: boolean
       }
-      issue_certificate: {
-        Args: { p_enrollment_id: string }
-        Returns: string
+      check_space_permission: {
+        Args: { p_permission: string; p_space_id: string; p_user_id: string }
+        Returns: boolean
       }
       complete_lesson: {
         Args: { p_enrollment_id: string; p_lesson_id: string }
         Returns: undefined
       }
-      create_community: {
-        Args: { p_description?: string; p_name: string; p_slug: string }
-        Returns: string
-      }
+      create_community:
+        | {
+            Args: { p_description?: string; p_name: string; p_slug: string }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_category?: string
+              p_description?: string
+              p_goodbye_message?: string
+              p_is_private?: boolean
+              p_name: string
+              p_price_amount?: number
+              p_price_currency?: string
+              p_pricing_period?: string
+              p_pricing_type?: string
+              p_slug: string
+              p_theme_hue?: number
+              p_welcome_message?: string
+            }
+            Returns: string
+          }
       current_user_id: { Args: never; Returns: string }
       current_user_role: {
         Args: { p_community_id: string }
@@ -1417,13 +1648,33 @@ export type Database = {
       delete_comment: { Args: { p_comment_id: string }; Returns: undefined }
       delete_post: { Args: { p_post_id: string }; Returns: undefined }
       enroll_in_course: { Args: { p_course_id: string }; Returns: string }
+      get_certificate_by_token: {
+        Args: { p_token: string }
+        Returns: {
+          certificate_url: string
+          community_name: string
+          course_title: string
+          issued_at: string
+          recipient_name: string
+        }[]
+      }
+      has_platform_subscription: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
       is_community_member: {
         Args: { p_community_id: string }
         Returns: boolean
       }
       is_community_owner: { Args: { p_community_id: string }; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
-      join_community: { Args: { p_community_id: string }; Returns: undefined }
+      issue_certificate: { Args: { p_enrollment_id: string }; Returns: string }
+      join_community:
+        | { Args: { p_community_id: string }; Returns: undefined }
+        | {
+            Args: { p_community_id: string; p_invite_token?: string }
+            Returns: undefined
+          }
       leave_community: { Args: { p_community_id: string }; Returns: undefined }
       toggle_vote: {
         Args: {
@@ -1435,6 +1686,10 @@ export type Database = {
       }
       transfer_community_ownership: {
         Args: { p_community_id: string; p_new_owner_id: string }
+        Returns: undefined
+      }
+      update_member_permissions: {
+        Args: { p_community_id: string; p_permissions: Json; p_user_id: string }
         Returns: undefined
       }
       update_member_role: {
@@ -1604,6 +1859,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       email_status: ["pending", "sent", "failed", "cancelled"],
@@ -1636,3 +1894,4 @@ export const Constants = {
     },
   },
 } as const
+

@@ -89,6 +89,8 @@ export function CreateSpaceModal({ communityId, isOpen, onClose }: Props) {
             <label style={labelStyle}>
               Space Name
               <input
+                id="space-name"
+                name="name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -102,6 +104,8 @@ export function CreateSpaceModal({ communityId, isOpen, onClose }: Props) {
             <label style={labelStyle}>
               Description
               <textarea
+                id="space-description"
+                name="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="What should members expect here?"
@@ -196,6 +200,8 @@ function PermissionRow({ icon, label, value, onChange }: { icon: React.ReactNode
       </div>
       <div style={{ position: 'relative' }}>
         <select 
+          id={`permission-${label.toLowerCase().replace(/\s+/g, '-')}`}
+          name={`permission-${label.toLowerCase().replace(/\s+/g, '-')}`}
           value={value} 
           onChange={(e) => onChange(e.target.value as PermissionRole)}
           style={selectStyle}
