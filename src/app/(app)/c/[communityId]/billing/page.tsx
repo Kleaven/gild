@@ -1,5 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getSupabaseServerClient } from '@/lib/auth/server';
+import { getCommunityContext } from '@/lib/community/context';
+import { PLANS, type PlanConfig } from '@/lib/billing';
 import { GILD_FONTS } from '@/components/gild';
 import PlanSelector from '@/app/(app)/onboarding/[communityId]/plan/PlanSelector';
 import { CreditCard, Check, Zap, Crown } from 'lucide-react';
@@ -31,79 +33,70 @@ export default async function BillingPage({ params }: Props) {
       margin: '0 auto',
       color: '#111',
     }}>
-      <header style={{ marginBottom: 40 }}>
+      {/* Header */}
+      <header style={{ marginBottom: 48 }}>
         <h1 style={{ 
           fontFamily: GILD_FONTS.display, 
-          fontSize: 32, 
-          fontWeight: 800, 
-          letterSpacing: '-0.03em', 
-          margin: '0 0 8px' 
+          fontSize: 36, 
+          fontWeight: 900, 
+          letterSpacing: '-0.04em', 
+          margin: '0 0 8px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
         }}>
           Billing & Subscription
         </h1>
-        <p style={{ fontSize: 16, color: 'oklch(0.50 0.02 250)', margin: 0 }}>
-          Manage your community's plan, billing cycles, and growth features.
+        <p style={{ color: 'oklch(0.50 0.02 250)', fontSize: 16 }}>
+          Manage your community's growth and financial settings.
         </p>
       </header>
 
-      {/* Current Plan Summary */}
+      {/* Current Plan Card */}
       <section style={{
-        background: 'oklch(0.985 0.003 250)',
-        border: '1px solid oklch(0.94 0.005 250)',
-        borderRadius: 20,
+        background: '#fff',
+        border: '1px solid oklch(0.92 0.01 250)',
+        borderRadius: 24,
         padding: 32,
         marginBottom: 48,
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
+        boxShadow: '0 4px 24px -1px rgba(0,0,0,0.02)',
       }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <div style={{
-              width: 40,
-              height: 40,
-              borderRadius: 10,
-              background: '#111',
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              {currentPlanId === 'pro' ? <Crown size={20} /> : <Zap size={20} />}
-            </div>
-            <div>
-              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'oklch(0.40 0.02 250)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Current Plan
-              </h3>
-              <p style={{ margin: 0, fontSize: 24, fontWeight: 800, fontFamily: GILD_FONTS.display, letterSpacing: '-0.02em' }}>
-                {currentPlanId === 'pro' ? 'Pro Architect' : 'Hobbyist'}
-              </p>
-            </div>
+          <div style={{ 
+            display: 'inline-flex', 
+            alignItems: 'center', 
+            gap: 6, 
+            background: 'oklch(0.96 0.01 250)', 
+            padding: '4px 10px', 
+            borderRadius: 100, 
+            fontSize: 12, 
+            fontWeight: 700, 
+            color: 'oklch(0.40 0.02 250)',
+            marginBottom: 16,
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+          }}>
+            <Crown size={14} />
+            Current Status: {status.toUpperCase()}
           </div>
-          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-            <span style={{ 
-              fontSize: 13, 
-              padding: '4px 10px', 
-              borderRadius: 6, 
-              background: status === 'active' ? 'oklch(0.92 0.16 150)' : 'oklch(0.95 0.005 250)',
-              color: status === 'active' ? 'oklch(0.30 0.16 150)' : 'oklch(0.40 0.02 250)',
-              fontWeight: 700,
-              textTransform: 'capitalize'
-            }}>
-              {status}
-            </span>
-            <p style={{ fontSize: 14, color: 'oklch(0.50 0.02 250)', margin: 0 }}>
-              {status === 'active' ? 'Your next billing cycle starts in 14 days.' : 'Upgrade to unlock full growth potential.'}
-            </p>
-          </div>
+          <h2 style={{ margin: 0, fontSize: 24, fontWeight: 800, fontFamily: GILD_FONTS.display }}>
+            {currentPlanId === 'pro' ? 'Gild Pro' : currentPlanId === 'hobby' ? 'Gild Hobby' : 'Gild Free'}
+          </h2>
+          <p style={{ margin: '4px 0 0', color: 'oklch(0.50 0.02 250)', fontSize: 15 }}>
+            Your community is currently on the {currentPlanId} plan.
+          </p>
         </div>
-        <button className="gild-btn" style={{
+        <button style={{
+          background: '#111',
+          color: '#fff',
           padding: '12px 24px',
-          borderRadius: 12,
-          background: '#fff',
-          border: '1px solid oklch(0.85 0.01 250)',
+          borderRadius: 14,
           fontSize: 14,
           fontWeight: 700,
+          border: 'none',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
@@ -119,7 +112,7 @@ export default async function BillingPage({ params }: Props) {
         Available Plans
       </h2>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-        {Object.values(PLANS).map((plan) => {
+        {(Object.values(PLANS) as PlanConfig[]).map((plan) => {
           const isCurrent = currentPlanId === plan.id;
           return (
             <div key={plan.id} style={{
@@ -154,7 +147,7 @@ export default async function BillingPage({ params }: Props) {
               </p>
               
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px', flex: 1 }}>
-                {plan.features.map(feat => (
+                {plan.features.map((feat: string) => (
                   <li key={feat} style={{ display: 'flex', gap: 10, fontSize: 14, color: 'oklch(0.40 0.02 250)', marginBottom: 12, alignItems: 'center' }}>
                     <Check size={16} color="oklch(0.60 0.15 150)" />
                     {feat}

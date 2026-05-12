@@ -37,8 +37,8 @@ export function StudioDiscover({ initialCommunities }: StudioDiscoverProps) {
   // Note: For a real app, we'd debounced search here, but for v1, 
   // we'll do client-side filtering of the initial batch or use the search param.
   const filtered = communities.filter(c => {
-    const matchesQuery = c.name.toLowerCase().includes(query.toLowerCase()) || 
-                        (c.description?.toLowerCase().includes(query.toLowerCase()) ?? false);
+    const matchesQuery = c.name.toLowerCase().includes(query.toLowerCase()) ||
+      (c.description?.toLowerCase().includes(query.toLowerCase()) ?? false);
     const matchesCategory = selectedCategory === 'All' || c.category === selectedCategory;
     return matchesQuery && matchesCategory;
   });
@@ -93,9 +93,9 @@ export function StudioDiscover({ initialCommunities }: StudioDiscoverProps) {
             maxWidth: 500,
             margin: '0 auto',
           }}>
-            <Search 
-              style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: 'oklch(0.50 0.02 250)' }} 
-              size={18} 
+            <Search
+              style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: 'oklch(0.50 0.02 250)' }}
+              size={18}
             />
             <input
               type="text"
@@ -152,7 +152,7 @@ export function StudioDiscover({ initialCommunities }: StudioDiscoverProps) {
           gap: '40px 32px',
         }}>
           {filtered.map(community => (
-            <Link 
+            <Link
               key={community.id}
               href={`/c/${community.id}/join`}
               style={{ textDecoration: 'none', color: 'inherit' }}
@@ -169,16 +169,16 @@ export function StudioDiscover({ initialCommunities }: StudioDiscoverProps) {
                 cursor: 'pointer',
                 boxShadow: '0 2px 8px oklch(0 0 0 / 0.02)',
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.boxShadow = '0 12px 24px oklch(0 0 0 / 0.06)';
-                e.currentTarget.style.borderColor = 'oklch(0.85 0.01 250)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 2px 8px oklch(0 0 0 / 0.02)';
-                e.currentTarget.style.borderColor = 'oklch(0.94 0.005 250)';
-              }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                  e.currentTarget.style.boxShadow = '0 12px 24px oklch(0 0 0 / 0.06)';
+                  e.currentTarget.style.borderColor = 'oklch(0.85 0.01 250)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 8px oklch(0 0 0 / 0.02)';
+                  e.currentTarget.style.borderColor = 'oklch(0.94 0.005 250)';
+                }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
                   <div style={{

@@ -215,8 +215,15 @@ export type Database = {
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           subscription_status: string
+          theme_hue: number | null
           trial_ends_at: string | null
           updated_at: string
+          welcome_message: string | null
+          pricing_type: string | null
+          price_amount: number | null
+          price_currency: string | null
+          pricing_period: string | null
+          goodbye_message: string | null
         }
         Insert: {
           banner_url?: string | null
@@ -237,6 +244,13 @@ export type Database = {
           subscription_status?: string
           trial_ends_at?: string | null
           updated_at?: string
+          theme_hue?: number | null
+          welcome_message?: string | null
+          pricing_type?: string | null
+          price_amount?: number | null
+          price_currency?: string | null
+          pricing_period?: string | null
+          goodbye_message?: string | null
         }
         Update: {
           banner_url?: string | null
@@ -257,6 +271,13 @@ export type Database = {
           subscription_status?: string
           trial_ends_at?: string | null
           updated_at?: string
+          theme_hue?: number | null
+          welcome_message?: string | null
+          pricing_type?: string | null
+          price_amount?: number | null
+          price_currency?: string | null
+          pricing_period?: string | null
+          goodbye_message?: string | null
         }
         Relationships: [
           {
@@ -278,6 +299,7 @@ export type Database = {
           tier_id: string | null
           updated_at: string
           user_id: string
+          permissions: Json
         }
         Insert: {
           community_id: string
@@ -288,6 +310,7 @@ export type Database = {
           tier_id?: string | null
           updated_at?: string
           user_id: string
+          permissions?: Json
         }
         Update: {
           community_id?: string
@@ -298,6 +321,7 @@ export type Database = {
           tier_id?: string | null
           updated_at?: string
           user_id?: string
+          permissions?: Json
         }
         Relationships: [
           {

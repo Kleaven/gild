@@ -254,12 +254,163 @@ function StatCard({ label, value, icon, hue }: { label: string, value: string | 
         }}>{label}</p>
         <p style={{ 
           fontFamily: GILD_FONTS.display, 
-          fontSize: 28, 
-          fontWeight: 800, 
-          margin: 0,
-          letterSpacing: '-0.03em',
-          color: '#111'
-        }}>{typeof value === 'number' ? value.toLocaleString() : value}</p>
+        <div>
+          <div style={{ 
+            display: 'inline-flex', 
+            alignItems: 'center', 
+            gap: 6, 
+            background: 'oklch(0.96 0.01 250)', 
+            padding: '4px 10px', 
+            borderRadius: 100, 
+            fontSize: 12, 
+            fontWeight: 700, 
+            color: 'oklch(0.40 0.02 250)',
+            marginBottom: 16,
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em'
+          }}>
+            <BarChart3 size={14} />
+            Commander Console
+          </div>
+          <h1 style={{ 
+            fontFamily: GILD_FONTS.display, 
+            fontSize: 48, 
+            fontWeight: 900, 
+            letterSpacing: '-0.05em', 
+            margin: 0,
+            lineHeight: 0.9 
+          }}>
+            {community.name}
+          </h1>
+        </div>
+
+        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'oklch(0.60 0.20 150)', boxShadow: '0 0 12px oklch(0.60 0.20 150)' }} />
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'oklch(0.40 0.02 250)' }}>
+            {onlineUsers?.length || 0} Online
+          </span>
+        </div>
+      </header>
+
+      {/* Hero Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 48 }}>
+        {[
+          { label: 'Momentum', value: stats.totalMembers, icon: <Users size={20} />, hue: 220, trend: '+12%' },
+          { label: 'Conversations', value: stats.totalPosts, icon: <MessageSquare size={20} />, hue: 280, trend: '+5%' },
+          { label: 'Engagement', value: stats.totalComments, icon: <Layers size={20} />, hue: 150, trend: '+18%' },
+          { label: 'Revenue (MRR)', value: '$0', icon: <DollarSign size={20} />, hue: 40, trend: '0%' },
+        ].map((stat) => (
+          <div key={stat.label} style={{
+            background: '#fff',
+            border: '1px solid oklch(0.92 0.01 250)',
+            borderRadius: 24,
+            padding: 32,
+            position: 'relative',
+            overflow: 'hidden',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+              <div style={{ 
+                width: 44, 
+                height: 44, 
+                borderRadius: 14, 
+                background: `oklch(0.96 0.01 ${stat.hue})`, 
+                color: `oklch(0.50 0.20 ${stat.hue})`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                {stat.icon}
+              </div>
+              <span style={{ 
+                fontSize: 12, 
+                fontWeight: 700, 
+                color: stat.trend.startsWith('+') ? 'oklch(0.60 0.20 150)' : 'oklch(0.50 0.02 250)',
+                background: stat.trend.startsWith('+') ? 'oklch(0.96 0.02 150)' : 'oklch(0.96 0.01 250)',
+                padding: '4px 8px',
+                borderRadius: 8
+              }}>
+                <TrendingUpIcon size={12} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />
+                {stat.trend}
+              </span>
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'oklch(0.50 0.02 250)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>
+              {stat.label}
+            </div>
+            <div style={{ fontSize: 32, fontWeight: 900, fontFamily: GILD_FONTS.display, letterSpacing: '-0.02em' }}>
+              {stat.value}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 24 }}>
+        {/* Main Growth Chart */}
+        <div style={{
+          background: '#fff',
+          border: '1px solid oklch(0.92 0.01 250)',
+          borderRadius: 32,
+          padding: 40,
+          display: 'flex',
+          flexDirection: 'column',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 40 }}>
+            <div>
+              <h2 style={{ fontSize: 24, fontWeight: 900, fontFamily: GILD_FONTS.display, margin: 0, letterSpacing: '-0.03em' }}>Community Pulse</h2>
+              <p style={{ margin: '4px 0 0', color: 'oklch(0.50 0.02 250)', fontSize: 14 }}>Real-time growth and engagement dynamics</p>
+            </div>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'oklch(0.60 0.18 220)' }} />
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'oklch(0.40 0.02 250)' }}>Growth</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'oklch(0.60 0.18 150)' }} />
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'oklch(0.40 0.02 250)' }}>Talk</span>
+              </div>
+            </div>
+          </div>
+          
+          <div style={{ flex: 1, minHeight: 300 }}>
+            <GodTierChart data={stats.dailyStats} />
+          </div>
+        </div>
+
+        {/* Right Rail: Activity & Members */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {/* Active Members Mini-List */}
+          <div style={{
+            background: '#fff',
+            border: '1px solid oklch(0.92 0.01 250)',
+            borderRadius: 32,
+            padding: 32,
+          }}>
+            <h3 style={{ fontSize: 18, fontWeight: 900, fontFamily: GILD_FONTS.display, margin: '0 0 20px', letterSpacing: '-0.02em' }}>Live Momentum</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {onlineUsers?.slice(0, 5).map((user) => (
+                <div key={user.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ 
+                    width: 36, 
+                    height: 36, 
+                    borderRadius: 12, 
+                    background: `oklch(0.92 0.04 ${user.hue || 200})`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 14,
+                    fontWeight: 800,
+                    color: `oklch(0.40 0.15 ${user.hue || 200})`
+                  }}>
+                    {user.name?.[0]}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700 }}>{user.name}</div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: 'oklch(0.60 0.20 150)', textTransform: 'uppercase' }}>Active</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -272,17 +423,19 @@ function GodTierChart({ data }: { data: { date: string; posts: number; comments:
   
   const getPoints = (valKey: 'posts' | 'comments') => {
     return data.map((d, i) => {
-      const x = (i / (data.length - 1)) * 90 + 5; // 5% padding on left/right
-      const y = 90 - (d[valKey] / maxVal) * 80; // 10% padding on top/bottom
+      const x = (i / (data.length - 1)) * 90 + 5; 
+      const y = 90 - (d[valKey] / maxVal) * 80; 
       return { x, y };
     });
   };
 
   const renderPath = (points: { x: number, y: number }[], hue: number, fill = false) => {
+    if (!points || points.length < 1) return null;
     let d = `M ${points[0].x} ${points[0].y}`;
     for (let i = 0; i < points.length - 1; i++) {
       const p0 = points[i];
       const p1 = points[i + 1];
+      if (!p0 || !p1) continue;
       const cp1x = p0.x + (p1.x - p0.x) / 2;
       const cp1y = p0.y;
       const cp2x = p0.x + (p1.x - p0.x) / 2;
@@ -291,7 +444,9 @@ function GodTierChart({ data }: { data: { date: string; posts: number; comments:
     }
     
     if (fill) {
-      const fillD = `${d} L ${points[points.length-1].x} 100 L ${points[0].x} 100 Z`;
+      const lastPoint = points[points.length - 1];
+      if (!lastPoint) return null;
+      const fillD = `${d} L ${lastPoint.x} 100 L ${points[0].x} 100 Z`;
       return <path d={fillD} fill={`url(#grad-${hue})`} opacity="0.1" />;
     }
     return <path d={d} fill="none" stroke={`oklch(0.60 0.18 ${hue})`} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />;
@@ -313,11 +468,6 @@ function GodTierChart({ data }: { data: { date: string; posts: number; comments:
             <stop offset="100%" stopColor="oklch(0.60 0.18 150)" stopOpacity="0" />
           </linearGradient>
         </defs>
-        
-        {/* Grid Lines */}
-        {[0, 25, 50, 75, 100].map(v => (
-          <line key={v} x1="0" y1={v} x2="100" y2={v} stroke="oklch(0.96 0.005 250)" strokeWidth="0.5" />
-        ))}
         
         {renderPath(commentPoints, 150, true)}
         {renderPath(commentPoints, 150)}
@@ -341,10 +491,14 @@ function MiniSparkline({ data, hue }: { data: number[], hue: number }) {
     y: 100 - (v / max) * 90
   }));
   
+  if (!points[0]) return null;
   let d = `M ${points[0].x} ${points[0].y}`;
   for (let i = 0; i < points.length - 1; i++) {
-    const cp1x = points[i].x + (points[i+1].x - points[i].x) / 2;
-    d += ` L ${cp1x} ${points[i].y} L ${cp1x} ${points[i+1].y} L ${points[i+1].x} ${points[i+1].y}`;
+    const p0 = points[i];
+    const p1 = points[i+1];
+    if (!p0 || !p1) continue;
+    const cp1x = p0.x + (p1.x - p0.x) / 2;
+    d += ` L ${cp1x} ${p0.y} L ${cp1x} ${p1.y} L ${p1.x} ${p1.y}`;
   }
 
   return (
@@ -353,4 +507,3 @@ function MiniSparkline({ data, hue }: { data: number[], hue: number }) {
     </svg>
   );
 }
-
