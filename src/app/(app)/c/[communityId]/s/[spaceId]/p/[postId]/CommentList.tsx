@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useTransition, useOptimistic } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CommentNode } from '@/lib/comments';
 import { deleteComment, updateComment } from '@/lib/comments/actions';
@@ -15,11 +15,28 @@ type Props = {
   isMod?: boolean;
 };
 
+type OptimisticAction = 
+  | { type: 'edit'; id: string; body: string }
+  | { type: 'delete'; id: string };
+
 export default function CommentList({ initialComments, postId, currentUserId, isMod }: Props) {
   const router = useRouter();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editBody, setEditBody] = useState('');
   const [isPending, startTransition] = useTransition();
+
+  const [optimisticComments, addOptimisticAction] = useOptimistic(
+    initialComments,
+    (state: CommentNode[], action: OptimisticAction) => {
+      if (action.type === 'edit') {
+        return state.map(c => c.id === action.id ? { ...c, body: action.body } : c);
+      }
+      if (action.type === 'delete') {
+        return state.filter(c => c.id !== action.id);
+      }
+      return state;
+    }
+  );
 
   useRealtimeComments(postId, () => {
     router.refresh();
@@ -27,35 +44,43 @@ export default function CommentList({ initialComments, postId, currentUserId, is
 
   const handleDelete = (commentId: string) => {
     if (!confirm('Are you sure you want to delete this comment?')) return;
+    
     startTransition(async () => {
+      addOptimisticAction({ type: 'delete', id: commentId });
       try {
         await deleteComment(commentId);
         router.refresh();
       } catch (err) {
         alert(err instanceof Error ? err.message : 'Failed to delete');
+        // router.refresh() will revert the optimistic change if it failed on server
+        router.refresh();
       }
     });
   };
 
   const handleUpdate = (commentId: string) => {
+    const newBody = editBody;
+    setEditingId(null);
+    
     startTransition(async () => {
+      addOptimisticAction({ type: 'edit', id: commentId, body: newBody });
       try {
-        await updateComment(commentId, editBody);
-        setEditingId(null);
+        await updateComment(commentId, newBody);
         router.refresh();
       } catch (err) {
         alert(err instanceof Error ? err.message : 'Failed to update');
+        router.refresh();
       }
     });
   };
 
-  if (initialComments.length === 0) {
+  if (optimisticComments.length === 0) {
     return <p style={{ color: 'oklch(0.55 0.02 250)', fontSize: 14, fontFamily: GILD_FONTS.sans }}>No comments yet.</p>;
   }
 
   return (
     <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 16, fontFamily: GILD_FONTS.sans }}>
-      {initialComments.map((comment) => {
+      {optimisticComments.map((comment) => {
         const isAuthor = currentUserId === comment.author_id;
         const createdAt = new Date(comment.created_at);
         const hoursSinceCreation = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60);
@@ -74,6 +99,8 @@ export default function CommentList({ initialComments, postId, currentUserId, is
               background: '#fff',
               boxShadow: '0 2px 8px oklch(0 0 0 / 0.02)',
               position: 'relative',
+              opacity: isPending ? 0.7 : 1,
+              transition: 'opacity 0.2s ease',
             }}
           >
             <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -153,6 +180,59 @@ export default function CommentList({ initialComments, postId, currentUserId, is
     </ul>
   );
 }
+
+const iconBtnStyle: React.CSSProperties = {
+  background: 'none',
+  border: 'none',
+  padding: 4,
+  cursor: 'pointer',
+  color: 'oklch(0.55 0.02 250)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderRadius: 4,
+  transition: 'all 0.2s ease',
+};
+
+const editInputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '12px',
+  borderRadius: 8,
+  border: '1.5px solid oklch(0.20 0.02 250)',
+  fontSize: 14,
+  fontFamily: 'inherit',
+  outline: 'none',
+  resize: 'none',
+  boxSizing: 'border-box',
+};
+
+const cancelBtnStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 6,
+  padding: '6px 12px',
+  borderRadius: 6,
+  background: 'none',
+  border: 'none',
+  fontSize: 12,
+  fontWeight: 600,
+  color: '#666',
+  cursor: 'pointer',
+};
+
+const saveBtnStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 6,
+  padding: '6px 12px',
+  borderRadius: 6,
+  background: '#111',
+  color: '#fff',
+  border: 'none',
+  fontSize: 12,
+  fontWeight: 700,
+  cursor: 'pointer',
+};
 
 const iconBtnStyle: React.CSSProperties = {
   background: 'none',
