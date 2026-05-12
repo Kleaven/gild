@@ -2,7 +2,8 @@
 
 import React, { useState, useTransition } from 'react';
 import { GILD_FONTS } from '@/components/gild';
-import { updateLesson, uploadMedia } from '@/app/actions/courses';
+import { updateLesson } from '@/app/actions/courses';
+import { uploadMedia } from '@/app/actions/media';
 import { X, Save, Video, Image as ImageIcon, FileText, Plus, Trash2 } from 'lucide-react';
 
 interface LessonEditorModalProps {

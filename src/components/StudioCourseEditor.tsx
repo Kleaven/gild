@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { GILD_FONTS } from '@/components/gild';
 import type { CourseWithModules } from '@/lib/courses';
 import { updateCourse, createModule, updateModule, deleteModule, createLesson, updateLesson, deleteLesson } from '@/app/actions/courses';
-import { uploadMedia } from '@/app/actions';
+import { uploadMedia } from '@/app/actions/media';
 import { 
   Plus, 
   Trash2, 
