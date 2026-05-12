@@ -92,7 +92,7 @@ export function StudioDashboard({
               }}>
                 <p style={{ fontSize: 12, fontWeight: 700, color: 'oklch(0.55 0.02 250)', margin: '0 0 4px', textTransform: 'uppercase' }}>Revenue Trend</p>
                 <div style={{ height: 40 }}>
-                   <MiniSparkline data={stats.revenueTimeSeries.map(d => d.amount)} hue={150} />
+                   <MiniSparkline data={(stats.revenueTimeSeries || []).map(d => d.amount)} hue={150} />
                 </div>
               </div>
             </div>
@@ -137,7 +137,7 @@ export function StudioDashboard({
                 </div>
                 
                 <div style={{ height: 300 }}>
-                   <GodTierChart data={stats.activityTimeSeries} />
+                   <GodTierChart data={stats.activityTimeSeries || []} />
                 </div>
               </div>
 
@@ -162,7 +162,7 @@ export function StudioDashboard({
                      <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>Top Performing Spaces</h3>
                    </div>
                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                      {stats.topSpaces.slice(0, 3).map((s, i) => (
+                      {(stats.topSpaces || []).slice(0, 3).map((s, i) => (
                         <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <span style={{ fontSize: 14, fontWeight: 600, color: '#333' }}>#{s.name}</span>
                           <span style={{ fontSize: 11, fontWeight: 800, color: 'oklch(0.45 0.16 280)', background: 'oklch(0.96 0.06 280 / 0.1)', padding: '3px 8px', borderRadius: 8 }}>{s.count} pts</span>
