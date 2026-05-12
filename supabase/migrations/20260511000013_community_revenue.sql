@@ -17,16 +17,26 @@ CREATE TABLE IF NOT EXISTS public.community_revenue (
 ALTER TABLE public.community_revenue ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Community owners can view their revenue
-CREATE POLICY "Community owners can view revenue"
-  ON public.community_revenue
-  FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.communities
-      WHERE id = community_revenue.community_id
-      AND owner_id = auth.uid()
-    )
-  );
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE tablename = 'community_revenue' 
+    AND policyname = 'Community owners can view revenue'
+  ) THEN
+    CREATE POLICY "Community owners can view revenue"
+      ON public.community_revenue
+      FOR SELECT
+      USING (
+        EXISTS (
+          SELECT 1 FROM public.communities
+          WHERE id = community_revenue.community_id
+          AND owner_id = auth.uid()
+        )
+      );
+  END IF;
+END
+$$;
 
 -- Index for dashboard performance
 CREATE INDEX IF NOT EXISTS idx_community_revenue_community_id ON public.community_revenue(community_id);

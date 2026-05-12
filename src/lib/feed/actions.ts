@@ -45,7 +45,10 @@ export async function createPost(input: CreatePostInput): Promise<{ postId: stri
     .eq('id', spaceId)
     .eq('community_id', communityId)
     .maybeSingle();
-  if (spaceError) throw new Error(spaceError.message);
+  if (spaceError) {
+    console.error('[createPost] Error fetching space:', spaceError);
+    throw new Error(spaceError.message);
+  }
   if (!space) throw new Error('[gild] space not found in community');
 
   // ─── Permission Check ──────────────────────────────────────────────────────
