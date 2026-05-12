@@ -110,7 +110,12 @@ export default async function PostPage({ params }: Props) {
           {commentsResult.data.length} comment{commentsResult.data.length !== 1 ? 's' : ''}
         </h2>
         <CommentForm postId={postId} />
-        <CommentList initialComments={commentsResult.data} postId={postId} />
+        <CommentList 
+          initialComments={commentsResult.data} 
+          postId={postId} 
+          currentUserId={user?.id}
+          isMod={isMod}
+        />
       </section>
     </div>
   );

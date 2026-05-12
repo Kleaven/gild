@@ -88,8 +88,74 @@ export async function createComment(input: CreateCommentInput): Promise<{ commen
 
 export async function deleteComment(commentId: string): Promise<void> {
   const supabase = await getSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('[gild] not authenticated');
+
+  const { data: comment, error: fetchError } = await supabase
+    .from('comments')
+    .select('author_id, created_at, community_id')
+    .eq('id', commentId)
+    .single();
+
+  if (fetchError || !comment) throw new Error('[gild] comment not found');
+
+  const isAuthor = comment.author_id === user.id;
+  const { data: isModerator } = await supabase.rpc('user_has_min_role', {
+    p_community_id: comment.community_id,
+    p_min_role: 'moderator',
+  });
+
+  if (!isAuthor && !isModerator) {
+    throw new Error('[gild] insufficient permissions to delete this comment');
+  }
+
+  if (isAuthor && !isModerator) {
+    const hoursSinceCreation = (Date.now() - new Date(comment.created_at).getTime()) / (1000 * 60 * 60);
+    if (hoursSinceCreation > 5) {
+      throw new Error('[gild] comments can only be deleted within the first 5 hours of posting');
+    }
+  }
+
   const { error } = await supabase.rpc('delete_comment', { p_comment_id: commentId });
   if (error) throw new Error(error.message);
+}
+
+export async function updateComment(commentId: string, body: string): Promise<void> {
+  const supabase = await getSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('[gild] not authenticated');
+
+  const { data: comment, error: fetchError } = await supabase
+    .from('comments')
+    .select('author_id, created_at, community_id')
+    .eq('id', commentId)
+    .single();
+
+  if (fetchError || !comment) throw new Error('[gild] comment not found');
+
+  const isAuthor = comment.author_id === user.id;
+  const { data: isModerator } = await supabase.rpc('user_has_min_role', {
+    p_community_id: comment.community_id,
+    p_min_role: 'moderator',
+  });
+
+  if (!isAuthor && !isModerator) {
+    throw new Error('[gild] insufficient permissions to edit this comment');
+  }
+
+  if (isAuthor && !isModerator) {
+    const hoursSinceCreation = (Date.now() - new Date(comment.created_at).getTime()) / (1000 * 60 * 60);
+    if (hoursSinceCreation > 5) {
+      throw new Error('[gild] comments can only be edited within the first 5 hours of posting');
+    }
+  }
+
+  const { error: updateError } = await supabase
+    .from('comments')
+    .update({ body, updated_at: new Date().toISOString() })
+    .eq('id', commentId);
+
+  if (updateError) throw new Error(updateError.message);
 }
 
 export async function toggleVote(
