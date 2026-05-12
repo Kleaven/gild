@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useTransition, useOptimistic } from 'react';
+import React, { useState, useTransition, useOptimistic, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CommentNode } from '@/lib/comments';
 import { deleteComment, updateComment } from '@/lib/comments/actions';
@@ -24,6 +24,7 @@ export default function CommentList({ initialComments, postId, currentUserId, is
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editBody, setEditBody] = useState('');
   const [isPending, startTransition] = useTransition();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [optimisticComments, addOptimisticAction] = useOptimistic(
     initialComments,
@@ -37,6 +38,15 @@ export default function CommentList({ initialComments, postId, currentUserId, is
       return state;
     }
   );
+
+  // Place cursor at the end of text when starting edit
+  useEffect(() => {
+    if (editingId && textareaRef.current) {
+      const length = textareaRef.current.value.length;
+      textareaRef.current.focus();
+      textareaRef.current.setSelectionRange(length, length);
+    }
+  }, [editingId]);
 
   useRealtimeComments(postId, () => {
     router.refresh();
@@ -52,7 +62,6 @@ export default function CommentList({ initialComments, postId, currentUserId, is
         router.refresh();
       } catch (err) {
         alert(err instanceof Error ? err.message : 'Failed to delete');
-        // router.refresh() will revert the optimistic change if it failed on server
         router.refresh();
       }
     });
@@ -60,6 +69,7 @@ export default function CommentList({ initialComments, postId, currentUserId, is
 
   const handleUpdate = (commentId: string) => {
     const newBody = editBody;
+    // Set to null immediately for instant UI response
     setEditingId(null);
     
     startTransition(async () => {
@@ -99,7 +109,7 @@ export default function CommentList({ initialComments, postId, currentUserId, is
               background: '#fff',
               boxShadow: '0 2px 8px oklch(0 0 0 / 0.02)',
               position: 'relative',
-              opacity: isPending ? 0.7 : 1,
+              opacity: isPending ? 0.8 : 1,
               transition: 'opacity 0.2s ease',
             }}
           >
@@ -150,11 +160,11 @@ export default function CommentList({ initialComments, postId, currentUserId, is
             {isEditing ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <textarea
+                  ref={textareaRef}
                   value={editBody}
                   onChange={(e) => setEditBody(e.target.value)}
                   style={editInputStyle}
                   rows={3}
-                  autoFocus
                 />
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
                   <button onClick={() => setEditingId(null)} style={cancelBtnStyle}>
