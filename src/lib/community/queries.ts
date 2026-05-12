@@ -186,7 +186,10 @@ export async function getUserCommunities(
     .eq('user_id', userId)
     .neq('role', 'banned');
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error('[getUserCommunities] error:', error);
+    return { owned: [], managed: [], joined: [] };
+  }
 
   const owned: Community[] = [];
   const managed: Community[] = [];

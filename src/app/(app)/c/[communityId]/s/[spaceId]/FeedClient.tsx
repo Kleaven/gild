@@ -168,7 +168,10 @@ export default function FeedClient({
     setFormError(null);
 
     try {
-      await createPost({ communityId, spaceId, title: title || undefined, body, mediaUrls, type, pollOptions });
+      const result = await createPost({ communityId, spaceId, title: title || undefined, body, mediaUrls, type, pollOptions });
+      if (result.error) {
+        throw new Error(result.error);
+      }
       setIsFormVisible(false);
     } catch (err) {
       startTransition(() => {
@@ -176,7 +179,6 @@ export default function FeedClient({
       });
       const msg = err instanceof Error ? err.message : 'Failed to create post';
       setFormError(msg);
-      throw new Error(msg);
     }
   }
 

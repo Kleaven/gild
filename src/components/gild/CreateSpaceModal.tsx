@@ -4,7 +4,7 @@ import React, { useState, useTransition } from 'react';
 import { createSpace } from '@/app/actions';
 import { GILD_FONTS } from '@/components/gild';
 import { useRouter } from 'next/navigation';
-import { Shield, MessageSquare, Reply, Heart, Lock, Globe, ChevronDown } from 'lucide-react';
+import { Shield, MessageSquare, Reply, Heart, Lock, Globe, ChevronDown, AlertCircle } from 'lucide-react';
 
 interface Props {
   communityId: string;
@@ -25,16 +25,18 @@ export function CreateSpaceModal({ communityId, isOpen, onClose }: Props) {
     react: 'member' as PermissionRole,
   });
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
+    setError(null);
 
     startTransition(async () => {
       try {
-        const { spaceId } = await createSpace({
+        const result = await createSpace({
           communityId,
           name,
           description,
@@ -55,12 +57,18 @@ export function CreateSpaceModal({ communityId, isOpen, onClose }: Props) {
             }
           },
         });
+
+        if (result.error) {
+          throw new Error(result.error);
+        }
+
         setName('');
         setDescription('');
         onClose();
-        router.push(`/c/${communityId}/s/${spaceId}`);
+        router.push(`/c/${communityId}/s/${result.spaceId}`);
       } catch (err) {
         console.error('Failed to create space', err);
+        setError(err instanceof Error ? err.message : 'Failed to create space');
       }
     });
   }
@@ -150,6 +158,22 @@ export function CreateSpaceModal({ communityId, isOpen, onClose }: Props) {
               />
             </div>
           </section>
+          
+          {error && (
+            <div style={{ 
+              padding: '0 32px', 
+              marginTop: 20, 
+              color: 'oklch(0.50 0.15 25)', 
+              fontSize: 13, 
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}>
+              <AlertCircle size={14} />
+              {error}
+            </div>
+          )}
 
           <div style={footerStyle}>
             <button type="button" onClick={onClose} style={cancelBtnStyle}>Cancel</button>

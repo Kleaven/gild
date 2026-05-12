@@ -10,19 +10,24 @@ import {
 } from '../../lib/community/spaces';
 import type { CreateSpaceInput, UpdateSpaceInput } from '../../lib/community/types';
 
-export async function createSpace(input: CreateSpaceInput): Promise<{ spaceId: string }> {
-  const supabase = await getSupabaseServerClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (error || !user) throw new Error('[gild] not authenticated');
+export async function createSpace(input: CreateSpaceInput): Promise<{ spaceId?: string; error?: string }> {
+  try {
+    const supabase = await getSupabaseServerClient();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+    if (error || !user) return { error: '[gild] not authenticated' };
 
-  const result = await libCreateSpace(input);
+    const result = await libCreateSpace(input);
 
-  revalidatePath(`/c/${input.communityId}`);
+    revalidatePath(`/c/${input.communityId}`);
 
-  return result;
+    return result;
+  } catch (err) {
+    console.error('[createSpace] action error:', err);
+    return { error: err instanceof Error ? err.message : 'Failed to create space' };
+  }
 }
 
 // communityId is a wrapper-only param — UpdateSpaceInput does not carry it

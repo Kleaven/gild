@@ -10,22 +10,22 @@ import {
 } from '../../lib/feed/actions';
 import type { CreatePostInput } from '../../lib/feed/types';
 
-export async function createPost(input: CreatePostInput): Promise<{ postId: string }> {
-  const supabase = await getSupabaseServerClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (error || !user) throw new Error('[gild] not authenticated');
+export async function createPost(input: CreatePostInput): Promise<{ postId?: string; error?: string }> {
+  try {
+    const supabase = await getSupabaseServerClient();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+    if (error || !user) return { error: '[gild] not authenticated' };
 
-    try {
-      const result = await libCreatePost(input);
-      revalidatePath(`/c/${input.communityId}/s/${input.spaceId}`);
-      return result;
-    } catch (err) {
-      console.error('[createPost] action error:', err);
-      throw err; // Re-throw so Next.js handles the error response
-    }
+    const result = await libCreatePost(input);
+    revalidatePath(`/c/${input.communityId}/s/${input.spaceId}`);
+    return result;
+  } catch (err) {
+    console.error('[createPost] action error:', err);
+    return { error: err instanceof Error ? err.message : 'Failed to create post' };
+  }
 }
 
 export async function deletePost(postId: string): Promise<void> {

@@ -61,9 +61,9 @@ function formatIssues(label: string, issues: readonly z.ZodIssue[]): string[] {
 }
 
 function reportAndExit(lines: string[]): never {
-  lines.push('Populate the missing keys in .env.local — see .env.example.');
-  console.error(lines.join('\n'));
-  process.exit(1);
+  const message = lines.join('\n');
+  console.error(message);
+  throw new Error(message);
 }
 
 function validateEnv(): Env {
@@ -91,7 +91,7 @@ function validateEnv(): Env {
       }
       reportAndExit(lines);
     }
-    return { ...serverResult.data, ...clientResult.data };
+    return { ...serverResult.data, ...clientResult.data } as Env;
   }
 
   if (!clientResult.success) {
