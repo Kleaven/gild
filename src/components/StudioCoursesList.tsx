@@ -3,6 +3,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { CoverArt, GILD_FONTS } from '@/components/gild';
+import { CreateCourseModal } from '@/components/gild/CreateCourseModal';
+import { Plus } from 'lucide-react';
 import type { Course } from '@/lib/courses';
 
 interface StudioCoursesListProps {
@@ -15,6 +17,8 @@ interface StudioCoursesListProps {
 }
 
 export function StudioCoursesList({ community, courses, isAdminOrOwner }: StudioCoursesListProps) {
+  const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
+
   const visibleCourses = isAdminOrOwner
     ? courses
     : courses.filter((c) => c.is_published);
@@ -30,48 +34,73 @@ export function StudioCoursesList({ community, courses, isAdminOrOwner }: Studio
       }}
     >
       <header style={{ marginBottom: 32 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 8 }}>
-          <h1
-            style={{
-              fontFamily: GILD_FONTS.display,
-              fontSize: 40,
-              fontWeight: 800,
-              letterSpacing: '-0.04em',
-              margin: 0,
-              lineHeight: 1,
-              color: '#111',
-            }}
-          >
-            Courses
-          </h1>
-          <span
-            style={{
-              padding: '3px 10px',
-              borderRadius: 999,
-              fontSize: 12,
-              fontWeight: 600,
-              background: 'oklch(0.96 0.005 250)',
-              color: 'oklch(0.40 0.02 250)',
-              fontFamily: GILD_FONTS.mono,
-            }}
-          >
-            {visibleCourses.length}
-          </span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 8 }}>
+              <h1
+                style={{
+                  fontFamily: GILD_FONTS.display,
+                  fontSize: 40,
+                  fontWeight: 800,
+                  letterSpacing: '-0.04em',
+                  margin: 0,
+                  lineHeight: 1,
+                  color: '#111',
+                }}
+              >
+                Courses
+              </h1>
+              <span
+                style={{
+                  padding: '3px 10px',
+                  borderRadius: 999,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  background: 'oklch(0.96 0.005 250)',
+                  color: 'oklch(0.40 0.02 250)',
+                  fontFamily: GILD_FONTS.mono,
+                }}
+              >
+                {visibleCourses.length}
+              </span>
+            </div>
+            <p
+              style={{
+                fontSize: 16,
+                color: 'oklch(0.55 0.02 250)',
+                margin: 0,
+                lineHeight: 1.5,
+              }}
+            >
+              Long-form content from {community.name}. Learn at your own pace.
+            </p>
+          </div>
+          {isAdminOrOwner && (
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '10px 20px',
+                borderRadius: 12,
+                background: '#111',
+                color: '#fff',
+                border: 'none',
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              <Plus size={18} />
+              New Course
+            </button>
+          )}
         </div>
-        <p
-          style={{
-            fontSize: 16,
-            color: 'oklch(0.55 0.02 250)',
-            margin: 0,
-            lineHeight: 1.5,
-          }}
-        >
-          Long-form content from {community.name}. Learn at your own pace.
-        </p>
       </header>
 
       {visibleCourses.length === 0 ? (
-        <EmptyState isAdminOrOwner={isAdminOrOwner} />
+        <EmptyState isAdminOrOwner={isAdminOrOwner} onOpenCreateModal={() => setIsCreateModalOpen(true)} />
       ) : (
         <div
           style={{
@@ -90,6 +119,12 @@ export function StudioCoursesList({ community, courses, isAdminOrOwner }: Studio
           ))}
         </div>
       )}
+
+      <CreateCourseModal
+        communityId={community.id}
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
     </div>
   );
 }
@@ -188,7 +223,7 @@ function CourseCard({
   );
 }
 
-function EmptyState({ isAdminOrOwner }: { isAdminOrOwner: boolean }) {
+function EmptyState({ isAdminOrOwner, onOpenCreateModal }: { isAdminOrOwner: boolean, onOpenCreateModal: () => void }) {
   return (
     <div
       style={{
@@ -212,11 +247,28 @@ function EmptyState({ isAdminOrOwner }: { isAdminOrOwner: boolean }) {
       >
         No courses yet
       </h2>
-      <p style={{ fontSize: 15, color: 'oklch(0.55 0.02 250)', margin: 0, lineHeight: 1.5 }}>
+      <p style={{ fontSize: 15, color: 'oklch(0.55 0.02 250)', margin: '0 0 24px', lineHeight: 1.5 }}>
         {isAdminOrOwner
           ? 'Create your first course to share long-form content with your community.'
           : 'Courses will appear here when they are published.'}
       </p>
+      {isAdminOrOwner && (
+        <button
+          onClick={onOpenCreateModal}
+          style={{
+            padding: '12px 24px',
+            borderRadius: 12,
+            background: '#111',
+            color: '#fff',
+            border: 'none',
+            fontSize: 15,
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}
+        >
+          Create Course
+        </button>
+      )}
     </div>
   );
 }

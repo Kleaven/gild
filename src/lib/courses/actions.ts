@@ -19,15 +19,17 @@ type LessonUpdate = Database['public']['Tables']['lessons']['Update'];
 
 const createCourseSchema = z.object({
   communityId: z.string().uuid(),
-  spaceId: z.string().uuid(),
+  spaceId: z.string().uuid().optional(),
   title: z.string().min(1).max(300),
   description: z.string().max(2000).optional(),
+  imageUrl: z.string().url().optional().or(z.literal('')),
   isPublished: z.boolean().default(false),
 });
 
 const updateCourseSchema = z.object({
   title: z.string().min(1).max(300).optional(),
   description: z.string().max(2000).optional(),
+  imageUrl: z.string().url().optional().or(z.literal('')),
   isPublished: z.boolean().optional(),
 });
 
@@ -45,7 +47,9 @@ const createLessonSchema = z.object({
   moduleId: z.string().uuid(),
   title: z.string().min(1).max(300),
   body: z.string().max(100000).optional(),
-  videoUrl: z.string().url().optional(),
+  videoUrl: z.string().url().optional().or(z.literal('')),
+  imageUrl: z.string().url().optional().or(z.literal('')),
+  attachmentUrls: z.array(z.string().url()).optional(),
   position: z.number().int().min(0).default(0),
   isPublished: z.boolean().default(false),
 });
@@ -53,7 +57,9 @@ const createLessonSchema = z.object({
 const updateLessonSchema = z.object({
   title: z.string().min(1).max(300).optional(),
   body: z.string().max(100000).optional(),
-  videoUrl: z.string().url().optional(),
+  videoUrl: z.string().url().optional().or(z.literal('')),
+  imageUrl: z.string().url().optional().or(z.literal('')),
+  attachmentUrls: z.array(z.string().url()).optional(),
   isPublished: z.boolean().optional(),
 });
 
@@ -121,11 +127,44 @@ async function resolveCommunityFromLesson(lessonId: string): Promise<{ community
 export async function createCourse(input: CreateCourseInput): Promise<{ courseId: string }> {
   const parsed = createCourseSchema.safeParse(input);
   if (!parsed.success) throw new Error(parsed.error.issues.map((i) => i.message).join(', '));
-  const { communityId, spaceId, title, description, isPublished } = parsed.data;
+  const { communityId, title, description, isPublished } = parsed.data;
+  let { spaceId } = parsed.data;
 
   await requireAdmin(communityId);
 
   const supabase = await getSupabaseServerClient();
+
+  // Resolve or create spaceId if missing
+  if (!spaceId) {
+    const { data: existingSpace } = await supabase
+      .from('spaces')
+      .select('id')
+      .eq('community_id', communityId)
+      .eq('type', 'course')
+      .is('deleted_at', null)
+      .limit(1)
+      .maybeSingle();
+
+    if (existingSpace) {
+      spaceId = existingSpace.id;
+    } else {
+      // Create a default courses space
+      const { data: newSpace, error: spaceErr } = await supabase
+        .from('spaces')
+        .insert({
+          community_id: communityId,
+          name: 'Courses',
+          slug: 'courses',
+          type: 'course',
+          min_role: 'free_member',
+        })
+        .select('id')
+        .single();
+      if (spaceErr) throw new Error(`[gild] failed to create default courses space: ${spaceErr.message}`);
+      spaceId = newSpace.id;
+    }
+  }
+
   const { data, error } = await supabase
     .from('courses')
     .insert({
@@ -133,6 +172,7 @@ export async function createCourse(input: CreateCourseInput): Promise<{ courseId
       space_id: spaceId,
       title,
       description: description ?? null,
+      image_url: parsed.data.imageUrl ?? null,
       is_published: isPublished,
     })
     .select('id')
@@ -151,6 +191,7 @@ export async function updateCourse(courseId: string, input: UpdateCourseInput): 
   const updates: CourseUpdate = {};
   if (parsed.data.title !== undefined) updates.title = parsed.data.title;
   if (parsed.data.description !== undefined) updates.description = parsed.data.description;
+  if (parsed.data.imageUrl !== undefined) updates.image_url = parsed.data.imageUrl;
   if (parsed.data.isPublished !== undefined) updates.is_published = parsed.data.isPublished;
 
   if (Object.keys(updates).length === 0) return;
@@ -241,6 +282,8 @@ export async function createLesson(input: CreateLessonInput): Promise<{ lessonId
       title,
       body: body ?? null,
       video_url: videoUrl ?? null,
+      image_url: parsed.data.imageUrl ?? null,
+      attachment_urls: parsed.data.attachmentUrls ?? [],
       position,
       is_published: isPublished,
     })
@@ -261,6 +304,8 @@ export async function updateLesson(lessonId: string, input: UpdateLessonInput): 
   if (parsed.data.title !== undefined) updates.title = parsed.data.title;
   if (parsed.data.body !== undefined) updates.body = parsed.data.body;
   if (parsed.data.videoUrl !== undefined) updates.video_url = parsed.data.videoUrl;
+  if (parsed.data.imageUrl !== undefined) updates.image_url = parsed.data.imageUrl;
+  if (parsed.data.attachmentUrls !== undefined) updates.attachment_urls = parsed.data.attachmentUrls;
   if (parsed.data.isPublished !== undefined) updates.is_published = parsed.data.isPublished;
 
   if (Object.keys(updates).length === 0) return;

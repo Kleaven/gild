@@ -3,8 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Avatar, GILD_FONTS } from '@/components/gild';
-import type { Person } from '@/components/gild';
+import { Avatar } from './GildPrimitives';
+import { GILD_FONTS } from './styles';
+import { CreateSpaceModal } from './CreateSpaceModal';
+import { LeaveCommunityModal } from './LeaveCommunityModal';
+import { InviteModal } from './InviteModal';
+import type { Person } from './types';
 
 interface StudioSidebarProps {
   community: {
@@ -12,6 +16,12 @@ interface StudioSidebarProps {
     name: string;
     member_count: number;
     plan: string | null;
+    theme_hue?: number;
+    logo_url?: string | null;
+    welcome_message?: string | null;
+    goodbye_message?: string | null;
+    is_private?: boolean;
+    slug?: string;
   };
   spaces: { id: string; name: string; hue?: number; [key: string]: unknown }[];
   currentUser: Person;
@@ -29,6 +39,9 @@ export function StudioSidebar({
   const pathname = usePathname();
   const [isMobile, setIsMobile] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [isCreateSpaceOpen, setIsCreateSpaceOpen] = useState(false);
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   useEffect(() => {
     function check() {
@@ -69,7 +82,7 @@ export function StudioSidebar({
           width: 28,
           height: 28,
           borderRadius: 7,
-          background: 'linear-gradient(135deg, oklch(0.78 0.14 75), oklch(0.55 0.14 75))',
+          background: community.logo_url ? `url(${community.logo_url}) center/cover` : `linear-gradient(135deg, oklch(0.78 0.14 ${community.theme_hue || 75}), oklch(0.55 0.14 ${community.theme_hue || 75}))`,
           color: '#fff',
           display: 'flex',
           alignItems: 'center',
@@ -78,7 +91,10 @@ export function StudioSidebar({
           fontWeight: 800,
           fontSize: 14,
           letterSpacing: '-0.04em',
-        }}>{community.name[0]}</div>
+          overflow: 'hidden',
+        }}>
+          {!community.logo_url && community.name[0]}
+        </div>
         <div style={{ lineHeight: 1.25, flex: 1, minWidth: 0 }}>
           <p style={{
             fontSize: 13,
@@ -96,15 +112,36 @@ export function StudioSidebar({
 
       {/* Spaces */}
       <div>
-        <p style={{
-          fontSize: 11,
-          fontWeight: 600,
-          color: 'oklch(0.55 0.02 250)',
-          padding: '0 10px 4px',
-          margin: 0,
-          textTransform: 'uppercase',
-          letterSpacing: '0.04em',
-        }}>Spaces</p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 10px 4px' }}>
+          <p style={{
+            fontSize: 11,
+            fontWeight: 600,
+            color: 'oklch(0.55 0.02 250)',
+            margin: 0,
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+          }}>Spaces</p>
+          {(currentUser.role === 'owner' || currentUser.role === 'admin') && (
+            <button
+              onClick={() => setIsCreateSpaceOpen(true)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'oklch(0.55 0.02 250)',
+                cursor: 'pointer',
+                fontSize: 16,
+                lineHeight: 1,
+                padding: '0 4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              title="Create Space"
+            >
+              +
+            </button>
+          )}
+        </div>
         {spaces.map(s => {
           const isActive = pathname.includes(`/s/${s.id}`);
           return (
@@ -117,17 +154,17 @@ export function StudioSidebar({
               marginBottom: 1,
               textDecoration: 'none',
               fontSize: 14,
-              background: isActive ? 'oklch(0.94 0.005 250)' : 'transparent',
-              color: isActive ? '#202020' : 'oklch(0.30 0.02 250)',
+              background: isActive ? `oklch(0.96 0.01 ${community.theme_hue || 250})` : 'transparent',
+              color: isActive ? `oklch(0.20 0.02 ${community.theme_hue || 250})` : 'oklch(0.30 0.02 250)',
               fontWeight: isActive ? 600 : 400,
             }}>
               <span style={{
                 width: 8,
                 height: 8,
                 borderRadius: 2,
-                background: `oklch(0.62 0.16 ${s.hue || 220})`,
+                background: `oklch(0.62 0.16 ${s.hue || community.theme_hue || 220})`,
                 boxShadow: isActive
-                  ? `0 0 0 3px oklch(0.62 0.16 ${s.hue || 220} / 0.18)`
+                  ? `0 0 0 3px oklch(0.62 0.16 ${s.hue || community.theme_hue || 220} / 0.18)`
                   : 'none',
               }}/>
               <span style={{ flex: 1 }}>{s.name}</span>
@@ -151,7 +188,30 @@ export function StudioSidebar({
           { label: 'Members', href: `/c/${community.id}/members` },
           ...(showCourses ? [{ label: 'Courses', href: `/c/${community.id}/courses` }] : []),
           { label: 'Search', href: `/c/${community.id}/search` },
-        ].map((item) => {
+          ...(currentUser.role !== 'owner' ? [{ label: 'Leave Community', onClick: () => setIsLeaveModalOpen(true), danger: true }] : []),
+        ].map((item: any) => {
+          if (item.onClick) {
+            return (
+              <button key={item.label} onClick={item.onClick} style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '5px 10px',
+                borderRadius: 6,
+                border: 'none',
+                background: item.primary ? `oklch(0.20 0.02 ${community.theme_hue || 250})` : 'transparent',
+                width: '100%',
+                cursor: 'pointer',
+                textAlign: 'left',
+                fontSize: 14,
+                color: item.primary ? '#fff' : item.danger ? 'oklch(0.50 0.16 25)' : 'oklch(0.30 0.02 250)',
+                fontWeight: 600,
+                marginBottom: item.primary ? 8 : 0,
+                boxShadow: item.primary ? '0 4px 12px rgba(0,0,0,0.1)' : 'none',
+              }}>
+                <span style={{ flex: 1 }}>{item.label}</span>
+              </button>
+            );
+          }
           const isActive = pathname === item.href;
           return (
             <Link key={item.label} href={item.href} style={{
@@ -236,22 +296,98 @@ export function StudioSidebar({
             overflow: 'hidden',
             textOverflow: 'ellipsis',
           }}>{currentUser.name}</p>
-          <p style={{
-            fontSize: 11,
-            color: 'oklch(0.50 0.02 250)',
-            margin: 0,
-            textTransform: 'capitalize',
-          }}>
-            {currentUser.role.replace('_', ' ')}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Link 
+              href="/settings/profile"
+              style={{
+                fontSize: 11,
+                color: 'oklch(0.50 0.02 250)',
+                textDecoration: 'none',
+                fontWeight: 600,
+              }}
+            >
+              Settings
+            </Link>
+            <span style={{ color: 'oklch(0.80 0.01 250)' }}>·</span>
+            <button 
+              onClick={() => {
+                const supabase = require('@/lib/auth/client').getSupabaseBrowserClient();
+                supabase.auth.signOut().then(() => window.location.href = '/');
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                fontSize: 11,
+                color: 'oklch(0.40 0.15 25)',
+                cursor: 'pointer',
+                fontWeight: 600,
+              }}
+            >
+              Sign out
+            </button>
+          </div>
         </div>
       </div>
+
+      <button
+        onClick={() => setIsInviteModalOpen(true)}
+        style={{
+          marginTop: 12,
+          padding: '10px',
+          borderRadius: 8,
+          background: `oklch(0.25 0.05 ${community.theme_hue || 250})`,
+          color: '#fff',
+          border: 'none',
+          cursor: 'pointer',
+          fontSize: 13,
+          fontWeight: 700,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          width: '100%',
+          boxShadow: '0 4px 12px oklch(0 0 0 / 0.05)',
+        }}
+      >
+        <span>Invite People</span>
+      </button>
     </aside>
+  );
+
+  const modals = (
+    <>
+      <CreateSpaceModal
+        communityId={community.id}
+        isOpen={isCreateSpaceOpen}
+        onClose={() => setIsCreateSpaceOpen(false)}
+      />
+      <LeaveCommunityModal
+        communityId={community.id}
+        communityName={community.name}
+        message={community.goodbye_message}
+        isOpen={isLeaveModalOpen}
+        onClose={() => setIsLeaveModalOpen(false)}
+      />
+      <InviteModal
+        communityId={community.id}
+        communitySlug={community.slug || ''}
+        communityName={community.name}
+        isPrivate={community.is_private || false}
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+      />
+    </>
   );
 
   // ─── Desktop ───────────────────────────────────────────────────────────────
   if (!isMobile) {
-    return sidebarContent;
+    return (
+      <>
+        {sidebarContent}
+        {modals}
+      </>
+    );
   }
 
   // ─── Mobile ────────────────────────────────────────────────────────────────
@@ -263,7 +399,7 @@ export function StudioSidebar({
         aria-label={drawerOpen ? 'Close menu' : 'Open menu'}
         style={{
           position: 'fixed',
-          top: 12,
+          top: 60,
           left: 12,
           zIndex: 200,
           width: 36,
@@ -335,6 +471,8 @@ export function StudioSidebar({
       }}>
         {sidebarContent}
       </div>
+
+      {modals}
     </>
   );
 }

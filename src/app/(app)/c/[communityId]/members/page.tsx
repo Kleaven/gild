@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getSupabaseServerClient } from '@/lib/auth/server';
+import { requireAuth } from '@/lib/auth';
 import { getCommunityMembers } from '@/lib/community';
 import { getCommunityContext } from '@/lib/community/context';
 import { StudioMembers } from '@/components/StudioMembers';
@@ -17,8 +18,9 @@ export default async function MembersPage({ params }: Props) {
     notFound();
   }
 
+  const { profile } = await requireAuth();
   const supabase = await getSupabaseServerClient();
-  const { community } = await getCommunityContext(communityId);
+  const { community, membership } = await getCommunityContext(communityId);
 
   if (!community) {
     notFound();
@@ -35,6 +37,8 @@ export default async function MembersPage({ params }: Props) {
         member_count: community.member_count,
       }}
       members={members}
+      currentUserId={profile.id}
+      currentUserRole={membership?.role ?? 'free_member'}
     />
   );
 }

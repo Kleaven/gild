@@ -4,7 +4,7 @@ import { getCommunityContext } from '../../../../lib/community/context';
 import { isAccessGranted } from '@/lib/billing';
 import { requireAuth } from '@/lib/auth';
 import { getFlag } from '@/lib/feature-flags';
-import { StudioSidebar } from '@/components/gild';
+import { StudioSidebar, NotificationListener, JoinGate, WelcomeHandler } from '@/components/gild';
 import type { Person } from '@/components/gild';
 import type { CommunityBillingState, SubscriptionStatus } from '@/lib/billing';
 import type { Plan } from '@/lib/billing';
@@ -38,9 +38,23 @@ export default async function CommunityLayout({ children, params }: Props) {
     notFound();
   }
 
-  // Private community — non-members must join first
-  if (community.is_private && !membership) {
-    redirect(`/c/${communityId}/join`);
+  // Join Gate — non-members must join to see community content
+  if (!membership) {
+    return (
+      <JoinGate 
+        community={{
+          id: community.id,
+          name: community.name,
+          description: community.description,
+          member_count: community.member_count,
+          welcome_message: community.welcome_message,
+          theme_hue: community.theme_hue,
+          pricing_type: community.pricing_type as 'free' | 'paid',
+          price_amount: Number(community.price_amount || 0),
+          price_currency: community.price_currency,
+        }} 
+      />
+    );
   }
 
   const feedSpaces = spaces.filter((s) => s.deleted_at === null && s.type !== 'course');
@@ -103,7 +117,7 @@ export default async function CommunityLayout({ children, params }: Props) {
         <>
           Your subscription has ended.{' '}
           <Link
-            href={`/onboarding/${communityId}/plan`}
+            href={`/c/${communityId}/billing`}
             style={{ color: '#fff', fontWeight: 700, textDecoration: 'underline' }}
           >
             Resubscribe to reactivate.
@@ -115,6 +129,7 @@ export default async function CommunityLayout({ children, params }: Props) {
 
   return (
     <>
+      <NotificationListener communityId={communityId} />
       {billingBannerContent && (
         <div
           role="alert"
@@ -129,13 +144,27 @@ export default async function CommunityLayout({ children, params }: Props) {
           {billingBannerContent}
         </div>
       )}
-    <div style={{ display: 'flex', minHeight: 'calc(100vh - 49px)' }}>
+    <div style={{ 
+      display: 'flex', 
+      minHeight: 'calc(100vh - 49px)',
+      // @ts-ignore
+      '--theme-hue': community.theme_hue || 250 
+    } as React.CSSProperties}>
+      <WelcomeHandler 
+        communityName={community.name} 
+        welcomeMessage={community.welcome_message} 
+      />
       <StudioSidebar
         community={{
           id: communityId,
           name: community.name,
           member_count: community.member_count,
           plan: community.plan,
+          theme_hue: community.theme_hue,
+          welcome_message: community.welcome_message,
+          goodbye_message: community.goodbye_message,
+          is_private: community.is_private,
+          slug: community.slug,
         }}
         spaces={feedSpaces}
         currentUser={currentUser}

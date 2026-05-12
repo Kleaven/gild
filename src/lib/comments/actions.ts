@@ -30,7 +30,7 @@ export async function createComment(input: CreateCommentInput): Promise<{ commen
 
   const { data: post, error: postError } = await supabase
     .from('posts')
-    .select('id, community_id')
+    .select('id, community_id, space_id, spaces(permissions)')
     .eq('id', postId)
     .is('deleted_at', null)
     .maybeSingle();
@@ -43,6 +43,19 @@ export async function createComment(input: CreateCommentInput): Promise<{ commen
   });
   if (roleError) throw new Error(roleError.message);
   if (!hasRole) throw new Error('[gild] not a member of this community');
+
+  // ─── Permission Check ──────────────────────────────────────────────────────
+  const space = (post as any).spaces;
+  const perms = space?.permissions || {};
+  const requiredRoleForComment = perms.comment || 'free_member';
+
+  const { data: hasPermission } = await supabase.rpc('user_has_min_role', {
+    p_community_id: post.community_id,
+    p_min_role: requiredRoleForComment,
+  });
+  if (!hasPermission) {
+    throw new Error(`Insufficient permissions to comment in this space. Required: ${requiredRoleForComment}`);
+  }
 
   if (parentId !== null) {
     const { data: parent, error: parentError } = await supabase
@@ -88,21 +101,53 @@ export async function toggleVote(
   if (targetType === 'post') {
     const { data: post, error } = await supabase
       .from('posts')
-      .select('community_id')
+      .select('community_id, space_id')
       .eq('id', targetId)
       .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!post) throw new Error('[gild] post not found');
+    
+    if (error || !post) throw new Error('[gild] post not found');
     communityId = post.community_id;
+
+    const { data: space } = await supabase
+      .from('spaces')
+      .select('permissions')
+      .eq('id', post.space_id)
+      .single();
+    
+    const requiredRole = (space?.permissions as any)?.react || 'free_member';
+    const { data: hasPerm } = await supabase.rpc('user_has_min_role', {
+      p_community_id: communityId,
+      p_min_role: requiredRole,
+    });
+    if (!hasPerm) throw new Error(`Insufficient permissions to react in this space. Required: ${requiredRole}`);
   } else {
     const { data: comment, error } = await supabase
       .from('comments')
-      .select('community_id')
+      .select('community_id, post_id')
       .eq('id', targetId)
       .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!comment) throw new Error('[gild] comment not found');
+    
+    if (error || !comment) throw new Error('[gild] comment not found');
     communityId = comment.community_id;
+
+    const { data: parentPost } = await supabase
+      .from('posts')
+      .select('space_id')
+      .eq('id', comment.post_id)
+      .single();
+    
+    const { data: targetSpace } = await supabase
+      .from('spaces')
+      .select('permissions')
+      .eq('id', parentPost?.space_id)
+      .single();
+
+    const requiredRole = (targetSpace?.permissions as any)?.react || 'free_member';
+    const { data: hasPerm } = await supabase.rpc('user_has_min_role', {
+      p_community_id: communityId,
+      p_min_role: requiredRole,
+    });
+    if (!hasPerm) throw new Error(`Insufficient permissions to react in this space. Required: ${requiredRole}`);
   }
 
   const { error } = await supabase.rpc('toggle_vote', {

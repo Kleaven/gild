@@ -1,4 +1,4 @@
-export { getCommunity, getCommunityBySlug, getCommunityMembers, getMembership, getMembershipTiers } from './queries';
+export { getCommunity, getCommunityBySlug, getCommunityMembers, getMembership, getMembershipTiers, getDiscoverCommunities } from './queries';
 
 export {
   createCommunity,

@@ -136,3 +136,74 @@ export async function getMembershipTiers(
     .order('price_month_usd', { ascending: true });
   return data ?? [];
 }
+
+export async function getDiscoverCommunities(
+  supabase: SupabaseClient<Database>,
+  options: {
+    query?: string;
+    category?: string;
+    limit?: number;
+  } = {}
+): Promise<Community[]> {
+  const limit = options.limit ?? DEFAULT_LIMIT;
+
+  let dbQuery = supabase
+    .from('communities')
+    .select('*, membership_tiers(price_month_usd)')
+    .eq('is_private', false)
+    .is('deleted_at', null)
+    .order('member_count', { ascending: false })
+    .limit(limit);
+
+  if (options.category) {
+    dbQuery = dbQuery.eq('category', options.category);
+  }
+
+  if (options.query) {
+    dbQuery = dbQuery.textSearch('search_vector', options.query, {
+      config: 'simple',
+      type: 'websearch',
+    });
+  }
+
+  const { data, error } = await dbQuery;
+  if (error) throw new Error(error.message);
+
+  return data ?? [];
+}
+
+export async function getUserCommunities(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+): Promise<{
+  owned: Community[];
+  managed: Community[];
+  joined: Community[];
+}> {
+  const { data: memberships, error } = await supabase
+    .from('community_members')
+    .select('role, community_id, communities(*)')
+    .eq('user_id', userId)
+    .neq('role', 'banned');
+
+  if (error) throw new Error(error.message);
+
+  const owned: Community[] = [];
+  const managed: Community[] = [];
+  const joined: Community[] = [];
+
+  memberships?.forEach((m) => {
+    const community = m.communities as Community | null;
+    if (!community) return;
+
+    if (m.role === 'owner') {
+      owned.push(community);
+    } else if (m.role === 'admin' || m.role === 'moderator') {
+      managed.push(community);
+    } else {
+      joined.push(community);
+    }
+  });
+
+  return { owned, managed, joined };
+}

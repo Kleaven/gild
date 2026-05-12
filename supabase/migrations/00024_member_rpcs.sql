@@ -41,6 +41,14 @@ BEGIN
     RAISE EXCEPTION '[gild] already a member';
   END IF;
 
+  -- Block joining private communities directly
+  IF EXISTS (
+    SELECT 1 FROM public.communities
+    WHERE id = p_community_id AND is_private = true
+  ) THEN
+    RAISE EXCEPTION '[gild] this community is private';
+  END IF;
+
   INSERT INTO public.community_members (community_id, user_id, role)
   VALUES (p_community_id, v_user_id, 'free_member');
 

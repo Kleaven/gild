@@ -15,6 +15,9 @@ const UpdateProfileSchema = z.object({
     .nullable()
     .optional(),
   bio: z.string().max(500).nullable().optional(),
+  persona: z.enum(['member', 'owner']).optional(),
+  interests: z.array(z.string()).optional(),
+  occupation: z.string().max(100).optional(),
 });
 
 export async function updateProfile(
@@ -34,6 +37,9 @@ export async function updateProfile(
       display_name: parsed.data.display_name,
       username: parsed.data.username ?? null,
       bio: parsed.data.bio ?? null,
+      persona: parsed.data.persona,
+      interests: parsed.data.interests,
+      occupation: parsed.data.occupation,
       updated_at: new Date().toISOString(),
     })
     .eq('id', user.id);
@@ -47,4 +53,43 @@ export async function updateProfile(
 
   revalidatePath('/settings');
   return { ok: true };
+}
+
+export async function uploadAvatar(formData: FormData): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  const file = formData.get('file') as File;
+  if (!file) return { ok: false, error: 'No file provided' };
+
+  // Basic validation
+  if (!file.type.startsWith('image/')) return { ok: false, error: 'File must be an image' };
+  if (file.size > 2 * 1024 * 1024) return { ok: false, error: 'File too large (max 2MB)' };
+
+  const { user } = await requireAuth();
+  const supabase = await getSupabaseServerClient();
+
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(fileName, file, {
+      contentType: file.type,
+      upsert: true,
+    });
+
+  if (uploadError) return { ok: false, error: uploadError.message };
+
+  const { data: { publicUrl } } = supabase.storage
+    .from('avatars')
+    .getPublicUrl(fileName);
+
+  // Update profile with new avatar URL
+  const { error: updateError } = await supabase
+    .from('profiles')
+    .update({ avatar_url: publicUrl, updated_at: new Date().toISOString() })
+    .eq('id', user.id);
+
+  if (updateError) return { ok: false, error: updateError.message };
+
+  revalidatePath('/settings');
+  return { ok: true, url: publicUrl };
 }

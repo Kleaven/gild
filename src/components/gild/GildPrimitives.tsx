@@ -235,27 +235,28 @@ export function LivePill({ count, hue = 150 }: { count: number | string; hue?: n
   );
 }
 
-// Wordmark — "Gild." with a signature gold dot at the end.
+// Wordmark — "Gild." with a signature yellow dot at the end.
 export function Wordmark({ size = 28, color = '#0d0d0d' }: { size?: number; color?: string }) {
   return (
     <span style={{
       fontFamily: GILD_FONTS.display,
       fontWeight: 800, 
       fontSize: size, 
-      letterSpacing: '-0.04em',
+      letterSpacing: '-0.045em',
       color, 
       lineHeight: 1, 
       display: 'inline-flex', 
       alignItems: 'baseline',
+      userSelect: 'none',
     }}>
       Gild
       <span style={{
-        marginLeft: '0.05em',
-        width: '0.22em',
-        height: '0.22em',
+        marginLeft: '0.04em',
+        width: '0.24em',
+        height: '0.24em',
         borderRadius: '50%',
-        background: 'oklch(0.62 0.16 75)',
-        boxShadow: '0 1px 2px oklch(0.62 0.16 75 / 0.3)',
+        background: 'oklch(0.85 0.18 90)', // Vibrant yellow
+        boxShadow: '0 0 8px oklch(0.85 0.18 90 / 0.4)',
         display: 'inline-block',
       }}/>
     </span>

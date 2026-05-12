@@ -88,6 +88,7 @@ const createSpaceSchema = z.object({
   description: z.string().max(500).optional(),
   isPrivate: z.boolean().default(false),
   minRole: z.enum(MEMBER_ROLES).default('free_member'),
+  role_permissions: z.record(z.any()).optional(),
 });
 
 const updateSpaceSchema = z.object({
@@ -95,6 +96,7 @@ const updateSpaceSchema = z.object({
   description: z.string().max(500).optional(),
   isPrivate: z.boolean().optional(),
   minRole: z.enum(MEMBER_ROLES).optional(),
+  role_permissions: z.record(z.any()).optional(),
 });
 
 export async function createSpace(
@@ -106,7 +108,7 @@ export async function createSpace(
   if (!parsed.success) {
     throw new Error(parsed.error.issues.map((i) => i.message).join(', '));
   }
-  const { communityId, name, type, description, isPrivate, minRole, slug } = parsed.data;
+  const { communityId, name, type, description, isPrivate, minRole, slug, role_permissions } = parsed.data;
 
   const supabase = await getSupabaseServerClient();
 
@@ -129,6 +131,10 @@ export async function createSpace(
       description: description ?? null,
       is_private: isPrivate,
       min_role: minRole,
+      role_permissions: role_permissions ?? {
+        "member": { "can_view": true, "can_post": true, "can_comment": true, "can_react": true },
+        "admin": { "can_view": true, "can_post": true, "can_comment": true, "can_react": true }
+      },
     })
     .select('id')
     .single();
@@ -172,6 +178,7 @@ export async function updateSpace(
   if (parsed.data.description !== undefined) updates.description = parsed.data.description;
   if (parsed.data.isPrivate !== undefined) updates.is_private = parsed.data.isPrivate;
   if (parsed.data.minRole !== undefined) updates.min_role = parsed.data.minRole;
+  if (parsed.data.role_permissions !== undefined) updates.role_permissions = parsed.data.role_permissions;
 
   if (Object.keys(updates).length === 0) return;
 

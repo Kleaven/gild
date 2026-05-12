@@ -2,7 +2,9 @@ import { notFound } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getSupabaseServerClient } from '@/lib/auth/server';
 import { getCommunityContext } from '@/lib/community/context';
-import { getCourse, getEnrollment, enrollInCourse } from '@/lib/courses';
+import { getCourse, getEnrollment, enrollInCourse, getLessonProgress } from '@/lib/courses';
+import { getCertificate } from '@/lib/courses/certificate.queries';
+import { issueCertificate } from '@/lib/courses/certificate.actions';
 import { StudioCourseDetail } from '@/components/StudioCourseDetail';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -41,11 +43,22 @@ export default async function CourseDetailPage({ params }: Props) {
 
   const enrollment = await getEnrollment(supabase, courseId);
   const isEnrolled = enrollment !== null;
+  const progressRows = isEnrolled ? await getLessonProgress(supabase, courseId) : [];
+  const completedLessonsCount = progressRows.length;
+  const certificate = isEnrolled ? await getCertificate(supabase, courseId) : null;
 
   async function enrollAction() {
     'use server';
     await enrollInCourse(courseId);
     revalidatePath(`/c/${communityId}/courses/${courseId}`);
+  }
+
+  async function claimCertificateAction() {
+    'use server';
+    if (enrollment) {
+      await issueCertificate(enrollment.id);
+      revalidatePath(`/c/${communityId}/courses/${courseId}`);
+    }
   }
 
   return (
@@ -57,7 +70,10 @@ export default async function CourseDetailPage({ params }: Props) {
       course={course}
       isEnrolled={isEnrolled}
       isAdminOrOwner={isAdminOrOwner}
+      completedLessonsCount={completedLessonsCount}
+      hasCertificate={!!certificate}
       enrollAction={enrollAction}
+      claimCertificateAction={claimCertificateAction}
     />
   );
 }

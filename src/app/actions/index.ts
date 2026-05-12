@@ -7,3 +7,4 @@ export * from './courses';
 export * from './admin';
 export * from './privacy';
 export * from './profile';
+export * from './media';

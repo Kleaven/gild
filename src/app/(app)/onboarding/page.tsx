@@ -1,29 +1,48 @@
 import { redirect } from 'next/navigation';
 import { getSupabaseServerClient } from '@/lib/auth/server';
 import CommunityForm from './CommunityForm';
+import { OnboardingClient } from './OnboardingClient';
 
-// Server component — checks for an existing owner community before rendering the form.
-// If the user already created a community (and lost their place), redirect them forward.
 export default async function OnboardingPage() {
   const supabase = await getSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (user) {
-    // Check if user already owns a community from a previous attempt
-    const { data: memberships } = await supabase
-      .from('community_members')
-      .select('community_id')
-      .eq('user_id', user.id)
-      .eq('role', 'owner')
-      .limit(1);
+  if (!user) redirect('/sign-in');
 
-    const existing = memberships?.[0];
-    if (existing) {
-      // Resume from the plan step — they already have a community
-      redirect(`/onboarding/${existing.community_id}/plan`);
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('persona, interests, occupation')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  // 1. If no persona chosen, show the picker
+  if (!profile?.persona) {
+    return <OnboardingClient step="persona" />;
+  }
+
+  // 2. If Member, check if KYC is done
+  if (profile.persona === 'member') {
+    if (!profile.interests || profile.interests.length === 0) {
+      return <OnboardingClient step="member_kyc" />;
     }
+    // Member is fully onboarded
+    redirect('/communities');
+  }
+
+  // 3. If Owner, proceed with community creation
+  // Check if user already owns a community from a previous attempt
+  const { data: memberships } = await supabase
+    .from('community_members')
+    .select('community_id')
+    .eq('user_id', user.id)
+    .eq('role', 'owner')
+    .limit(1);
+
+  const existing = memberships?.[0];
+  if (existing) {
+    redirect(`/onboarding/${existing.community_id}/plan`);
   }
 
   return (

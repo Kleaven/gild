@@ -2,8 +2,11 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Avatar, GILD_FONTS } from '@/components/gild';
+import { Avatar, GILD_FONTS, ConfirmModal } from '@/components/gild';
 import type { Person, MemberRole } from '@/components/gild';
+import { updateMemberRole } from '@/app/actions';
+import { MoreHorizontal, Shield, UserMinus, Settings2 } from 'lucide-react';
+import { AdminPrivilegesUI } from './gild/AdminPrivilegesUI';
 
 interface StudioMembersProps {
   community: {
@@ -12,10 +15,15 @@ interface StudioMembersProps {
     member_count: number;
   };
   members: { user_id: string; display_name: string; role: string; joined_at: string; username?: string | null }[];
+  currentUserId: string;
+  currentUserRole: MemberRole;
 }
 
-export function StudioMembers({ community, members }: StudioMembersProps) {
+export function StudioMembers({ community, members, currentUserId, currentUserRole }: StudioMembersProps) {
+  const [isPending, setIsPending] = useState<string | null>(null);
   const [filter, setFilter] = useState('');
+  const [showBanConfirm, setShowBanConfirm] = useState<{ id: string; name: string } | null>(null);
+  const [privilegeModal, setPrivilegeModal] = useState<{ id: string; name: string; perms: any } | null>(null);
   const filteredMembers = filter.trim() === ''
     ? members
     : members.filter((m) => {
@@ -71,22 +79,30 @@ export function StudioMembers({ community, members }: StudioMembersProps) {
           }}
         />
 
-        <Link
-          href={`/onboarding/${community.id}/invite`}
-          style={{
-            padding: '7px 12px',
-            borderRadius: 6,
-            fontSize: 13,
-            fontWeight: 500,
-            background: 'oklch(0.20 0.02 250)',
-            color: '#fff',
-            border: 'none',
-            cursor: 'pointer',
-            textDecoration: 'none',
-            display: 'inline-block',
-          }}
-        >Invite</Link>
       </div>
+
+      <ConfirmModal
+        isOpen={!!showBanConfirm}
+        onClose={() => setShowBanConfirm(null)}
+        onConfirm={async () => {
+          if (!showBanConfirm) return;
+          setIsPending(showBanConfirm.id);
+          try {
+            await updateMemberRole({
+              communityId: community.id,
+              targetUserId: showBanConfirm.id,
+              newRole: 'banned',
+            });
+          } finally {
+            setIsPending(null);
+            setShowBanConfirm(null);
+          }
+        }}
+        title="Ban Member"
+        message={`Are you sure you want to ban ${showBanConfirm?.name}? They will lose all access to this community instantly.`}
+        confirmLabel="Ban Member"
+        isDestructive
+      />
 
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
         <thead>
@@ -103,6 +119,9 @@ export function StudioMembers({ community, members }: StudioMembersProps) {
             <th style={{ padding: '10px 8px', borderBottom: '1px solid oklch(0.94 0.005 250)' }}>Joined</th>
             <th style={{ padding: '10px 8px', borderBottom: '1px solid oklch(0.94 0.005 250)' }}>Handle</th>
             <th style={{ padding: '10px 8px', borderBottom: '1px solid oklch(0.94 0.005 250)' }}>Status</th>
+            {(currentUserRole === 'owner' || currentUserRole === 'admin') && (
+              <th style={{ padding: '10px 8px', borderBottom: '1px solid oklch(0.94 0.005 250)', textAlign: 'right' }}>Admin</th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -149,6 +168,80 @@ export function StudioMembers({ community, members }: StudioMembersProps) {
                 <td style={{ padding: '10px 8px' }}>
                   <span style={{ fontSize: 12, color: 'oklch(0.55 0.02 250)' }}>Offline</span>
                 </td>
+                {(currentUserRole === 'owner' || currentUserRole === 'admin') && (
+                  <td style={{ padding: '10px 8px', textAlign: 'right' }}>
+                    {member.user_id !== currentUserId && member.role !== 'owner' && (
+                      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', alignItems: 'center' }}>
+                        {member.role === 'admin' && currentUserRole === 'owner' && (
+                          <button
+                            title="Manage Privileges"
+                            onClick={() => setPrivilegeModal({ id: member.user_id, name: member.display_name, perms: (member as any).permissions || {} })}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: 'oklch(0.50 0.02 250)',
+                              cursor: 'pointer',
+                              padding: '4px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              borderRadius: 6,
+                              transition: 'all 0.2s ease',
+                            }}
+                          >
+                            <Settings2 size={14} />
+                          </button>
+                        )}
+                        <select
+                          value={member.role}
+                          disabled={!!isPending}
+                          onChange={async (e) => {
+                            const newRole = e.target.value as any;
+                            setIsPending(member.user_id);
+                            try {
+                              await updateMemberRole({
+                                communityId: community.id,
+                                targetUserId: member.user_id,
+                                newRole,
+                              });
+                            } finally {
+                              setIsPending(null);
+                            }
+                          }}
+                          style={{
+                            fontSize: 11,
+                            padding: '2px 4px',
+                            borderRadius: 4,
+                            border: '1px solid oklch(0.90 0.01 250)',
+                            background: '#fff',
+                            color: 'oklch(0.30 0.02 250)',
+                            outline: 'none',
+                          }}
+                        >
+                          <option value="admin">Admin</option>
+                          <option value="moderator">Moderator</option>
+                          <option value="tier2_member">Tier 2</option>
+                          <option value="tier1_member">Tier 1</option>
+                          <option value="free_member">Free</option>
+                        </select>
+                        <button
+                          title="Ban Member"
+                          onClick={() => setShowBanConfirm({ id: member.user_id, name: member.display_name })}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'oklch(0.60 0.15 25)',
+                            cursor: 'pointer',
+                            padding: '2px',
+                            display: 'flex',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <UserMinus size={14} />
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                )}
               </tr>
             );
           })}
@@ -159,6 +252,16 @@ export function StudioMembers({ community, members }: StudioMembersProps) {
         <div style={{ textAlign: 'center', padding: '40px 0', color: 'oklch(0.50 0.02 250)' }}>
           {members.length === 0 ? 'No members found.' : `No members match "${filter}".`}
         </div>
+      )}
+
+      {privilegeModal && (
+        <AdminPrivilegesUI 
+          communityId={community.id}
+          userId={privilegeModal.id}
+          userName={privilegeModal.name}
+          currentPermissions={privilegeModal.perms}
+          onClose={() => setPrivilegeModal(null)}
+        />
       )}
     </div>
   );

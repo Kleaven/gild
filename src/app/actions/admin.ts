@@ -1,74 +1,32 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
 import { getSupabaseServerClient } from '@/lib/auth/server';
-import { requirePlatformAdmin } from '@/lib/admin/guards';
-import { getCommunityOverridesForFlag } from '@/lib/admin';
-import type { FlagName } from '@/lib/feature-flags';
+import { revalidatePath } from 'next/cache';
 
-export async function setGlobalFlag(
-  flagName: FlagName,
-  enabled: boolean,
-): Promise<{ error: string | null }> {
-  await requirePlatformAdmin();
-  const supabase = await getSupabaseServerClient();
-  const { error } = await supabase
-    .from('feature_flags')
-    .upsert(
-      { community_id: null, flag_name: flagName, is_enabled: enabled },
-      { onConflict: 'community_id,flag_name' },
-    );
-  if (error) return { error: error.message };
-  revalidatePath('/admin/flags');
-  return { error: null };
-}
-
-export async function setCommunityFlag(
+export async function updateMemberPermissions(
   communityId: string,
-  flagName: FlagName,
-  enabled: boolean,
-): Promise<{ error: string | null }> {
-  await requirePlatformAdmin();
+  userId: string,
+  permissions: Record<string, boolean>
+): Promise<void> {
   const supabase = await getSupabaseServerClient();
-  const { error } = await supabase
-    .from('feature_flags')
-    .upsert(
-      { community_id: communityId, flag_name: flagName, is_enabled: enabled },
-      { onConflict: 'community_id,flag_name' },
-    );
-  if (error) return { error: error.message };
-  revalidatePath('/admin/flags');
-  return { error: null };
-}
 
-export async function clearCommunityFlagOverride(
-  communityId: string,
-  flagName: FlagName,
-): Promise<{ error: string | null }> {
-  await requirePlatformAdmin();
-  const supabase = await getSupabaseServerClient();
-  const { error } = await supabase
-    .from('feature_flags')
-    .delete()
-    .eq('community_id', communityId)
-    .eq('flag_name', flagName);
-  if (error) return { error: error.message };
-  revalidatePath('/admin/flags');
-  return { error: null };
-}
+  // 1. Verify caller is the owner
+  const { data: isOwner } = await supabase.rpc('is_community_owner', {
+    p_community_id: communityId
+  });
 
-export async function getOverridesForFlag(
-  flagName: FlagName,
-): Promise<{
-  data: Array<{ communityId: string; communityName: string; enabled: boolean }> | null;
-  error: string | null;
-}> {
-  try {
-    await requirePlatformAdmin();
-    const overrides = await getCommunityOverridesForFlag(flagName);
-    return { data: overrides, error: null };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return { data: null, error: message };
+  if (!isOwner) {
+    throw new Error('[gild] only the community owner can configure granular admin privileges');
   }
+
+  // 2. Update permissions
+  const { error } = await supabase
+    .from('community_members')
+    .update({ permissions })
+    .eq('community_id', communityId)
+    .eq('user_id', userId);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/c/${communityId}/members`);
 }

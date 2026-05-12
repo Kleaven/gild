@@ -21,38 +21,45 @@ export default async function SpacePage({ params }: Props) {
 
   const supabase = await getSupabaseServerClient();
 
-  const [{ profile }, { membership }, space, postsResult] = await Promise.all([
+  const [{ user, profile }, { community, membership }, space, postsResult] = await Promise.all([
     requireAuth(),
     getCommunityContext(communityId),
     getSpace(supabase, spaceId),
     getFeedPosts(supabase, communityId, spaceId, { limit: 20 }),
   ]);
 
-  if (!space) {
+  if (!space || !community) {
     notFound();
   }
 
+  // Moderators and owners can pin AND delete any post
   const canPin =
     membership?.role === 'owner' ||
     membership?.role === 'moderator' ||
     membership?.role === 'admin';
 
-  return (
-    <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 24px' }}>
-      <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 24 }}>{space.name}</h1>
+  // Derive a stable hue from the space ID
+  const spaceHue = spaceId.charCodeAt(0) * 10 % 360;
 
-      <FeedClient
-        initialPosts={postsResult.data}
-        communityId={communityId}
-        spaceId={spaceId}
-        spaceName={space.name}
-        spaceType={space.type}
-        author={{
-          display_name: profile.display_name,
-          avatar_url: profile.avatar_url,
-        }}
-        canPin={canPin}
-      />
-    </div>
+  return (
+    <FeedClient
+      initialPosts={postsResult.data}
+      communityId={communityId}
+      spaceId={spaceId}
+      spaceName={space.name}
+      spaceDesc={space.description}
+      spaceType={space.type}
+      spaceHue={spaceHue}
+      spaceMembersCount={community.member_count}
+      allowMemberPosts={space.allow_member_posts}
+      author={{
+        display_name: profile.display_name,
+        avatar_url: profile.avatar_url,
+      }}
+      currentUserId={user.id}
+      canPin={canPin}
+      rolePermissions={space.role_permissions}
+      isPrivate={space.is_private}
+    />
   );
 }

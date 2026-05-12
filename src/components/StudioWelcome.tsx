@@ -77,25 +77,43 @@ export function StudioWelcome() {
             maxWidth: 460,
           }}
         >
-          You&apos;re not part of any community yet. Start your own and invite the people who matter.
+          You&apos;re not part of any community yet. Join a space that inspires you or start your own.
         </p>
 
-        <Link
-          href="/communities/new"
-          style={{
-            display: 'inline-block',
-            padding: '14px 28px',
-            borderRadius: 12,
-            fontWeight: 700,
-            fontSize: 16,
-            background: 'oklch(0.20 0.02 250)',
-            color: '#fff',
-            textDecoration: 'none',
-            boxShadow: '0 20px 40px -10px oklch(0.20 0.02 250 / 0.3)',
-          }}
-        >
-          Create your first community
-        </Link>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+          <Link
+            href="/communities"
+            style={{
+              display: 'inline-block',
+              padding: '14px 28px',
+              borderRadius: 12,
+              fontWeight: 700,
+              fontSize: 16,
+              background: 'oklch(0.20 0.02 250)',
+              color: '#fff',
+              textDecoration: 'none',
+              boxShadow: '0 20px 40px -10px oklch(0.20 0.02 250 / 0.3)',
+            }}
+          >
+            Discover communities
+          </Link>
+          <Link
+            href="/communities/new"
+            style={{
+              display: 'inline-block',
+              padding: '14px 28px',
+              borderRadius: 12,
+              fontWeight: 700,
+              fontSize: 16,
+              background: '#fff',
+              color: 'oklch(0.20 0.02 250)',
+              border: '1px solid oklch(0.90 0.01 250)',
+              textDecoration: 'none',
+            }}
+          >
+            Start a community
+          </Link>
+        </div>
       </section>
     </main>
   );

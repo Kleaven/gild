@@ -46,11 +46,14 @@ export const viewport: Viewport = {
   themeColor: '#ffffff',
 };
 
+import { Toaster } from 'sonner';
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${bricolage.variable} ${inter.variable} ${jetbrains.variable} ${gochi.variable}`}>
       <body style={{ margin: 0, fontFamily: 'system-ui, sans-serif' }}>
         <style dangerouslySetInnerHTML={{ __html: gildKeyframes }} />
+        <Toaster richColors position="bottom-right" />
         {children}
         <Script
           id="sw-registration"

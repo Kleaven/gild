@@ -4,10 +4,12 @@ import React, { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Wordmark, Avatar, GILD_FONTS } from '@/components/gild';
 import type { Person } from '@/components/gild';
-import { updateProfile, requestDataExport, requestAccountDeletion } from '@/app/actions';
+import { updateProfile, uploadAvatar, requestDataExport, requestAccountDeletion } from '@/app/actions';
 import { signOut } from '@/lib/auth/actions';
+import { Camera, Shield, User, Trash2, LogOut } from 'lucide-react';
+import { SecurityPanel } from './SecurityPanel';
 
-type Tab = 'profile' | 'danger';
+type Tab = 'profile' | 'security' | 'danger';
 
 interface StudioSettingsProps {
   user: {
@@ -33,42 +35,7 @@ export function StudioSettings({ user }: StudioSettingsProps) {
 
   return (
     <div style={{ fontFamily: GILD_FONTS.sans, background: '#fff', minHeight: '100vh', color: '#202020' }}>
-      <header
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '14px 28px',
-          borderBottom: '1px solid oklch(0.95 0.005 250)',
-        }}
-      >
-        <Wordmark size={22} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Avatar person={currentUser} size={28} />
-          <button
-            type="button"
-            onClick={async () => {
-              await signOut();
-              router.push('/');
-              router.refresh();
-            }}
-            style={{
-              padding: '6px 14px',
-              borderRadius: 8,
-              background: 'transparent',
-              color: 'oklch(0.30 0.02 250)',
-              border: '1px solid oklch(0.90 0.01 250)',
-              fontSize: 13,
-              fontWeight: 500,
-              cursor: 'pointer',
-            }}
-          >
-            Log out
-          </button>
-        </div>
-      </header>
-
-      <main style={{ maxWidth: 720, margin: '0 auto', padding: '32px 28px' }}>
+      <main style={{ maxWidth: 800, margin: '0 auto', padding: '60px 24px' }}>
         <h1
           style={{
             fontFamily: GILD_FONTS.display,
@@ -81,17 +48,23 @@ export function StudioSettings({ user }: StudioSettingsProps) {
           Settings
         </h1>
 
-        <nav style={{ display: 'flex', gap: 4, marginBottom: 24, borderBottom: '1px solid oklch(0.94 0.005 250)' }}>
+        <nav style={{ display: 'flex', gap: 4, marginBottom: 40, borderBottom: '1px solid oklch(0.94 0.005 250)' }}>
           <TabButton active={tab === 'profile'} onClick={() => setTab('profile')}>
-            Profile
+            <User size={16} style={{ marginRight: 8 }} /> Profile
+          </TabButton>
+          <TabButton active={tab === 'security'} onClick={() => setTab('security')}>
+            <Shield size={16} style={{ marginRight: 8 }} /> Security
           </TabButton>
           <TabButton active={tab === 'danger'} onClick={() => setTab('danger')}>
-            Danger Zone
+            <Trash2 size={16} style={{ marginRight: 8 }} /> Danger Zone
           </TabButton>
         </nav>
 
-        {tab === 'profile' && <ProfilePanel user={user} />}
-        {tab === 'danger' && <DangerPanel />}
+        <div style={{ minHeight: 400 }}>
+          {tab === 'profile' && <ProfilePanel user={user} />}
+          {tab === 'security' && <SecurityPanel />}
+          {tab === 'danger' && <DangerPanel />}
+        </div>
       </main>
     </div>
   );
@@ -127,6 +100,29 @@ function ProfilePanel({ user }: { user: StudioSettingsProps['user'] }) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [isUploading, setIsUploading] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState(user.avatar_url);
+
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setError(null);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const result = await uploadAvatar(formData);
+    setIsUploading(false);
+
+    if (result.ok) {
+      setAvatarUrl(result.url);
+      setSuccess(true);
+    } else {
+      setError(result.error);
+    }
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -149,8 +145,56 @@ function ProfilePanel({ user }: { user: StudioSettingsProps['user'] }) {
   return (
     <form
       onSubmit={handleSubmit}
-      style={{ display: 'flex', flexDirection: 'column', gap: 18 }}
+      style={{ display: 'flex', flexDirection: 'column', gap: 24 }}
     >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 10 }}>
+        <div style={{ position: 'relative' }}>
+          <Avatar 
+            person={{ 
+              id: user.id, 
+              name: displayName, 
+              avatar_url: avatarUrl,
+              role: 'free_member',
+              hue: user.id.charCodeAt(0) * 10 % 360,
+              online: true 
+            }} 
+            size={80} 
+          />
+          <label style={{
+            position: 'absolute',
+            bottom: -2,
+            right: -2,
+            width: 32,
+            height: 32,
+            borderRadius: '50%',
+            background: 'oklch(0.20 0.02 250)',
+            color: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            border: '3px solid #fff',
+            boxShadow: '0 2px 8px oklch(0 0 0 / 0.15)',
+            opacity: isUploading ? 0.7 : 1,
+          }}>
+            <Camera size={14} />
+            <input 
+              type="file" 
+              accept="image/*" 
+              onChange={handleAvatarChange} 
+              disabled={isUploading}
+              style={{ display: 'none' }} 
+            />
+          </label>
+        </div>
+        <div>
+          <h3 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 4px' }}>Profile Picture</h3>
+          <p style={{ fontSize: 13, color: 'oklch(0.50 0.02 250)', margin: 0 }}>
+            {isUploading ? 'Uploading...' : 'JPG, PNG or GIF. Max 2MB.'}
+          </p>
+        </div>
+      </div>
+
       <Field label="Display name" required>
         <input
           type="text"
@@ -211,13 +255,50 @@ function ProfilePanel({ user }: { user: StudioSettingsProps['user'] }) {
 }
 
 function DangerPanel() {
+  const router = useRouter();
+  const handleLogout = async () => {
+    await signOut();
+    router.push('/');
+    router.refresh();
+  };
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+      <section style={sectionStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+          <div style={{ padding: 10, borderRadius: 12, background: 'oklch(0.96 0.04 250)', color: 'oklch(0.50 0.02 250)' }}>
+            <LogOut size={20} />
+          </div>
+          <div>
+            <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Sign Out</h3>
+            <p style={{ fontSize: 13, color: 'oklch(0.55 0.02 250)', margin: 0 }}>End your current session on this device.</p>
+          </div>
+        </div>
+        <button onClick={handleLogout} style={secondaryBtnStyle}>Log out</button>
+      </section>
+
       <ExportSection />
       <DeleteSection />
     </div>
   );
 }
+
+const sectionStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+};
+
+const secondaryBtnStyle: React.CSSProperties = {
+  padding: '8px 16px',
+  borderRadius: 10,
+  background: 'transparent',
+  border: '1px solid oklch(0.90 0.01 250)',
+  color: '#111',
+  fontSize: 14,
+  fontWeight: 600,
+  cursor: 'pointer',
+  width: 'fit-content'
+};
 
 function ExportSection() {
   const [isPending, startTransition] = useTransition();

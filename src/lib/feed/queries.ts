@@ -28,6 +28,33 @@ async function fetchVotedSet(
   return set;
 }
 
+async function fetchPollData(
+  supabase: SupabaseClient<Database>,
+  postIds: string[],
+): Promise<{ results: Record<string, Record<string, number>>; viewerVotes: Record<string, string> }> {
+  if (postIds.length === 0) return { results: {}, viewerVotes: {} };
+
+  const { data: votes } = await supabase
+    .from('poll_votes')
+    .select('post_id, option_id, user_id')
+    .in('post_id', postIds);
+
+  const results: Record<string, Record<string, number>> = {};
+  const viewerVotes: Record<string, string> = {};
+  const currentUserId = (await supabase.auth.getUser()).data.user?.id;
+
+  (votes ?? []).forEach((v) => {
+    if (!results[v.post_id]) results[v.post_id] = {};
+    results[v.post_id][v.option_id] = (results[v.post_id][v.option_id] || 0) + 1;
+    
+    if (v.user_id === currentUserId) {
+      viewerVotes[v.post_id] = v.option_id;
+    }
+  });
+
+  return { results, viewerVotes };
+}
+
 export async function getFeedPosts(
   supabase: SupabaseClient<Database>,
   communityId: string,
@@ -69,10 +96,17 @@ export async function getFeedPosts(
     posts.map((p) => p.id),
     'post',
   );
+  
+  const { results: pollResults, viewerVotes: pollViewerVotes } = await fetchPollData(
+    supabase,
+    posts.map(p => p.id).filter(id => posts.find(p => p.id === id)?.type === 'poll')
+  );
 
   const feedPosts = posts.map((post) => ({
     ...post,
     viewer_has_voted: votedIds.has(post.id),
+    viewer_voted_option: pollViewerVotes[post.id] || null,
+    poll_results: pollResults[post.id] || null,
   })) as FeedPost[];
 
   let nextCursor: string | null = null;
@@ -104,9 +138,12 @@ export async function getPost(
   if (!post) return null;
 
   const votedIds = await fetchVotedSet(supabase, [postId], 'post');
+  const { results, viewerVotes } = await fetchPollData(supabase, [postId]);
 
   return {
     ...post,
     viewer_has_voted: votedIds.has(postId),
+    viewer_voted_option: viewerVotes[postId] || null,
+    poll_results: results[postId] || null,
   } as FeedPost;
 }

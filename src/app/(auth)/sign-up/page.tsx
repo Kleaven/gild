@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { createBrowserClient } from '@supabase/ssr';
 import Image from 'next/image';
 import { Wordmark, GILD_FONTS } from '@/components/gild';
+import { signUp } from '@/lib/auth/actions';
 
 export default function SignUpPage() {
   const [email, setEmail] = useState('');
@@ -14,26 +14,36 @@ export default function SignUpPage() {
   const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  );
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const { error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { display_name: displayName } },
-    });
-    setLoading(false);
-    if (authError) {
-      setError(authError.message);
-      return;
+    
+    const formData = new FormData();
+    formData.append('email', email);
+    formData.append('password', password);
+    formData.append('displayName', displayName);
+    formData.append('username', email.split('@')[0]); // Default username
+
+    try {
+      const { data, error: authError } = await signUp(formData);
+      setLoading(false);
+      
+      if (authError) {
+        setError(authError.message);
+        return;
+      }
+      
+      if (data?.user) {
+        // Refresh the page or redirect to onboarding
+        window.location.href = '/onboarding';
+      } else {
+        setDone(true);
+      }
+    } catch (err) {
+      setLoading(false);
+      setError('An unexpected error occurred. Please try again.');
     }
-    setDone(true);
   }
 
   return (

@@ -6,88 +6,98 @@ import type { Plan } from './plans';
 import db from '../db';
 import { env } from '../env';
 
-// NEXT_PUBLIC_APP_URL is in the client schema and available server-side.
 const APP_URL = env.NEXT_PUBLIC_APP_URL;
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type CommunityBillingRow = {
+type BillingRow = {
   id: string;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   subscription_status: string;
-  plan: string;
+  plan: string | null;
 };
 
-// Closed enum — only two legal return destinations after Stripe checkout.
-// No caller-supplied string ever touches URL construction.
-export type CheckoutReturnContext = 'settings' | 'onboarding';
+export type CheckoutReturnContext = 'settings' | 'onboarding' | 'global';
 
 // ─── createCheckoutSession ────────────────────────────────────────────────────
+// Handles both Community and Platform (User) level checkouts.
+// Supports plan switching (upgrade/downgrade) for existing subscriptions.
 
 export async function createCheckoutSession(
-  communityId: string,
+  targetId: string, // communityId OR userId
   plan: Plan,
-  ownerEmail: string,
+  email: string,
+  targetType: 'community' | 'platform',
   returnContext: CheckoutReturnContext = 'settings',
 ): Promise<{ url: string }> {
-  // Step 1 — Fetch community billing state
-  const rows = await db<CommunityBillingRow[]>`
+  // Step 1 — Fetch current billing state
+  const tableIdent = targetType === 'community' ? 'communities' : 'profiles';
+  const rows = await db<BillingRow[]>`
     SELECT id, stripe_customer_id, stripe_subscription_id, subscription_status, plan
-    FROM public.communities
-    WHERE id = ${communityId}
+    FROM public.${db(tableIdent)}
+    WHERE id = ${targetId}
     LIMIT 1
   `;
-  const community = rows[0];
-  if (!community) throw new Error('[gild] community not found');
+  const entity = rows[0];
+  if (!entity) throw new Error(`[gild] ${targetType} not found`);
 
+  // Step 2 — Handle Plan Switching for active subscriptions
   if (
-    community.subscription_status === 'active' ||
-    community.subscription_status === 'trialing'
+    entity.stripe_subscription_id && 
+    (entity.subscription_status === 'active' || entity.subscription_status === 'trialing')
   ) {
-    throw new Error('[gild] already subscribed');
+    // If they are already on this plan, just return a portal URL
+    if (entity.plan === plan) {
+      return createBillingPortalSession(targetId, targetType, returnContext);
+    }
+
+    // Otherwise, use Stripe Checkout to switch plans (upgrade/downgrade)
+    // We update the existing subscription instead of creating a new one.
+    const session = await stripe.checkout.sessions.create({
+      customer: entity.stripe_customer_id!,
+      mode: 'subscription',
+      line_items: [{ price: PLANS[plan].priceId, quantity: 1 }],
+      success_url: `${APP_URL}${getReturnPath(targetId, targetType, returnContext)}?checkout=success`,
+      cancel_url: `${APP_URL}${getReturnPath(targetId, targetType, returnContext)}?checkout=cancelled`,
+      subscription_data: {
+        metadata: { targetId, plan, targetType },
+      },
+      metadata: { targetId, plan, targetType },
+    });
+
+    if (!session.url) throw new Error('[gild] checkout session has no URL');
+    return { url: session.url };
   }
 
-  // Step 2 — Get or create Stripe customer
+  // Step 3 — New Subscription Flow
   let customerId: string;
-  if (!community.stripe_customer_id) {
+  if (!entity.stripe_customer_id) {
     const customer = await stripe.customers.create({
-      email: ownerEmail,
-      metadata: { communityId },
+      email: email,
+      metadata: { targetId, targetType },
     });
     await db`
-      UPDATE public.communities
+      UPDATE public.${db(tableIdent)}
       SET stripe_customer_id = ${customer.id}
-      WHERE id = ${communityId}
+      WHERE id = ${targetId}
     `;
     customerId = customer.id;
   } else {
-    customerId = community.stripe_customer_id;
+    customerId = entity.stripe_customer_id;
   }
-
-  // Step 3 — Create checkout session
-  // success_url and cancel_url constructed entirely server-side from hardcoded
-  // paths keyed on the closed CheckoutReturnContext enum — no caller string used.
-  const successPath =
-    returnContext === 'onboarding'
-      ? `/onboarding/${communityId}/checkout?checkout=success`
-      : `/c/${communityId}/settings?checkout=success`;
-  const cancelPath =
-    returnContext === 'onboarding'
-      ? `/onboarding/${communityId}/plan?checkout=cancelled`
-      : `/c/${communityId}/settings?checkout=cancelled`;
 
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: 'subscription',
     line_items: [{ price: PLANS[plan].priceId, quantity: 1 }],
-    success_url: `${APP_URL}${successPath}`,
-    cancel_url: `${APP_URL}${cancelPath}`,
+    success_url: `${APP_URL}${getReturnPath(targetId, targetType, returnContext)}?checkout=success`,
+    cancel_url: `${APP_URL}${getReturnPath(targetId, targetType, returnContext)}?checkout=cancelled`,
     subscription_data: {
       trial_period_days: 14,
-      metadata: { communityId, plan },
+      metadata: { targetId, plan, targetType },
     },
-    metadata: { communityId, plan },
+    metadata: { targetId, plan, targetType },
     allow_promotion_codes: true,
   });
 
@@ -98,13 +108,15 @@ export async function createCheckoutSession(
 // ─── createBillingPortalSession ───────────────────────────────────────────────
 
 export async function createBillingPortalSession(
-  communityId: string,
+  targetId: string,
+  targetType: 'community' | 'platform',
+  returnContext: CheckoutReturnContext = 'settings',
 ): Promise<{ url: string }> {
-  // Step 1 — Fetch stripe_customer_id
+  const tableIdent = targetType === 'community' ? 'communities' : 'profiles';
   const rows = await db<{ stripe_customer_id: string | null }[]>`
     SELECT stripe_customer_id
-    FROM public.communities
-    WHERE id = ${communityId}
+    FROM public.${db(tableIdent)}
+    WHERE id = ${targetId}
     LIMIT 1
   `;
   const row = rows[0];
@@ -112,10 +124,9 @@ export async function createBillingPortalSession(
     throw new Error('[gild] no billing account found — complete checkout first');
   }
 
-  // Step 2 — Create portal session
   const session = await stripe.billingPortal.sessions.create({
     customer: row.stripe_customer_id,
-    return_url: `${APP_URL}/c/${communityId}/settings`,
+    return_url: `${APP_URL}${getReturnPath(targetId, targetType, returnContext)}`,
   });
 
   return { url: session.url };
@@ -123,12 +134,15 @@ export async function createBillingPortalSession(
 
 // ─── cancelSubscription ───────────────────────────────────────────────────────
 
-export async function cancelSubscription(communityId: string): Promise<void> {
-  // Step 1 — Fetch stripe_subscription_id
+export async function cancelSubscription(
+  targetId: string,
+  targetType: 'community' | 'platform',
+): Promise<void> {
+  const tableIdent = targetType === 'community' ? 'communities' : 'profiles';
   const rows = await db<{ stripe_subscription_id: string | null }[]>`
     SELECT stripe_subscription_id
-    FROM public.communities
-    WHERE id = ${communityId}
+    FROM public.${db(tableIdent)}
+    WHERE id = ${targetId}
     LIMIT 1
   `;
   const row = rows[0];
@@ -136,9 +150,73 @@ export async function cancelSubscription(communityId: string): Promise<void> {
     throw new Error('[gild] no active subscription');
   }
 
-  // Step 2 — Cancel at period end (never immediately)
-  // Webhook handler owns all subscription_status updates — do NOT update here
   await stripe.subscriptions.update(row.stripe_subscription_id, {
     cancel_at_period_end: true,
   });
+}
+
+
+// ─── createCommunityJoinSession ──────────────────────────────────────────────
+// Handles one-time payment checkouts for users joining a paid community.
+
+export async function createCommunityJoinSession(
+  communityId: string,
+  userId: string,
+  email: string,
+): Promise<{ url: string }> {
+  const rows = await db<{ name: string; price_amount: number; price_currency: string; pricing_period: string }[]>`
+    SELECT name, price_amount, price_currency, pricing_period
+    FROM public.communities
+    WHERE id = ${communityId}
+    LIMIT 1
+  `;
+  const community = rows[0];
+  if (!community) throw new Error('[gild] community not found');
+
+  const isRecurring = community.pricing_period === 'monthly' || community.pricing_period === 'yearly';
+
+  const session = await stripe.checkout.sessions.create({
+    mode: isRecurring ? 'subscription' : 'payment',
+    customer_email: email,
+    line_items: [{
+      price_data: {
+        currency: community.price_currency.toLowerCase(),
+        product_data: {
+          name: `Access to ${community.name}`,
+          description: isRecurring 
+            ? `Recurring ${community.pricing_period} membership for ${community.name}.`
+            : `One-time payment for lifetime access to the ${community.name} community.`,
+        },
+        unit_amount: Math.round(community.price_amount * 100),
+        ...(isRecurring && {
+          recurring: {
+            interval: community.pricing_period === 'monthly' ? 'month' : 'year',
+          },
+        }),
+      },
+      quantity: 1,
+    }],
+    success_url: `${APP_URL}/c/${communityId}?welcome=1&payment=success`,
+    cancel_url: `${APP_URL}/c/${communityId}?payment=cancelled`,
+    metadata: { 
+      communityId, 
+      userId, 
+      type: 'community_join' 
+    },
+    subscription_data: isRecurring ? {
+      metadata: { communityId, userId, type: 'community_join' }
+    } : undefined,
+  });
+
+  if (!session.url) throw new Error('[gild] checkout session has no URL');
+  return { url: session.url };
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function getReturnPath(targetId: string, targetType: 'community' | 'platform', context: CheckoutReturnContext): string {
+  if (targetType === 'platform') return '/settings/billing';
+  
+  if (context === 'onboarding') return `/onboarding/${targetId}/checkout`;
+  return `/c/${targetId}/settings`;
 }

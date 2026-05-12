@@ -27,15 +27,17 @@ export type CreateCourseInput = {
   communityId: string;
   // DEVIATION: courses table requires space_id (NOT NULL FK → spaces.id).
   // Spec omitted this field; added here to match the actual schema.
-  spaceId: string;
+  spaceId?: string;
   title: string;
   description?: string;
+  imageUrl?: string;
   isPublished?: boolean;
 };
 
 export type UpdateCourseInput = {
   title?: string;
   description?: string;
+  imageUrl?: string;
   isPublished?: boolean;
 };
 
@@ -56,6 +58,8 @@ export type CreateLessonInput = {
   title: string;
   body?: string;
   videoUrl?: string;
+  imageUrl?: string;
+  attachmentUrls?: string[];
   position?: number;
   isPublished?: boolean;
 };
@@ -64,6 +68,8 @@ export type UpdateLessonInput = {
   title?: string;
   body?: string;
   videoUrl?: string;
+  imageUrl?: string;
+  attachmentUrls?: string[];
   isPublished?: boolean;
 };
 

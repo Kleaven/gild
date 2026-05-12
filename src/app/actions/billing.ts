@@ -11,15 +11,45 @@ import {
 import type { CheckoutReturnContext } from '../../lib/billing/subscription';
 import type { Plan } from '../../lib/billing/plans';
 
-const returnContextSchema = z.enum(['settings', 'onboarding']);
+const returnContextSchema = z.enum(['settings', 'onboarding', 'global']);
+const targetTypeSchema = z.enum(['community', 'platform']);
 
 export async function createCheckoutSession(
-  communityId: string,
+  targetId: string,
   plan: Plan,
+  targetType: 'community' | 'platform' = 'community',
   returnContext: CheckoutReturnContext = 'settings',
 ): Promise<{ url: string }> {
-  // Validate returnContext against the closed enum before delegating to lib.
-  // Rejects any value that isn't 'settings' or 'onboarding' at the action boundary.
+  const validatedContext = returnContextSchema.parse(returnContext);
+  const validatedType = targetTypeSchema.parse(targetType);
+
+  const supabase = await getSupabaseServerClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+  if (error || !user) throw new Error('[gild] not authenticated');
+
+  // Verify ownership/authorization
+  if (validatedType === 'community') {
+    const { data: isOwner } = await supabase.rpc('is_community_owner', {
+      p_community_id: targetId,
+    });
+    if (!isOwner) throw new Error('[gild] not authorized');
+  } else {
+    if (targetId !== user.id) throw new Error('[gild] not authorized');
+  }
+
+  const ownerEmail = user.email ?? '';
+  return libCreateCheckoutSession(targetId, plan, ownerEmail, validatedType, validatedContext);
+}
+
+export async function createBillingPortalSession(
+  targetId: string,
+  targetType: 'community' | 'platform' = 'community',
+  returnContext: CheckoutReturnContext = 'settings',
+): Promise<{ url: string }> {
+  const validatedType = targetTypeSchema.parse(targetType);
   const validatedContext = returnContextSchema.parse(returnContext);
 
   const supabase = await getSupabaseServerClient();
@@ -29,48 +59,56 @@ export async function createCheckoutSession(
   } = await supabase.auth.getUser();
   if (error || !user) throw new Error('[gild] not authenticated');
 
-  const { data: isOwner } = await supabase.rpc('is_community_owner', {
-    p_community_id: communityId,
-  });
-  if (!isOwner) throw new Error('[gild] not authorized');
+  if (validatedType === 'community') {
+    const { data: isOwner } = await supabase.rpc('is_community_owner', {
+      p_community_id: targetId,
+    });
+    if (!isOwner) throw new Error('[gild] not authorized');
+  } else {
+    if (targetId !== user.id) throw new Error('[gild] not authorized');
+  }
 
-  // user.email comes from the verified JWT — not caller-supplied
-  const ownerEmail = user.email ?? '';
-  return libCreateCheckoutSession(communityId, plan, ownerEmail, validatedContext);
+  return libCreateBillingPortalSession(targetId, validatedType, validatedContext);
 }
 
-export async function createBillingPortalSession(
+export async function cancelSubscription(
+  targetId: string,
+  targetType: 'community' | 'platform' = 'community',
+): Promise<void> {
+  const validatedType = targetTypeSchema.parse(targetType);
+
+  const supabase = await getSupabaseServerClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+  if (error || !user) throw new Error('[gild] not authenticated');
+
+  if (validatedType === 'community') {
+    const { data: isOwner } = await supabase.rpc('is_community_owner', {
+      p_community_id: targetId,
+    });
+    if (!isOwner) throw new Error('[gild] not authorized');
+  } else {
+    if (targetId !== user.id) throw new Error('[gild] not authorized');
+  }
+
+  await libCancelSubscription(targetId, validatedType);
+
+  if (validatedType === 'community') {
+    revalidatePath(`/c/${targetId}/settings`);
+  } else {
+    revalidatePath(`/settings/billing`);
+  }
+}
+
+export async function createCommunityJoinSession(
   communityId: string,
 ): Promise<{ url: string }> {
   const supabase = await getSupabaseServerClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) throw new Error('[gild] not authenticated');
 
-  const { data: isOwner } = await supabase.rpc('is_community_owner', {
-    p_community_id: communityId,
-  });
-  if (!isOwner) throw new Error('[gild] not authorized');
-
-  return libCreateBillingPortalSession(communityId);
-}
-
-export async function cancelSubscription(communityId: string): Promise<void> {
-  const supabase = await getSupabaseServerClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (error || !user) throw new Error('[gild] not authenticated');
-
-  const { data: isOwner } = await supabase.rpc('is_community_owner', {
-    p_community_id: communityId,
-  });
-  if (!isOwner) throw new Error('[gild] not authorized');
-
-  await libCancelSubscription(communityId);
-
-  revalidatePath(`/c/${communityId}/settings`);
+  const { createCommunityJoinSession: libCreateJoin } = await import('../../lib/billing/subscription');
+  return libCreateJoin(communityId, user.id, user.email ?? '');
 }

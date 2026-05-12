@@ -22,6 +22,15 @@ export type CreateCommunityInput = {
   name: string;
   slug: string;
   description?: string;
+  is_private?: boolean;
+  category?: string;
+  theme_hue?: number;
+  welcome_message?: string;
+  goodbye_message?: string;
+  pricing_type?: 'free' | 'paid';
+  price_amount?: number;
+  price_currency?: string;
+  pricing_period?: 'one_time' | 'monthly' | 'yearly';
 };
 
 export type UpdateMemberRoleInput = {
@@ -38,6 +47,7 @@ export type CreateSpaceInput = {
   isPrivate?: boolean;
   minRole?: Database['public']['Enums']['member_role'];
   slug?: string;
+  permissions?: Record<string, string>;
 };
 
 export type UpdateSpaceInput = {
@@ -45,4 +55,5 @@ export type UpdateSpaceInput = {
   description?: string;
   isPrivate?: boolean;
   minRole?: Database['public']['Enums']['member_role'];
+  permissions?: Record<string, string>;
 };

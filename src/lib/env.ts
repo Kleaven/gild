@@ -18,6 +18,8 @@ const serverSchema = z.object({
   CRON_SECRET: z.string().min(1),
   RESEND_API_KEY: z.string().min(1),
   RESEND_FROM_EMAIL: z.string().email(),
+  GOOGLE_CLIENT_ID: z.string().min(1),
+  GOOGLE_CLIENT_SECRET: z.string().min(1),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 });
 
@@ -46,6 +48,8 @@ const SERVER_KEYS = new Set<string>([
   'CRON_SECRET',
   'RESEND_API_KEY',
   'RESEND_FROM_EMAIL',
+  'GOOGLE_CLIENT_ID',
+  'GOOGLE_CLIENT_SECRET',
   'NODE_ENV',
 ]);
 
@@ -63,7 +67,14 @@ function reportAndExit(lines: string[]): never {
 }
 
 function validateEnv(): Env {
-  const clientResult = clientSchema.safeParse(process.env);
+  const clientEnv = {
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+  };
+
+  const clientResult = clientSchema.safeParse(clientEnv);
 
   // Server bundle: validate both schemas. Browser bundle: skip server schema —
   // those vars are intentionally not exposed to the client. The Proxy guard
@@ -106,6 +117,8 @@ function validateEnv(): Env {
     CRON_SECRET: '',
     RESEND_API_KEY: '',
     RESEND_FROM_EMAIL: '',
+    GOOGLE_CLIENT_ID: '',
+    GOOGLE_CLIENT_SECRET: '',
     NODE_ENV: 'development',
     ...clientResult.data,
   };
