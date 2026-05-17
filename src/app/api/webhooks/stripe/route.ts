@@ -79,12 +79,13 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event): Promise<void
   const session = event.data.object as Stripe.CheckoutSession;
   const { type, communityId, userId, targetType, targetId, plan } = session.metadata || {};
 
-  // Case 1: One-time Community Join
+  // Case 1: One-time Community Join (idempotent — ON CONFLICT DO NOTHING handles replays)
   if (type === 'community_join' && communityId && userId) {
-    await db.rpc('join_community', {
-      p_community_id: communityId,
-      p_user_id: userId
-    });
+    await db`
+      INSERT INTO public.community_members (community_id, user_id, role)
+      VALUES (${communityId}, ${userId}, 'free_member')
+      ON CONFLICT (community_id, user_id) DO NOTHING
+    `;
     return;
   }
 

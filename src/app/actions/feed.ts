@@ -10,6 +10,19 @@ import {
 } from '../../lib/feed/actions';
 import type { CreatePostInput } from '../../lib/feed/types';
 
+// Routes are keyed by slug, not UUID — revalidatePath('/c/<uuid>/...') is a
+// dead path that Next happily accepts and then silently does nothing useful.
+// Resolve slug from the UUID input so the cache key actually matches a route.
+async function communitySlugForCacheKey(communityId: string): Promise<string | null> {
+  const supabase = await getSupabaseServerClient();
+  const { data } = await supabase
+    .from('communities')
+    .select('slug')
+    .eq('id', communityId)
+    .maybeSingle();
+  return data?.slug ?? null;
+}
+
 export async function createPost(input: CreatePostInput): Promise<{ postId?: string; error?: string }> {
   try {
     const supabase = await getSupabaseServerClient();
@@ -20,7 +33,8 @@ export async function createPost(input: CreatePostInput): Promise<{ postId?: str
     if (error || !user) return { error: '[gild] not authenticated' };
 
     const result = await libCreatePost(input);
-    revalidatePath(`/c/${input.communityId}/s/${input.spaceId}`);
+    const slug = await communitySlugForCacheKey(input.communityId);
+    if (slug) revalidatePath(`/c/${slug}/s/${input.spaceId}`);
     return result;
   } catch (err) {
     console.error('[createPost] action error:', err);

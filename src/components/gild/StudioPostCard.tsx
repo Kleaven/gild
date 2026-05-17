@@ -29,7 +29,7 @@ interface StudioPostCardProps {
     poll_results?: Record<string, number> | null;
     viewer_voted_option?: string | null;
   };
-  communityId: string;
+  communitySlug: string;
   spaceId: string;
   hue?: number;
   canPin?: boolean;
@@ -54,7 +54,7 @@ const iconBtn: React.CSSProperties = {
 
 export function StudioPostCard({
   post,
-  communityId,
+  communitySlug,
   spaceId,
   hue = 220,
   canPin = false,
@@ -72,7 +72,7 @@ export function StudioPostCard({
   };
 
   const isOptimistic = Boolean(post._optimistic);
-  const postHref = `/c/${communityId}/s/${spaceId}/p/${post.id}`;
+  const postHref = `/c/${communitySlug}/s/${spaceId}/p/${post.id}`;
 
   // YouTube embed logic
   const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;

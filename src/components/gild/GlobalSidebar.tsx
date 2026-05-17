@@ -294,11 +294,11 @@ function SidebarItem({ icon, label, href, active }: { icon: React.ReactNode, lab
 
 function CommunityItem({ community }: { community: Community }) {
   const pathname = usePathname();
-  const isActive = pathname.startsWith(`/c/${community.id}`);
-  
+  const isActive = pathname.startsWith(`/c/${community.slug}`);
+
   return (
-    <Link 
-      href={`/c/${community.id}`}
+    <Link
+      href={`/c/${community.slug}`}
       style={{
         display: 'flex',
         alignItems: 'center',

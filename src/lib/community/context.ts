@@ -1,6 +1,6 @@
 import { cache } from 'react';
 import { getSupabaseServerClient } from '../auth/server';
-import { getCommunity, getMembership, getSpaces } from './index';
+import { getCommunity, getCommunityBySlug, getMembership, getSpaces } from './index';
 import type { Community, CommunityMember, Space } from './index';
 
 export type CommunityContext = {
@@ -26,3 +26,12 @@ export const getCommunityContext = cache(async (communityId: string): Promise<Co
   }
   return { community, membership, spaces };
 });
+
+// Resolves a slug to a UUID then calls the cached getCommunityContext so all
+// pages under c/[slug] deduplicate to one DB round-trip per request.
+export async function getCommunityContextBySlug(slug: string): Promise<CommunityContext> {
+  const supabase = await getSupabaseServerClient();
+  const community = await getCommunityBySlug(supabase, slug);
+  if (!community) return { community: null, membership: null, spaces: [] };
+  return getCommunityContext(community.id);
+}

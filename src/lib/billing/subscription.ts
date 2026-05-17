@@ -1,12 +1,23 @@
 import 'server-only';
 
+import { headers } from 'next/headers';
 import { stripe } from './stripe';
 import { PLANS } from './catalog';
 import type { Plan } from './plans';
 import db from '../db';
 import { env } from '../env';
 
-const APP_URL = env.NEXT_PUBLIC_APP_URL;
+async function getAppUrl(): Promise<string> {
+  try {
+    const h = await headers();
+    const host = h.get('x-forwarded-host') ?? h.get('host');
+    const proto = h.get('x-forwarded-proto') ?? 'https';
+    if (host) return `${proto}://${host}`;
+  } catch {
+    // Outside request context (build time, cron) — fall back to env
+  }
+  return env.NEXT_PUBLIC_APP_URL;
+}
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -31,6 +42,8 @@ export async function createCheckoutSession(
   targetType: 'community' | 'platform',
   returnContext: CheckoutReturnContext = 'settings',
 ): Promise<{ url: string }> {
+  const appUrl = await getAppUrl();
+
   // Step 1 — Fetch current billing state
   const tableIdent = targetType === 'community' ? 'communities' : 'profiles';
   const rows = await db<BillingRow[]>`
@@ -58,8 +71,8 @@ export async function createCheckoutSession(
       customer: entity.stripe_customer_id!,
       mode: 'subscription',
       line_items: [{ price: PLANS[plan].priceId, quantity: 1 }],
-      success_url: `${APP_URL}${getReturnPath(targetId, targetType, returnContext)}?checkout=success`,
-      cancel_url: `${APP_URL}${getReturnPath(targetId, targetType, returnContext)}?checkout=cancelled`,
+      success_url: `${appUrl}${getReturnPath(targetId, targetType, returnContext)}?checkout=success`,
+      cancel_url: `${appUrl}${getReturnPath(targetId, targetType, returnContext)}?checkout=cancelled`,
       subscription_data: {
         metadata: { targetId, plan, targetType },
       },
@@ -91,8 +104,8 @@ export async function createCheckoutSession(
     customer: customerId,
     mode: 'subscription',
     line_items: [{ price: PLANS[plan].priceId, quantity: 1 }],
-    success_url: `${APP_URL}${getReturnPath(targetId, targetType, returnContext)}?checkout=success`,
-    cancel_url: `${APP_URL}${getReturnPath(targetId, targetType, returnContext)}?checkout=cancelled`,
+    success_url: `${appUrl}${getReturnPath(targetId, targetType, returnContext)}?checkout=success`,
+    cancel_url: `${appUrl}${getReturnPath(targetId, targetType, returnContext)}?checkout=cancelled`,
     subscription_data: {
       trial_period_days: 14,
       metadata: { targetId, plan, targetType },
@@ -112,6 +125,7 @@ export async function createBillingPortalSession(
   targetType: 'community' | 'platform',
   returnContext: CheckoutReturnContext = 'settings',
 ): Promise<{ url: string }> {
+  const appUrl = await getAppUrl();
   const tableIdent = targetType === 'community' ? 'communities' : 'profiles';
   const rows = await db<{ stripe_customer_id: string | null }[]>`
     SELECT stripe_customer_id
@@ -126,7 +140,7 @@ export async function createBillingPortalSession(
 
   const session = await stripe.billingPortal.sessions.create({
     customer: row.stripe_customer_id,
-    return_url: `${APP_URL}${getReturnPath(targetId, targetType, returnContext)}`,
+    return_url: `${appUrl}${getReturnPath(targetId, targetType, returnContext)}`,
   });
 
   return { url: session.url };
@@ -164,8 +178,9 @@ export async function createCommunityJoinSession(
   userId: string,
   email: string,
 ): Promise<{ url: string }> {
-  const rows = await db<{ name: string; price_amount: number; price_currency: string; pricing_period: string }[]>`
-    SELECT name, price_amount, price_currency, pricing_period
+  const appUrl = await getAppUrl();
+  const rows = await db<{ name: string; price_amount: number; price_currency: string; pricing_period: string; slug: string }[]>`
+    SELECT name, price_amount, price_currency, pricing_period, slug
     FROM public.communities
     WHERE id = ${communityId}
     LIMIT 1
@@ -196,8 +211,8 @@ export async function createCommunityJoinSession(
       },
       quantity: 1,
     }],
-    success_url: `${APP_URL}/c/${communityId}?welcome=1&payment=success`,
-    cancel_url: `${APP_URL}/c/${communityId}?payment=cancelled`,
+    success_url: `${appUrl}/c/${community.slug}?welcome=1&payment=success`,
+    cancel_url: `${appUrl}/c/${community.slug}?payment=cancelled`,
     metadata: { 
       communityId, 
       userId, 

@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
-import { Bricolage_Grotesque, Inter, JetBrains_Mono, Gochi_Hand } from 'next/font/google';
+import { Bricolage_Grotesque, Inter, JetBrains_Mono, Gochi_Hand, Outfit } from 'next/font/google';
 import { gildKeyframes } from '@/components/gild';
 
 const bricolage = Bricolage_Grotesque({
@@ -28,6 +28,12 @@ const gochi = Gochi_Hand({
   display: 'swap',
 });
 
+const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-outfit',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
   title: 'Gild',
   description: 'Premium community platform',
@@ -50,7 +56,7 @@ import { Toaster } from 'sonner';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${bricolage.variable} ${inter.variable} ${jetbrains.variable} ${gochi.variable}`}>
+    <html lang="en" className={`${bricolage.variable} ${inter.variable} ${jetbrains.variable} ${gochi.variable} ${outfit.variable}`}>
       <body style={{ margin: 0, fontFamily: 'system-ui, sans-serif' }}>
         <style dangerouslySetInnerHTML={{ __html: gildKeyframes }} />
         <Toaster richColors position="bottom-right" />

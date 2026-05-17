@@ -21,7 +21,7 @@ interface StudioSidebarProps {
     welcome_message?: string | null;
     goodbye_message?: string | null;
     is_private?: boolean;
-    slug?: string;
+    slug: string;
   };
   spaces: { id: string; name: string; hue?: number; [key: string]: unknown }[];
   currentUser: Person;
@@ -59,8 +59,10 @@ export function StudioSidebar({
 
   const sidebarContent = (
     <aside style={{
-      background: 'oklch(0.985 0.003 250)',
-      borderRight: '1px solid oklch(0.94 0.005 250)',
+      background: 'oklch(0.985 0.003 250 / 0.75)',
+      backdropFilter: 'blur(12px)',
+      WebkitBackdropFilter: 'blur(12px)',
+      borderRight: '1px solid oklch(0.94 0.005 250 / 0.6)',
       padding: '14px 10px',
       display: 'flex',
       flexDirection: 'column',
@@ -145,7 +147,7 @@ export function StudioSidebar({
         {spaces.map(s => {
           const isActive = pathname.includes(`/s/${s.id}`);
           return (
-            <Link key={s.id} href={`/c/${community.id}/s/${s.id}`} style={{
+            <Link key={s.id} href={`/c/${community.slug}/s/${s.id}`} style={{
               display: 'flex',
               alignItems: 'center',
               gap: 10,
@@ -185,9 +187,9 @@ export function StudioSidebar({
           letterSpacing: '0.04em',
         }}>Library</p>
         {[
-          { label: 'Members', href: `/c/${community.id}/members` },
-          ...(showCourses ? [{ label: 'Courses', href: `/c/${community.id}/courses` }] : []),
-          { label: 'Search', href: `/c/${community.id}/search` },
+          { label: 'Members', href: `/c/${community.slug}/members` },
+          ...(showCourses ? [{ label: 'Courses', href: `/c/${community.slug}/courses` }] : []),
+          { label: 'Search', href: `/c/${community.slug}/search` },
           ...(currentUser.role !== 'owner' ? [{ label: 'Leave Community', onClick: () => setIsLeaveModalOpen(true), danger: true }] : []),
         ].map((item: any) => {
           if (item.onClick) {
@@ -243,7 +245,7 @@ export function StudioSidebar({
             textTransform: 'uppercase',
             letterSpacing: '0.04em',
           }}>Admin</p>
-          <Link href={`/c/${community.id}/dashboard`} style={{
+          <Link href={`/c/${community.slug}/dashboard`} style={{
             display: 'flex',
             alignItems: 'center',
             padding: '5px 10px',
@@ -258,7 +260,7 @@ export function StudioSidebar({
           }}>
             Dashboard
           </Link>
-          <Link href={`/c/${community.id}/settings`} style={{
+          <Link href={`/c/${community.slug}/settings`} style={{
             display: 'flex',
             alignItems: 'center',
             padding: '5px 10px',

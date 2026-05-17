@@ -13,6 +13,16 @@ import {
 } from '../../lib/community/actions';
 import type { CreateCommunityInput, UpdateMemberRoleInput } from '../../lib/community/types';
 
+async function resolveCommunitySlug(communityId: string): Promise<string> {
+  const supabase = await getSupabaseServerClient();
+  const { data } = await supabase
+    .from('communities')
+    .select('slug')
+    .eq('id', communityId)
+    .single();
+  return data?.slug ?? communityId;
+}
+
 export async function createCommunity(
   input: CreateCommunityInput,
 ): Promise<{ communityId: string }> {
@@ -41,7 +51,8 @@ export async function joinCommunity(communityId: string): Promise<{ welcome_mess
 
   const result = await libJoinCommunity(communityId);
 
-  revalidatePath(`/c/${communityId}`);
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}`);
   return result;
 }
 
@@ -55,7 +66,8 @@ export async function leaveCommunity(communityId: string): Promise<void> {
 
   await libLeaveCommunity(communityId);
 
-  revalidatePath(`/c/${communityId}`);
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}`);
 }
 
 export async function updateMemberRole(input: UpdateMemberRoleInput): Promise<void> {
@@ -68,7 +80,8 @@ export async function updateMemberRole(input: UpdateMemberRoleInput): Promise<vo
 
   await libUpdateMemberRole(input);
 
-  revalidatePath(`/c/${input.communityId}/members`);
+  const slug = await resolveCommunitySlug(input.communityId);
+  revalidatePath(`/c/${slug}/members`);
 }
 
 export async function transferOwnership(
@@ -84,7 +97,8 @@ export async function transferOwnership(
 
   await libTransferOwnership(communityId, newOwnerId);
 
-  revalidatePath(`/c/${communityId}/settings`);
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}/settings`);
 }
 
 export async function updateCommunity(
@@ -100,8 +114,9 @@ export async function updateCommunity(
 
   await libUpdateCommunity(communityId, input);
 
-  revalidatePath(`/c/${communityId}`);
-  revalidatePath(`/c/${communityId}/settings`);
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}`);
+  revalidatePath(`/c/${slug}/settings`);
 }
 
 export async function deleteCommunity(communityId: string): Promise<void> {
@@ -147,8 +162,9 @@ export async function uploadCommunityAsset(
   const updateInput = type === 'logo' ? { logo_url: publicUrl } : { banner_url: publicUrl };
   await libUpdateCommunity(communityId, updateInput);
 
-  revalidatePath(`/c/${communityId}`);
-  revalidatePath(`/c/${communityId}/settings`);
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}`);
+  revalidatePath(`/c/${slug}/settings`);
 
   return { ok: true, url: publicUrl };
 }
