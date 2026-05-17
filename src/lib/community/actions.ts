@@ -4,7 +4,10 @@ import { z } from 'zod';
 import { getSupabaseServerClient } from '../auth/server';
 import { checkRateLimit } from '../rate-limit/index';
 import { getMemberLimit } from '../billing/gates';
+import type { Database } from '../supabase/types';
 import type { CreateCommunityInput, UpdateMemberRoleInput } from './types';
+
+type Json = Database['public']['Tables']['communities']['Row']['role_permissions'];
 
 const createCommunitySchema = z.object({
   name: z.string().min(2).max(100),
@@ -159,36 +162,68 @@ export async function transferOwnership(
   if (error) throw new Error(error.message);
 }
 
+// ─── Community update / delete: strict input shape + role gate ──────────────
+// Schema lives here (not in the wrapper) so any caller path — including any
+// future internal code that bypasses app/actions — is forced through both
+// the Zod validation AND the role check. Defense-in-depth: the RLS policy
+// on communities.UPDATE already gates to is_community_owner OR platform
+// admin, but we re-prove the role at the app layer so a future RLS
+// loosening cannot silently widen the blast radius.
+
+const updateCommunitySchema = z.object({
+  name: z.string().min(2).max(100).optional(),
+  description: z.string().max(2000).nullable().optional(),
+  theme_hue: z.number().int().min(0).max(360).optional(),
+  logo_url: z.string().url().nullable().optional(),
+  banner_url: z.string().url().nullable().optional(),
+  is_private: z.boolean().optional(),
+  category: z.string().max(80).nullable().optional(),
+  // role_permissions is a JSONB blob; Zod-validate the outer shape (an
+  // object) but keep value types loose until a dedicated permission schema
+  // is built. Rejects strings, arrays, primitives.
+  role_permissions: z.record(z.string(), z.unknown()).optional(),
+  welcome_message: z.string().max(2000).nullable().optional(),
+  goodbye_message: z.string().max(2000).nullable().optional(),
+}).strict();
+
+export type UpdateCommunityInput = z.infer<typeof updateCommunitySchema>;
+
 export async function updateCommunity(
   communityId: string,
-  input: { 
-    name?: string; 
-    description?: string; 
-    theme_hue?: number; 
-    logo_url?: string; 
-    banner_url?: string; 
-    is_private?: boolean; 
-    category?: string;
-    role_permissions?: any;
-    welcome_message?: string;
-    goodbye_message?: string;
-  },
+  input: UpdateCommunityInput,
 ): Promise<void> {
+  const parsed = updateCommunitySchema.safeParse(input);
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues.map((i) => i.message).join(', '));
+  }
+
   const supabase = await getSupabaseServerClient();
+
+  // Defense-in-depth role gate. RLS on communities.UPDATE would also block
+  // a non-admin caller, but a clear, early error beats Postgres' opaque
+  // RLS denial AND protects against future policy weakening.
+  const { data: hasRole, error: roleError } = await supabase.rpc('user_has_min_role', {
+    p_community_id: communityId,
+    p_min_role: 'admin',
+  });
+  if (roleError) throw new Error(roleError.message);
+  if (!hasRole) throw new Error('[gild] insufficient permissions');
 
   const { error } = await supabase
     .from('communities')
     .update({
-      ...(input.name && { name: input.name }),
-      ...(input.description !== undefined && { description: input.description }),
-      ...(input.theme_hue !== undefined && { theme_hue: input.theme_hue }),
-      ...(input.logo_url !== undefined && { logo_url: input.logo_url }),
-      ...(input.banner_url !== undefined && { banner_url: input.banner_url }),
-      ...(input.is_private !== undefined && { is_private: input.is_private }),
-      ...(input.category !== undefined && { category: input.category }),
-      ...(input.role_permissions !== undefined && { role_permissions: input.role_permissions }),
-      ...(input.welcome_message !== undefined && { welcome_message: input.welcome_message }),
-      ...(input.goodbye_message !== undefined && { goodbye_message: input.goodbye_message }),
+      ...(parsed.data.name !== undefined && { name: parsed.data.name }),
+      ...(parsed.data.description !== undefined && { description: parsed.data.description }),
+      ...(parsed.data.theme_hue !== undefined && { theme_hue: parsed.data.theme_hue }),
+      ...(parsed.data.logo_url !== undefined && { logo_url: parsed.data.logo_url }),
+      ...(parsed.data.banner_url !== undefined && { banner_url: parsed.data.banner_url }),
+      ...(parsed.data.is_private !== undefined && { is_private: parsed.data.is_private }),
+      ...(parsed.data.category !== undefined && { category: parsed.data.category }),
+      // role_permissions is a JSONB blob — Zod validates the outer object
+      // shape, then we cast to the Supabase Json type at the boundary.
+      ...(parsed.data.role_permissions !== undefined && { role_permissions: parsed.data.role_permissions as Json }),
+      ...(parsed.data.welcome_message !== undefined && { welcome_message: parsed.data.welcome_message }),
+      ...(parsed.data.goodbye_message !== undefined && { goodbye_message: parsed.data.goodbye_message }),
       updated_at: new Date().toISOString(),
     })
     .eq('id', communityId);
@@ -198,6 +233,16 @@ export async function updateCommunity(
 
 export async function deleteCommunity(communityId: string): Promise<void> {
   const supabase = await getSupabaseServerClient();
+
+  // Owner-only soft delete. RLS on communities.UPDATE also enforces
+  // is_community_owner; the app-layer check produces a clean error
+  // message and survives future policy widening.
+  const { data: isOwner, error: roleError } = await supabase.rpc('user_has_min_role', {
+    p_community_id: communityId,
+    p_min_role: 'owner',
+  });
+  if (roleError) throw new Error(roleError.message);
+  if (!isOwner) throw new Error('[gild] insufficient permissions');
 
   const { error } = await supabase
     .from('communities')

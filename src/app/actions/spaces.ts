@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { getSupabaseServerClient } from '../../lib/auth/server';
+import { resolveCommunitySlug } from '../../lib/community/context';
 import {
   createSpace as libCreateSpace,
   updateSpace as libUpdateSpace,
@@ -9,6 +10,10 @@ import {
   reorderSpaces as libReorderSpaces,
 } from '../../lib/community/spaces';
 import type { CreateSpaceInput, UpdateSpaceInput } from '../../lib/community/types';
+
+// Routes live at /c/[slug] — every revalidatePath in this file translates
+// the UUID we receive from the client into the active slug before invalidating.
+// See lib/community/context.ts:resolveCommunitySlug (React-cached).
 
 export async function createSpace(input: CreateSpaceInput): Promise<{ spaceId?: string; error?: string }> {
   try {
@@ -21,7 +26,8 @@ export async function createSpace(input: CreateSpaceInput): Promise<{ spaceId?: 
 
     const result = await libCreateSpace(input);
 
-    revalidatePath(`/c/${input.communityId}`);
+    const slug = await resolveCommunitySlug(input.communityId);
+    revalidatePath(`/c/${slug}`);
 
     return result;
   } catch (err) {
@@ -45,7 +51,8 @@ export async function updateSpace(
 
   await libUpdateSpace(spaceId, input);
 
-  revalidatePath(`/c/${communityId}`);
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}`);
 }
 
 // communityId is a wrapper-only param — lib deleteSpace takes only spaceId
@@ -59,7 +66,8 @@ export async function deleteSpace(spaceId: string, communityId: string): Promise
 
   await libDeleteSpace(spaceId);
 
-  revalidatePath(`/c/${communityId}`);
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}`);
 }
 
 export async function reorderSpaces(
@@ -75,5 +83,6 @@ export async function reorderSpaces(
 
   await libReorderSpaces(communityId, orderedSpaceIds);
 
-  revalidatePath(`/c/${communityId}`);
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}`);
 }

@@ -35,3 +35,27 @@ export async function getCommunityContextBySlug(slug: string): Promise<Community
   if (!community) return { community: null, membership: null, spaces: [] };
   return getCommunityContext(community.id);
 }
+
+// ─── resolveCommunitySlug ────────────────────────────────────────────────────
+// Server-only, per-request cached UUID→slug lookup used by every mutating
+// Server Action to build the correct revalidatePath() target.
+//
+// Routes live at /c/[slug] — calling revalidatePath('/c/<UUID>') after a
+// mutation succeeds silently but invalidates nothing the user will load.
+// This helper centralises the UUID→slug translation so callers cannot
+// forget it.
+//
+// Wrapped in React's cache() so repeated calls for the same UUID within
+// one request (e.g. several Server Actions in a single transition) share
+// the lookup. Falls back to the raw UUID only if the row genuinely
+// doesn't exist — better to revalidate a dead path than to crash a
+// successful mutation.
+export const resolveCommunitySlug = cache(async (communityId: string): Promise<string> => {
+  const supabase = await getSupabaseServerClient();
+  const { data } = await supabase
+    .from('communities')
+    .select('slug')
+    .eq('id', communityId)
+    .maybeSingle();
+  return data?.slug ?? communityId;
+});

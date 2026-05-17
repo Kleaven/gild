@@ -2,6 +2,11 @@
 
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { getSupabaseServerClient } from '../../lib/auth/server';
+import { resolveCommunitySlug } from '../../lib/community/context';
+
+// Routes live at /c/[slug] — every revalidatePath in this file translates
+// the UUID we receive from the client into the active slug before invalidating.
+// See lib/community/context.ts:resolveCommunitySlug (React-cached).
 import {
   createCourse as libCreateCourse,
   updateCourse as libUpdateCourse,
@@ -48,7 +53,8 @@ async function requireUser(): Promise<string> {
 export async function createCourse(input: CreateCourseInput): Promise<{ courseId: string }> {
   await requireUser();
   const result = await libCreateCourse(input);
-  revalidatePath(`/c/${input.communityId}/courses`);
+  const slug = await resolveCommunitySlug(input.communityId);
+  revalidatePath(`/c/${slug}/courses`);
   return result;
 }
 
@@ -59,15 +65,17 @@ export async function updateCourse(
 ): Promise<void> {
   await requireUser();
   await libUpdateCourse(courseId, input);
-  revalidatePath(`/c/${communityId}/courses`);
-  revalidatePath(`/c/${communityId}/courses/${courseId}`);
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}/courses`);
+  revalidatePath(`/c/${slug}/courses/${courseId}`);
 }
 
 export async function deleteCourse(courseId: string, communityId: string): Promise<void> {
   await requireUser();
   await libDeleteCourse(courseId);
-  revalidatePath(`/c/${communityId}/courses`);
-  revalidatePath(`/c/${communityId}/courses/${courseId}`);
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}/courses`);
+  revalidatePath(`/c/${slug}/courses/${courseId}`);
 }
 
 // ─── Module wrappers ──────────────────────────────────────────────────────────
@@ -81,7 +89,8 @@ export async function createModule(
 ): Promise<{ moduleId: string }> {
   await requireUser();
   const result = await libCreateModule(input);
-  revalidatePath(`/c/${communityId}/courses/${input.courseId}`);
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}/courses/${input.courseId}`);
   return result;
 }
 
@@ -93,7 +102,8 @@ export async function updateModule(
 ): Promise<void> {
   await requireUser();
   await libUpdateModule(moduleId, input);
-  revalidatePath(`/c/${communityId}/courses/${courseId}`);
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}/courses/${courseId}`);
 }
 
 export async function deleteModule(
@@ -103,7 +113,8 @@ export async function deleteModule(
 ): Promise<void> {
   await requireUser();
   await libDeleteModule(moduleId);
-  revalidatePath(`/c/${communityId}/courses/${courseId}`);
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}/courses/${courseId}`);
 }
 
 // ─── Lesson wrappers ──────────────────────────────────────────────────────────
@@ -115,7 +126,8 @@ export async function createLesson(
 ): Promise<{ lessonId: string }> {
   await requireUser();
   const result = await libCreateLesson(input);
-  revalidatePath(`/c/${communityId}/courses/${courseId}`);
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}/courses/${courseId}`);
   return result;
 }
 
@@ -127,7 +139,8 @@ export async function updateLesson(
 ): Promise<void> {
   await requireUser();
   await libUpdateLesson(lessonId, input);
-  revalidatePath(`/c/${communityId}/courses/${courseId}`);
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}/courses/${courseId}`);
 }
 
 export async function deleteLesson(
@@ -137,7 +150,8 @@ export async function deleteLesson(
 ): Promise<void> {
   await requireUser();
   await libDeleteLesson(lessonId);
-  revalidatePath(`/c/${communityId}/courses/${courseId}`);
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}/courses/${courseId}`);
 }
 
 // ─── Reorder wrappers ─────────────────────────────────────────────────────────
@@ -149,7 +163,8 @@ export async function reorderModules(
 ): Promise<void> {
   await requireUser();
   await libReorderModules(courseId, orderedModuleIds);
-  revalidatePath(`/c/${communityId}/courses/${courseId}`);
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}/courses/${courseId}`);
 }
 
 export async function reorderLessons(
@@ -160,7 +175,8 @@ export async function reorderLessons(
 ): Promise<void> {
   await requireUser();
   await libReorderLessons(moduleId, orderedLessonIds);
-  revalidatePath(`/c/${communityId}/courses/${courseId}`);
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}/courses/${courseId}`);
 }
 
 // ─── Enrollment + progress wrappers ──────────────────────────────────────────
@@ -168,7 +184,8 @@ export async function reorderLessons(
 export async function enrollInCourse(courseId: string, communityId: string): Promise<void> {
   await requireUser();
   await libEnrollInCourse(courseId);
-  revalidatePath(`/c/${communityId}/courses/${courseId}`);
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}/courses/${courseId}`);
 }
 
 export async function completeLesson(
@@ -191,7 +208,8 @@ export async function issueCertificate(
 ): Promise<Certificate> {
   await requireUser();
   const result = await libIssueCertificate(enrollmentId);
-  revalidatePath(`/c/${communityId}/courses/${courseId}`);
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}/courses/${courseId}`);
   return result;
 }
 

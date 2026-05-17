@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { getSupabaseServerClient } from '../../lib/auth/server';
+import { resolveCommunitySlug } from '../../lib/community/context';
 import {
   createCommunity as libCreateCommunity,
   joinCommunity as libJoinCommunity,
@@ -11,17 +12,8 @@ import {
   updateCommunity as libUpdateCommunity,
   deleteCommunity as libDeleteCommunity,
 } from '../../lib/community/actions';
+import type { UpdateCommunityInput } from '../../lib/community/actions';
 import type { CreateCommunityInput, UpdateMemberRoleInput } from '../../lib/community/types';
-
-async function resolveCommunitySlug(communityId: string): Promise<string> {
-  const supabase = await getSupabaseServerClient();
-  const { data } = await supabase
-    .from('communities')
-    .select('slug')
-    .eq('id', communityId)
-    .single();
-  return data?.slug ?? communityId;
-}
 
 export async function createCommunity(
   input: CreateCommunityInput,
@@ -101,9 +93,13 @@ export async function transferOwnership(
   revalidatePath(`/c/${slug}/settings`);
 }
 
+// Input is validated by libUpdateCommunity's Zod schema (UpdateCommunityInput).
+// The lib also re-checks the executor's role server-side before touching
+// the DB — this wrapper just confirms session presence and revalidates the
+// slug-keyed cache paths after a successful update.
 export async function updateCommunity(
   communityId: string,
-  input: { name?: string; description?: string; theme_hue?: number; logo_url?: string; banner_url?: string; is_private?: boolean; category?: string },
+  input: UpdateCommunityInput,
 ): Promise<void> {
   const supabase = await getSupabaseServerClient();
   const {
@@ -119,6 +115,10 @@ export async function updateCommunity(
   revalidatePath(`/c/${slug}/settings`);
 }
 
+// Owner-only soft delete. libDeleteCommunity re-proves the role server-side
+// via user_has_min_role('owner') before mutating; this wrapper handles the
+// session check and cache invalidation for the community route + global
+// listings (which now hide the soft-deleted entry).
 export async function deleteCommunity(communityId: string): Promise<void> {
   const supabase = await getSupabaseServerClient();
   const {
@@ -127,10 +127,15 @@ export async function deleteCommunity(communityId: string): Promise<void> {
   } = await supabase.auth.getUser();
   if (error || !user) throw new Error('[gild] not authenticated');
 
+  // Resolve the slug BEFORE deletion — once deleted_at is set, the row may
+  // not be visible to this client through ordinary queries.
+  const slug = await resolveCommunitySlug(communityId);
+
   await libDeleteCommunity(communityId);
 
   revalidatePath('/');
   revalidatePath('/communities');
+  revalidatePath(`/c/${slug}`);
 }
 
 export async function uploadCommunityAsset(

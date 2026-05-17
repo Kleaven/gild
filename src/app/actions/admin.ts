@@ -2,6 +2,7 @@
 
 import { getSupabaseServerClient, getSupabaseServiceClient } from '@/lib/auth/server';
 import { revalidatePath } from 'next/cache';
+import { resolveCommunitySlug } from '@/lib/community/context';
 import type { FlagName } from '@/lib/feature-flags/flags';
 
 export async function updateMemberPermissions(
@@ -29,7 +30,8 @@ export async function updateMemberPermissions(
 
   if (error) throw new Error(error.message);
 
-  revalidatePath(`/c/${communityId}/members`);
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}/members`);
 }
 
 export async function initializeInfrastructure(): Promise<{ ok: boolean; message: string }> {
