@@ -368,6 +368,7 @@ export type Database = {
       }
       community_members: {
         Row: {
+          broadcast_opt_out: boolean
           community_id: string
           created_at: string
           id: string
@@ -375,10 +376,12 @@ export type Database = {
           permissions: Json
           role: Database["public"]["Enums"]["member_role"]
           tier_id: string | null
+          unsubscribe_token: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          broadcast_opt_out?: boolean
           community_id: string
           created_at?: string
           id?: string
@@ -386,10 +389,12 @@ export type Database = {
           permissions?: Json
           role?: Database["public"]["Enums"]["member_role"]
           tier_id?: string | null
+          unsubscribe_token?: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          broadcast_opt_out?: boolean
           community_id?: string
           created_at?: string
           id?: string
@@ -397,6 +402,7 @@ export type Database = {
           permissions?: Json
           role?: Database["public"]["Enums"]["member_role"]
           tier_id?: string | null
+          unsubscribe_token?: string
           updated_at?: string
           user_id?: string
         }
@@ -1676,6 +1682,10 @@ export type Database = {
             Returns: undefined
           }
       leave_community: { Args: { p_community_id: string }; Returns: undefined }
+      set_broadcast_opt_out: {
+        Args: { p_community_id: string; p_opt_out: boolean }
+        Returns: undefined
+      }
       toggle_vote: {
         Args: {
           p_community_id: string

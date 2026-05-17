@@ -1,6 +1,7 @@
 // server-only — do not import from client components
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../supabase/types';
+import db from '../db';
 import {
   decodeCursor,
   encodeCursor,
@@ -9,6 +10,49 @@ import {
   type PaginatedResult,
 } from '../pagination/cursor';
 import type { FeedPost } from './types';
+
+// ─── Broadcast status ────────────────────────────────────────────────────────
+// Per-post counts of COMMUNITY_BROADCAST rows in email_queue. Caller is
+// responsible for the auth check — this helper bypasses RLS via the
+// postgres-js client because email_queue SELECT is platform-admin only.
+// Returns null when no broadcast rows exist for the post (UI hides the badge).
+
+export type BroadcastStatus = {
+  total: number;
+  pending: number;
+  sent: number;
+  failed: number;
+  cancelled: number;
+};
+
+export async function getBroadcastStatus(postId: string): Promise<BroadcastStatus | null> {
+  const rows = await db<{
+    pending: string;
+    sent: string;
+    failed: string;
+    cancelled: string;
+  }[]>`
+    SELECT
+      COUNT(*) FILTER (WHERE status = 'pending')   AS pending,
+      COUNT(*) FILTER (WHERE status = 'sent')      AS sent,
+      COUNT(*) FILTER (WHERE status = 'failed')    AS failed,
+      COUNT(*) FILTER (WHERE status = 'cancelled') AS cancelled
+    FROM public.email_queue
+    WHERE template = 'COMMUNITY_BROADCAST'
+      AND variables->>'postId' = ${postId}
+  `;
+  const r = rows[0];
+  if (!r) return null;
+
+  const pending = Number(r.pending) || 0;
+  const sent = Number(r.sent) || 0;
+  const failed = Number(r.failed) || 0;
+  const cancelled = Number(r.cancelled) || 0;
+  const total = pending + sent + failed + cancelled;
+  if (total === 0) return null;
+
+  return { total, pending, sent, failed, cancelled };
+}
 
 const DEFAULT_LIMIT = 20;
 

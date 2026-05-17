@@ -25,4 +25,11 @@ async function apiGeneral(ip: string): Promise<RateLimitResult> {
   return checkRateLimit(ip, 'api_general', 100, 60);
 }
 
-export const rateLimit = { signIn, signUp, passwordReset, postCreate, commentCreate, apiGeneral };
+// Newsletter broadcasts fan out to every member — strict per-community cap
+// independent of which admin triggered it. 3/hour prevents accidental
+// notification storms (admin double-clicks "Post" with toggle on).
+async function broadcast(communityId: string): Promise<RateLimitResult> {
+  return checkRateLimit(communityId, 'broadcast', 3, 3600);
+}
+
+export const rateLimit = { signIn, signUp, passwordReset, postCreate, commentCreate, apiGeneral, broadcast };

@@ -5,6 +5,27 @@ import { env } from '../env';
 import { resend } from './client';
 import { renderTemplate } from './templates';
 
+const APP_URL = env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+// Per-template SMTP header injection. Bulk-mail templates require
+// List-Unsubscribe + List-Unsubscribe-Post to satisfy Gmail/Yahoo's Feb 2024
+// bulk sender rules; transactional templates omit them.
+function headersForTemplate(
+  template: string,
+  vars: Record<string, string>,
+): Record<string, string> | undefined {
+  if (template === 'COMMUNITY_BROADCAST') {
+    const token = vars.unsubscribeToken;
+    if (!token) return undefined;
+    const url = `${APP_URL}/u/${token}`;
+    return {
+      'List-Unsubscribe': `<${url}>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+    };
+  }
+  return undefined;
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type EmailRow = {
@@ -59,6 +80,7 @@ export async function processPendingEmails(): Promise<{ sent: number; failed: nu
           );
 
           const rendered = renderTemplate(row.template, vars);
+          const headers = headersForTemplate(row.template, vars);
 
           const response = await resend.emails.send({
             from: env.RESEND_FROM_EMAIL,
@@ -66,6 +88,7 @@ export async function processPendingEmails(): Promise<{ sent: number; failed: nu
             subject: rendered.subject,
             html: rendered.html,
             text: rendered.text,
+            ...(headers ? { headers } : {}),
           });
 
           if (response.error) {

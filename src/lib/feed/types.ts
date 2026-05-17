@@ -20,4 +20,5 @@ export type CreatePostInput = {
   mediaUrls?: string[];
   type?: 'post' | 'poll';
   pollOptions?: { id: string; text: string }[];
+  broadcastAsNewsletter?: boolean;
 };

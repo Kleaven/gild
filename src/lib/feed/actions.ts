@@ -1,9 +1,11 @@
 'use server';
 
+import { after } from 'next/server';
 import { z } from 'zod';
 import { getSupabaseServerClient } from '../auth/server';
 import { rateLimit } from '../rate-limit/index';
 import { normalizeRole } from '../permissions/roles';
+import db from '../db';
 import type { CreatePostInput } from './types';
 
 const createPostSchema = z.object({
@@ -14,6 +16,7 @@ const createPostSchema = z.object({
   mediaUrls: z.array(z.string().url()).optional(),
   type: z.enum(['post', 'poll']).optional().default('post'),
   pollOptions: z.array(z.object({ id: z.string(), text: z.string() })).optional(),
+  broadcastAsNewsletter: z.boolean().optional(),
 });
 
 export async function createPost(input: CreatePostInput): Promise<{ postId: string }> {
@@ -21,7 +24,7 @@ export async function createPost(input: CreatePostInput): Promise<{ postId: stri
   if (!parsed.success) {
     throw new Error(parsed.error.issues.map((i) => i.message).join(', '));
   }
-  const { communityId, spaceId, title, body, mediaUrls, type, pollOptions } = parsed.data;
+  const { communityId, spaceId, title, body, mediaUrls, type, pollOptions, broadcastAsNewsletter } = parsed.data;
 
   const supabase = await getSupabaseServerClient();
   const {
@@ -64,6 +67,31 @@ export async function createPost(input: CreatePostInput): Promise<{ postId: stri
     throw new Error(`Insufficient permissions to post in this space. Required: ${requiredRoleForPost}`);
   }
 
+  // ─── Broadcast pre-flight ──────────────────────────────────────────────────
+  // Validate broadcast eligibility BEFORE inserting the post. Otherwise a
+  // failed broadcast check leaves a phantom post in the feed and surfaces
+  // an opaque "only admins…" error to the user.
+  let authorDisplayName = 'A member';
+  if (broadcastAsNewsletter) {
+    const { data: isAdmin } = await supabase.rpc('user_has_min_role', {
+      p_community_id: communityId,
+      p_min_role: 'admin',
+    });
+    if (!isAdmin) throw new Error('[gild] only admins can broadcast newsletters');
+
+    const rlBroadcast = await rateLimit.broadcast(communityId);
+    if (!rlBroadcast.allowed) {
+      throw new Error('[gild] broadcast rate limit exceeded (max 3/hour per community)');
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', user.id)
+      .maybeSingle();
+    authorDisplayName = profile?.display_name?.trim() || 'A member';
+  }
+
   const { data: post, error: insertError } = await supabase
     .from('posts')
     .insert({
@@ -80,7 +108,126 @@ export async function createPost(input: CreatePostInput): Promise<{ postId: stri
     .single();
   if (insertError) throw new Error(insertError.message);
 
+  if (broadcastAsNewsletter) {
+    // Defer the fan-out work to AFTER the response is flushed. For a
+    // community of 10k members the JOIN + batch INSERT can take seconds —
+    // we don't want the user staring at "Posting…" while it runs.
+    // Errors here are swallowed (logged only) because the post itself
+    // succeeded; the user's primary intent is satisfied. Failed broadcasts
+    // surface in server logs and (eventually) ops alerting.
+    const broadcastJob = {
+      communityId,
+      postId: post.id,
+      title,
+      body,
+      authorName: authorDisplayName,
+    };
+    after(async () => {
+      try {
+        await enqueueBroadcast(broadcastJob);
+      } catch (err) {
+        console.error('[enqueueBroadcast] post-response failure', {
+          postId: post.id,
+          communityId,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    });
+  }
+
   return { postId: post.id };
+}
+
+type BroadcastParams = {
+  communityId: string;
+  postId: string;
+  title?: string;
+  body: string;
+  authorName: string;
+};
+
+// Truncate body for the email preview. Email clients struggle with very long
+// HTML <pre> blocks, and a CTA back to the community is the real conversion.
+const EMAIL_BODY_PREVIEW_CHARS = 600;
+
+function truncateForEmail(text: string, max: number): string {
+  if (text.length <= max) return text;
+  // Cut at last whitespace within budget to avoid mid-word breaks.
+  const slice = text.slice(0, max);
+  const lastBreak = Math.max(slice.lastIndexOf(' '), slice.lastIndexOf('\n'));
+  const cut = lastBreak > max * 0.6 ? slice.slice(0, lastBreak) : slice;
+  return cut.trimEnd() + '…';
+}
+
+async function enqueueBroadcast({ communityId, postId, title, body, authorName }: BroadcastParams): Promise<void> {
+  // Fetch community metadata (name, slug, theme_hue) in one round-trip
+  const commRows = await db<{ name: string; slug: string; theme_hue: number | null }[]>`
+    SELECT name, slug, theme_hue
+    FROM public.communities
+    WHERE id = ${communityId}
+    LIMIT 1
+  `;
+  const community = commRows[0];
+  if (!community) return;
+
+  // JOIN community_members → profiles → auth.users to get eligible recipients.
+  // broadcast_opt_out is honoured here; transactional mail bypasses this filter.
+  const members = await db<{
+    email: string;
+    display_name: string | null;
+    unsubscribe_token: string;
+  }[]>`
+    SELECT au.email, p.display_name, cm.unsubscribe_token
+    FROM public.community_members cm
+    JOIN public.profiles p ON p.id = cm.user_id
+    JOIN auth.users au ON au.id = cm.user_id
+    WHERE cm.community_id = ${communityId}
+      AND cm.role <> 'banned'
+      AND cm.broadcast_opt_out = false
+      AND au.email IS NOT NULL
+  `;
+  if (members.length === 0) return;
+
+  const postTitle = title ?? '';
+  // Template owns subject formatting — passing an empty string lets the
+  // template's `${title} — ${community}` default fire. We still pass *something*
+  // because email_queue.subject is NOT NULL.
+  const subject = (postTitle
+    ? `${postTitle} — ${community.name}`
+    : `New post in ${community.name}`
+  ).slice(0, 200);
+  const themeHue = String(community.theme_hue ?? 250);
+  const previewBody = truncateForEmail(body, EMAIL_BODY_PREVIEW_CHARS);
+
+  const rows = members.map((m) => ({
+    to_email: m.email,
+    to_name: m.display_name || null,
+    subject,
+    template: 'COMMUNITY_BROADCAST',
+    variables: {
+      postId,
+      postTitle,
+      postBody: previewBody,
+      communityName: community.name,
+      communitySlug: community.slug,
+      recipientName: m.display_name || '',
+      authorName,
+      themeHue,
+      unsubscribeToken: m.unsubscribe_token,
+    },
+  }));
+
+  // ON CONFLICT DO NOTHING pairs with the partial unique index on
+  // (template, to_email, variables->>'postId') WHERE template = 'COMMUNITY_BROADCAST'
+  // so accidental retries (double-click, transient network) silently dedupe.
+  await db`
+    INSERT INTO public.email_queue ${db(rows, 'to_email', 'to_name', 'subject', 'template', 'variables')}
+    ON CONFLICT (template, to_email, (variables->>'postId'))
+    WHERE template = 'COMMUNITY_BROADCAST'
+      AND status IN ('pending', 'sent')
+      AND (variables->>'postId') IS NOT NULL
+    DO NOTHING
+  `;
 }
 
 export async function deletePost(postId: string): Promise<void> {
