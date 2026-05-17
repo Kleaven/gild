@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Avatar, GILD_FONTS, ConfirmModal } from '@/components/gild';
+import { Avatar, GILD_FONTS, ConfirmModal, useGildChat } from '@/components/gild';
 import type { Person, MemberRole } from '@/components/gild';
 import { updateMemberRole } from '@/app/actions';
-import { MoreHorizontal, Shield, UserMinus, Settings2 } from 'lucide-react';
+import { MessageCircle, UserMinus, Settings2 } from 'lucide-react';
 import { AdminPrivilegesUI } from './gild/AdminPrivilegesUI';
 
 interface StudioMembersProps {
@@ -24,6 +24,7 @@ export function StudioMembers({ community, members, currentUserId, currentUserRo
   const [filter, setFilter] = useState('');
   const [showBanConfirm, setShowBanConfirm] = useState<{ id: string; name: string } | null>(null);
   const [privilegeModal, setPrivilegeModal] = useState<{ id: string; name: string; perms: any } | null>(null);
+  const { openChatWithUser } = useGildChat();
   const filteredMembers = filter.trim() === ''
     ? members
     : members.filter((m) => {
@@ -166,7 +167,33 @@ export function StudioMembers({ community, members, currentUserId, currentUserRo
                   {member.username ? `@${member.username}` : '—'}
                 </td>
                 <td style={{ padding: '10px 8px' }}>
-                  <span style={{ fontSize: 12, color: 'oklch(0.55 0.02 250)' }}>Offline</span>
+                  {member.user_id !== currentUserId ? (
+                    <button
+                      type="button"
+                      onClick={() => openChatWithUser(member.user_id)}
+                      aria-label={`Message ${member.display_name}`}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        padding: '4px 10px',
+                        borderRadius: 6,
+                        border: '1px solid oklch(0.90 0.01 250)',
+                        background: '#fff',
+                        color: 'oklch(0.35 0.02 250)',
+                        fontSize: 12,
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                        transition: 'background 0.15s ease, border-color 0.15s ease',
+                      }}
+                    >
+                      <MessageCircle size={13} aria-hidden="true" />
+                      Message
+                    </button>
+                  ) : (
+                    <span style={{ fontSize: 12, color: 'oklch(0.55 0.02 250)' }}>You</span>
+                  )}
                 </td>
                 {(currentUserRole === 'owner' || currentUserRole === 'admin') && (
                   <td style={{ padding: '10px 8px', textAlign: 'right' }}>

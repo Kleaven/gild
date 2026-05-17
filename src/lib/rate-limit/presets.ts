@@ -32,4 +32,12 @@ async function broadcast(communityId: string): Promise<RateLimitResult> {
   return checkRateLimit(communityId, 'broadcast', 3, 3600);
 }
 
-export const rateLimit = { signIn, signUp, passwordReset, postCreate, commentCreate, apiGeneral, broadcast };
+// 1-on-1 chat — generous for natural conversation, tight enough to stop
+// a runaway client. 60/min is roughly 1 message/second sustained which is
+// faster than any human types but slow enough that a scripted spammer hits
+// the wall quickly.
+async function directMessage(userId: string): Promise<RateLimitResult> {
+  return checkRateLimit(userId, 'direct_message', 60, 60);
+}
+
+export const rateLimit = { signIn, signUp, passwordReset, postCreate, commentCreate, apiGeneral, broadcast, directMessage };

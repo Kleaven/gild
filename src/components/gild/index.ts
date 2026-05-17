@@ -14,3 +14,5 @@ export * from './InviteModal';
 export * from './RolePermissionsEditor';
 export * from './PollRenderer';
 export * from './SpaceSettingsModal';
+export * from './GildChatProvider';
+export * from './GildChatDrawer';

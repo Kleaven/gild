@@ -28,6 +28,7 @@
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.104.1",
     "@upstash/redis": "^1.37.0",
+    "framer-motion": "^12.38.0",
     "lucide-react": "^1.14.0",
     "next": "^15.1.0",
     "postgres": "^3.4.9",

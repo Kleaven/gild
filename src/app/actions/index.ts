@@ -9,3 +9,4 @@ export * from './privacy';
 export * from './profile';
 export * from './media';
 export * from './notifications';
+export * from './dm';
