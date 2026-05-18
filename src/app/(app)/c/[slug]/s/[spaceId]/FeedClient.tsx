@@ -221,7 +221,7 @@ export default function FeedClient({
     // For now, we'll just call the server action and revalidate
     // SOTA would have optimistic vote counting, but let's start with reliable first
     try {
-      await voteInPoll(postId, optionId);
+      await voteInPoll(postId, optionId, communitySlug, spaceId);
     } catch (err) {
       console.error('Failed to vote', err);
     }

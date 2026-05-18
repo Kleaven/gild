@@ -68,7 +68,26 @@ export async function pinPost(postId: string, pin: boolean): Promise<void> {
   revalidateTag(`post-${postId}`);
 }
 
-export async function voteInPoll(postId: string, optionId: string): Promise<void> {
+// slug + spaceId are wrapper-only args used to build the precise cache key.
+// Old impl was `revalidatePath('/', 'layout')` which nuked the entire app's
+// layout cache for every vote — thermonuclear. We now only invalidate the
+// specific post route the vote lives under, plus the parent feed (so
+// vote-count badges on the feed list refresh too).
+export async function voteInPoll(
+  postId: string,
+  optionId: string,
+  communitySlug: string,
+  spaceId: string,
+): Promise<void> {
+  const supabase = await getSupabaseServerClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+  if (error || !user) throw new Error('[gild] not authenticated');
+
   await libVoteInPoll(postId, optionId);
-  revalidatePath(`/`, 'layout');
+
+  revalidatePath(`/c/${communitySlug}/s/${spaceId}/p/${postId}`);
+  revalidatePath(`/c/${communitySlug}/s/${spaceId}`);
 }
