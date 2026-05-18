@@ -276,26 +276,47 @@ const updateCommunitySchema = z.object({
 
 export type UpdateCommunityInput = z.infer<typeof updateCommunitySchema>;
 
+// Same pattern as createCommunity / deleteCommunity / joinCommunity.
+// Predictable failures (Zod validation, ownership check) return
+// structured codes so the settings save flow can render an inline
+// error instead of crashing to a generic 500 with the message stripped.
+// Unexpected DB errors still throw → 500 in monitoring.
+export type UpdateCommunityResult =
+  | { ok: true }
+  | { ok: false; code: 'validation_failed'; message: string }
+  | { ok: false; code: 'insufficient_permissions'; message: string };
+
 export async function updateCommunity(
   communityId: string,
   input: UpdateCommunityInput,
-): Promise<void> {
+): Promise<UpdateCommunityResult> {
   const parsed = updateCommunitySchema.safeParse(input);
   if (!parsed.success) {
-    throw new Error(parsed.error.issues.map((i) => i.message).join(', '));
+    return {
+      ok: false,
+      code: 'validation_failed',
+      message: parsed.error.issues.map((i) => i.message).join(', '),
+    };
   }
 
   const supabase = await getSupabaseServerClient();
 
-  // Defense-in-depth role gate. RLS on communities.UPDATE would also block
-  // a non-admin caller, but a clear, early error beats Postgres' opaque
-  // RLS denial AND protects against future policy weakening.
-  const { data: hasRole, error: roleError } = await supabase.rpc('user_has_min_role', {
+  // Use is_community_owner (NOT user_has_min_role('admin')) so the app-layer
+  // check agrees with the RLS policy on communities.UPDATE. The two helpers
+  // check different things — user_has_min_role reads community_members.role,
+  // is_community_owner reads communities.owner_id — and they can desync.
+  // Same divergence broke deleteCommunity at commit e35fb2f.
+  const { data: isOwner, error: roleError } = await supabase.rpc('is_community_owner', {
     p_community_id: communityId,
-    p_min_role: 'admin',
   });
   if (roleError) throw new Error(roleError.message);
-  if (!hasRole) throw new Error('[gild] insufficient permissions');
+  if (!isOwner) {
+    return {
+      ok: false,
+      code: 'insufficient_permissions',
+      message: 'Only the community owner can update these settings.',
+    };
+  }
 
   const { error } = await supabase
     .from('communities')
@@ -316,7 +337,23 @@ export async function updateCommunity(
     })
     .eq('id', communityId);
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    // RLS denial — surface as structured. Defense-in-depth: we already
+    // ran the is_community_owner check above, but if a future migration
+    // tightens the RLS policy in a way that diverges from that check,
+    // we'd rather show "insufficient permissions" than crash.
+    if (error.message.includes('row-level security')) {
+      return {
+        ok: false,
+        code: 'insufficient_permissions',
+        message: 'Only the community owner can update these settings.',
+      };
+    }
+    // Anything else is genuinely unexpected.
+    throw new Error(error.message);
+  }
+
+  return { ok: true };
 }
 
 // Discriminated union return — same pattern as createCommunity. The

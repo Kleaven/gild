@@ -45,14 +45,18 @@ export default function CommunitySettings({ community }: Props) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+  const [updateSuccess, setUpdateSuccess] = useState(false);
 
   function handleUpdate(e: React.FormEvent) {
     e.preventDefault();
+    setUpdateError(null);
+    setUpdateSuccess(false);
     startTransition(async () => {
       try {
-        await updateCommunity(community.id, { 
-          name, 
-          description, 
+        const result = await updateCommunity(community.id, {
+          name,
+          description,
           theme_hue: themeHue,
           is_private: isPrivate,
           category: category || undefined,
@@ -60,8 +64,15 @@ export default function CommunitySettings({ community }: Props) {
           goodbye_message: goodbyeMessage || undefined,
           role_permissions: rolePermissions,
         });
+        if (!result.ok) {
+          setUpdateError(result.message);
+          return;
+        }
+        setUpdateSuccess(true);
+        // Auto-clear the success banner after 3s so it doesn't linger.
+        setTimeout(() => setUpdateSuccess(false), 3000);
       } catch (err) {
-        console.error('Failed to update community', err);
+        setUpdateError(err instanceof Error ? err.message : 'Failed to update community');
       }
     });
   }
@@ -295,6 +306,42 @@ export default function CommunitySettings({ community }: Props) {
             {isPending ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
+
+        {updateSuccess && (
+          <p
+            role="status"
+            style={{
+              marginTop: 12,
+              padding: '10px 14px',
+              background: 'oklch(0.96 0.05 150)',
+              border: '1px solid oklch(0.85 0.10 150)',
+              borderRadius: 8,
+              color: 'oklch(0.36 0.14 150)',
+              fontSize: 13,
+              lineHeight: 1.4,
+            }}
+          >
+            Settings saved.
+          </p>
+        )}
+
+        {updateError && (
+          <p
+            role="alert"
+            style={{
+              marginTop: 12,
+              padding: '10px 14px',
+              background: 'oklch(0.96 0.04 25)',
+              border: '1px solid oklch(0.88 0.08 25)',
+              borderRadius: 8,
+              color: 'oklch(0.40 0.16 25)',
+              fontSize: 13,
+              lineHeight: 1.4,
+            }}
+          >
+            {updateError}
+          </p>
+        )}
       </form>
 
       <section style={{ borderTop: '1px solid oklch(0.90 0.01 250)', paddingTop: 32 }}>

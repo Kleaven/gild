@@ -12,7 +12,7 @@ import {
   updateCommunity as libUpdateCommunity,
   deleteCommunity as libDeleteCommunity,
 } from '../../lib/community/actions';
-import type { CreateCommunityResult, DeleteCommunityResult, JoinCommunityResult, UpdateCommunityInput } from '../../lib/community/actions';
+import type { CreateCommunityResult, DeleteCommunityResult, JoinCommunityResult, UpdateCommunityInput, UpdateCommunityResult } from '../../lib/community/actions';
 import type { CreateCommunityInput, UpdateMemberRoleInput } from '../../lib/community/types';
 
 // Returns the lib's discriminated union as-is so the form can render a
@@ -105,14 +105,14 @@ export async function transferOwnership(
   revalidatePath(`/c/${slug}/settings`);
 }
 
-// Input is validated by libUpdateCommunity's Zod schema (UpdateCommunityInput).
-// The lib also re-checks the executor's role server-side before touching
-// the DB — this wrapper just confirms session presence and revalidates the
-// slug-keyed cache paths after a successful update.
+// Returns the lib's discriminated union as-is so the settings save flow
+// can render an inline "validation failed" or "only the owner can update"
+// chip instead of catching a thrown 500 with the message stripped.
+// Cache invalidation only fires on the success branch.
 export async function updateCommunity(
   communityId: string,
   input: UpdateCommunityInput,
-): Promise<void> {
+): Promise<UpdateCommunityResult> {
   const supabase = await getSupabaseServerClient();
   const {
     data: { user },
@@ -120,11 +120,15 @@ export async function updateCommunity(
   } = await supabase.auth.getUser();
   if (error || !user) throw new Error('[gild] not authenticated');
 
-  await libUpdateCommunity(communityId, input);
+  const result = await libUpdateCommunity(communityId, input);
 
-  const slug = await resolveCommunitySlug(communityId);
-  revalidatePath(`/c/${slug}`);
-  revalidatePath(`/c/${slug}/settings`);
+  if (result.ok) {
+    const slug = await resolveCommunitySlug(communityId);
+    revalidatePath(`/c/${slug}`);
+    revalidatePath(`/c/${slug}/settings`);
+  }
+
+  return result;
 }
 
 // Owner-only soft delete. libDeleteCommunity re-proves the role server-side
@@ -180,9 +184,15 @@ export async function uploadCommunityAsset(
     .from('branding')
     .getPublicUrl(filePath);
 
-  // Update community with new asset URL
+  // Update community with new asset URL. libUpdateCommunity now returns
+  // a discriminated union; translate failures back into this function's
+  // existing { ok, error } shape so callers (CustomizeClient) don't need
+  // to change.
   const updateInput = type === 'logo' ? { logo_url: publicUrl } : { banner_url: publicUrl };
-  await libUpdateCommunity(communityId, updateInput);
+  const updateResult = await libUpdateCommunity(communityId, updateInput);
+  if (!updateResult.ok) {
+    return { ok: false, error: updateResult.message };
+  }
 
   const slug = await resolveCommunitySlug(communityId);
   revalidatePath(`/c/${slug}`);
