@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import { updateCommunity, deleteCommunity, uploadCommunityAsset } from '@/app/actions';
 import { GILD_FONTS, DeleteCommunityModal } from '@/components/gild';
 import { Camera, Image as ImageIcon, Palette, ShieldAlert } from 'lucide-react';
@@ -46,7 +45,6 @@ export default function CommunitySettings({ community }: Props) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const router = useRouter();
 
   function handleUpdate(e: React.FormEvent) {
     e.preventDefault();
@@ -356,11 +354,30 @@ export default function CommunitySettings({ community }: Props) {
                 setIsDeleting(false);
                 return;
               }
-              // Success — leave the now-deleted route immediately. router.push
-              // followed by router.refresh() ensures the global community
-              // sidebar refetches and drops the deleted entry.
-              router.push('/');
-              router.refresh();
+              // Success — leave the now-deleted route immediately.
+              //
+              // CRITICAL: use a hard navigation (window.location), NOT
+              // router.push + router.refresh. router.refresh() triggers a
+              // Server Component re-render that does NOT pass through
+              // middleware. @supabase/ssr's getSupabaseServerClient
+              // intentionally silences cookie-write failures inside Server
+              // Components (writes are forbidden by Next outside Server
+              // Actions / Route Handlers / Middleware). If the access
+              // token is near expiry when the home-page Server Component
+              // runs, Supabase rotates the refresh token server-side, our
+              // setAll() silently fails to persist the new cookies, and
+              // the next real request submits an already-rotated refresh
+              // token → 401 → supabase-ssr clears the cookie → the user
+              // is unexpectedly signed out a few seconds after delete.
+              //
+              // Hard navigation forces a fresh request through middleware
+              // (where setAll DOES persist), so the token rotation
+              // completes cleanly and the session survives.
+              //
+              // We also route to /communities/new (not /) so the user
+              // lands on something actionable instead of the empty
+              // authed-but-no-community home state.
+              window.location.assign('/communities/new');
             } catch (err) {
               setDeleteError(
                 err instanceof Error
