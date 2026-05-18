@@ -284,12 +284,16 @@ export type DeleteCommunityResult =
 export async function deleteCommunity(communityId: string): Promise<DeleteCommunityResult> {
   const supabase = await getSupabaseServerClient();
 
-  // Owner-only soft delete. RLS on communities.UPDATE also enforces
-  // is_community_owner; the app-layer check produces a clean error
-  // message and survives future policy widening.
-  const { data: isOwner, error: roleError } = await supabase.rpc('user_has_min_role', {
+  // Owner-only soft delete. CRITICAL: use is_community_owner (which checks
+  // communities.owner_id = auth.uid()) — NOT user_has_min_role(..., 'owner')
+  // which checks community_members.role. RLS on communities.UPDATE uses
+  // is_community_owner; if we check the membership table but RLS checks
+  // the owner_id column, a desynced row (e.g. a community where
+  // owner_id is null/wrong but the member row says 'owner') will pass
+  // our check, then bomb out with a 500 at the actual UPDATE. This
+  // exact divergence broke staging at commit e35fb2f.
+  const { data: isOwner, error: roleError } = await supabase.rpc('is_community_owner', {
     p_community_id: communityId,
-    p_min_role: 'owner',
   });
   if (roleError) throw new Error(roleError.message);
   if (!isOwner) {
