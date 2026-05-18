@@ -12,12 +12,15 @@ import {
   updateCommunity as libUpdateCommunity,
   deleteCommunity as libDeleteCommunity,
 } from '../../lib/community/actions';
-import type { UpdateCommunityInput } from '../../lib/community/actions';
+import type { CreateCommunityResult, UpdateCommunityInput } from '../../lib/community/actions';
 import type { CreateCommunityInput, UpdateMemberRoleInput } from '../../lib/community/types';
 
+// Returns the lib's discriminated union as-is so the form can render a
+// paywall/slug-taken CTA inline instead of catching a thrown 500.
+// Cache invalidation only fires on the success branch.
 export async function createCommunity(
   input: CreateCommunityInput,
-): Promise<{ communityId: string }> {
+): Promise<CreateCommunityResult> {
   const supabase = await getSupabaseServerClient();
   const {
     data: { user },
@@ -27,8 +30,10 @@ export async function createCommunity(
 
   const result = await libCreateCommunity(input);
 
-  revalidatePath('/');
-  revalidatePath('/communities');
+  if (result.ok) {
+    revalidatePath('/');
+    revalidatePath('/communities');
+  }
 
   return result;
 }

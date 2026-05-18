@@ -30,12 +30,30 @@ const updateMemberRoleSchema = z.object({
   newRole: z.enum(['admin', 'moderator', 'tier2_member', 'tier1_member', 'free_member', 'banned']),
 });
 
+// Discriminated union return.
+// Throws are reserved for UNEXPECTED failure modes (auth corruption, RLS
+// denial, network errors, schema bugs) that warrant a 500. Predictable
+// business-rule failures (paywall, slug collision, rate limit) return
+// { ok: false, code: ... } so the form can render a meaningful CTA
+// instead of Next.js wrapping a thrown Error as a generic 500 with the
+// message stripped in production builds.
+export type CreateCommunityResult =
+  | { ok: true; communityId: string }
+  | { ok: false; code: 'subscription_required'; message: string }
+  | { ok: false; code: 'slug_taken'; message: string }
+  | { ok: false; code: 'rate_limited'; message: string }
+  | { ok: false; code: 'validation_failed'; message: string };
+
 export async function createCommunity(
   input: CreateCommunityInput,
-): Promise<{ communityId: string }> {
+): Promise<CreateCommunityResult> {
   const parsed = createCommunitySchema.safeParse(input);
   if (!parsed.success) {
-    throw new Error(parsed.error.issues.map((i) => i.message).join(', '));
+    return {
+      ok: false,
+      code: 'validation_failed',
+      message: parsed.error.issues.map((i) => i.message).join(', '),
+    };
   }
   const { name, slug, description, is_private, category, theme_hue, welcome_message, goodbye_message, pricing_type, price_amount, price_currency, pricing_period } = parsed.data;
 
@@ -44,16 +62,33 @@ export async function createCommunity(
     data: { user },
     error: authError,
   } = await supabase.auth.getUser();
+  // Auth failure is genuinely unexpected here — the wrapper already
+  // verifies the session before we get called. Throwing keeps the
+  // existing surface for missing-session bugs.
   if (authError || !user) throw new Error('[gild] not authenticated');
 
   const rl = await checkRateLimit(user.id, 'community_create', 5, 3600);
-  if (!rl.allowed) throw new Error('[gild] rate limit exceeded');
+  if (!rl.allowed) {
+    return {
+      ok: false,
+      code: 'rate_limited',
+      message: 'You have hit the community creation rate limit. Try again in an hour.',
+    };
+  }
 
-  // Paywall Check
+  // Paywall — the most common reason a real user hits this Server Action
+  // and fails. Surfacing as a structured response lets the form render an
+  // "Upgrade →" CTA instead of crashing to a generic 500.
   const { data: hasSubscription } = await supabase.rpc('has_platform_subscription', {
-    p_user_id: user.id
+    p_user_id: user.id,
   });
-  if (!hasSubscription) throw new Error('A valid Gild subscription is required to create a community.');
+  if (!hasSubscription) {
+    return {
+      ok: false,
+      code: 'subscription_required',
+      message: 'A valid Gild subscription is required to create a community.',
+    };
+  }
 
   const { data: communityId, error } = await supabase.rpc('create_community', {
     p_name: name,
@@ -71,12 +106,18 @@ export async function createCommunity(
   });
   if (error) {
     if (error.message.includes('duplicate key value violates unique constraint')) {
-      throw new Error('This URL slug is already taken. Please choose another.');
+      return {
+        ok: false,
+        code: 'slug_taken',
+        message: 'This URL slug is already taken. Please choose another.',
+      };
     }
+    // Any other DB error is unexpected — let Next surface it as a 500
+    // so it shows up in monitoring/logs as something to investigate.
     throw new Error(error.message);
   }
 
-  return { communityId: communityId as string };
+  return { ok: true, communityId: communityId as string };
 }
 
 export async function joinCommunity(communityId: string): Promise<{ welcome_message: string | null; name: string }> {
