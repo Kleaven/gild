@@ -1694,6 +1694,7 @@ export type Database = {
         Returns: Database["public"]["Enums"]["member_role"]
       }
       delete_comment: { Args: { p_comment_id: string }; Returns: undefined }
+      delete_community: { Args: { p_community_id: string }; Returns: undefined }
       delete_post: { Args: { p_post_id: string }; Returns: undefined }
       enroll_in_course: { Args: { p_course_id: string }; Returns: string }
       get_certificate_by_token: {

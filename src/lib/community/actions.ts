@@ -284,36 +284,30 @@ export type DeleteCommunityResult =
 export async function deleteCommunity(communityId: string): Promise<DeleteCommunityResult> {
   const supabase = await getSupabaseServerClient();
 
-  // Owner-only soft delete. CRITICAL: use is_community_owner (which checks
-  // communities.owner_id = auth.uid()) — NOT user_has_min_role(..., 'owner')
-  // which checks community_members.role. RLS on communities.UPDATE uses
-  // is_community_owner; if we check the membership table but RLS checks
-  // the owner_id column, a desynced row (e.g. a community where
-  // owner_id is null/wrong but the member row says 'owner') will pass
-  // our check, then bomb out with a 500 at the actual UPDATE. This
-  // exact divergence broke staging at commit e35fb2f.
-  const { data: isOwner, error: roleError } = await supabase.rpc('is_community_owner', {
+  // Route through the delete_community SECURITY DEFINER RPC. Direct
+  // UPDATE-from-the-client fails RLS because the SELECT policies on
+  // communities filter `deleted_at IS NULL` — the post-UPDATE row is
+  // immediately invisible to the caller, and Postgres reports this as
+  // a generic "new row violates row-level security policy". The RPC
+  // runs as the function owner, bypasses RLS on the table, and keeps
+  // the auth check (owner OR platform admin) inside the function body.
+  // See migration 20260518000003_delete_community_rpc.sql for the
+  // full rationale and authorization model.
+  const { error } = await supabase.rpc('delete_community', {
     p_community_id: communityId,
   });
-  if (roleError) throw new Error(roleError.message);
-  if (!isOwner) {
-    return {
-      ok: false,
-      code: 'insufficient_permissions',
-      message: 'Only the community owner can delete this community.',
-    };
+
+  if (error) {
+    if (error.message.includes('insufficient_permissions')) {
+      return {
+        ok: false,
+        code: 'insufficient_permissions',
+        message: 'Only the community owner can delete this community.',
+      };
+    }
+    // Anything else — re-raise so it surfaces as a 500 in monitoring.
+    throw new Error(error.message);
   }
-
-  const { error } = await supabase
-    .from('communities')
-    .update({
-      deleted_at: new Date().toISOString(),
-    })
-    .eq('id', communityId);
-
-  // Unexpected DB error (e.g. RLS denial despite the explicit check, or
-  // network drop). Throw so it shows up as a 500 in monitoring.
-  if (error) throw new Error(error.message);
 
   return { ok: true };
 }
