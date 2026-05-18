@@ -43,9 +43,10 @@ export default async function CommunityLayout({ children, params }: Props) {
   // Join Gate — non-members must join to see community content
   if (!membership) {
     return (
-      <JoinGate 
+      <JoinGate
         community={{
           id: community.id,
+          slug: community.slug,
           name: community.name,
           description: community.description,
           member_count: community.member_count,
@@ -54,7 +55,7 @@ export default async function CommunityLayout({ children, params }: Props) {
           pricing_type: community.pricing_type as 'free' | 'paid',
           price_amount: Number(community.price_amount || 0),
           price_currency: community.price_currency,
-        }} 
+        }}
       />
     );
   }
@@ -131,7 +132,7 @@ export default async function CommunityLayout({ children, params }: Props) {
 
   return (
     <GildChatProvider>
-      <NotificationListener communityId={communityId} />
+      <NotificationListener communityId={communityId} communitySlug={slug} />
       {billingBannerContent && (
         <div
           role="alert"

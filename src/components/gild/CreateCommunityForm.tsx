@@ -20,7 +20,9 @@ function toSlug(name: string): string {
 }
 
 interface Props {
-  onSuccess: (communityId: string) => void;
+  // Routes are slug-keyed — callers need slug for navigation, id for any
+  // subsequent DB-scoped Server Actions.
+  onSuccess: (communityId: string, slug: string) => void;
   submitLabel?: string;
 }
 
@@ -64,7 +66,7 @@ export function CreateCommunityForm({ onSuccess, submitLabel = 'Create community
         pricing_period: pricingPeriod,
         theme_hue: Math.floor(Math.random() * 360),
       });
-      onSuccess(communityId);
+      onSuccess(communityId, slug);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create community');
     } finally {

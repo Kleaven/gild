@@ -7,8 +7,8 @@ export default function CommunityForm() {
   const router = useRouter();
 
   return (
-    <CreateCommunityForm 
-      onSuccess={(communityId) => router.push(`/c/${communityId}/dashboard`)}
+    <CreateCommunityForm
+      onSuccess={(_communityId, slug) => router.push(`/c/${slug}/dashboard`)}
     />
   );
 }

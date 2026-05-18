@@ -11,6 +11,7 @@ import { Users, Sparkles, ArrowRight } from 'lucide-react';
 interface Props {
   community: {
     id: string;
+    slug: string;
     name: string;
     description: string | null;
     member_count: number;
@@ -38,7 +39,7 @@ export function JoinGate({ community }: Props) {
         }
 
         await joinCommunity(community.id);
-        router.push(`/c/${community.id}?welcome=1`);
+        router.push(`/c/${community.slug}?welcome=1`);
       } catch (err) {
         console.error('Failed to join:', err);
       }

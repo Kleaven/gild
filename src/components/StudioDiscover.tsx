@@ -154,7 +154,7 @@ export function StudioDiscover({ initialCommunities }: StudioDiscoverProps) {
           {filtered.map(community => (
             <Link
               key={community.id}
-              href={`/c/${community.id}/join`}
+              href={`/c/${community.slug}/join`}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <div style={{

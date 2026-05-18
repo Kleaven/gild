@@ -62,7 +62,7 @@ export default async function DonePage({ params }: Props) {
       </div>
 
       <Link
-        href={`/c/${communityId}`}
+        href={`/c/${community.slug}`}
         style={{
           display: 'block',
           textAlign: 'center',

@@ -12,7 +12,7 @@ type LessonNavStub = {
 };
 
 interface StudioLessonPlayerProps {
-  community: { id: string; name: string };
+  community: { id: string; slug: string; name: string };
   course: { id: string; title: string };
   lesson: Lesson;
   prevLesson: LessonNavStub | null;
@@ -55,7 +55,7 @@ export function StudioLessonPlayer({
       {/* Breadcrumb */}
       <nav style={{ marginBottom: 20, fontSize: 13, fontFamily: GILD_FONTS.mono }}>
         <Link
-          href={`/c/${community.id}/courses/${course.id}`}
+          href={`/c/${community.slug}/courses/${course.id}`}
           style={{ color: 'oklch(0.55 0.02 250)', textDecoration: 'none' }}
         >
           ← {course.title}
@@ -189,7 +189,7 @@ export function StudioLessonPlayer({
           <div style={{ display: 'flex', gap: 10 }}>
             {prevLesson ? (
               <Link
-                href={`/c/${community.id}/courses/${course.id}/${prevLesson.id}`}
+                href={`/c/${community.slug}/courses/${course.id}/${prevLesson.id}`}
                 style={navLinkStyle()}
               >
                 ← Previous
@@ -199,7 +199,7 @@ export function StudioLessonPlayer({
             )}
             {nextLesson ? (
               <Link
-                href={`/c/${community.id}/courses/${course.id}/${nextLesson.id}`}
+                href={`/c/${community.slug}/courses/${course.id}/${nextLesson.id}`}
                 style={navLinkStyle()}
               >
                 Next →

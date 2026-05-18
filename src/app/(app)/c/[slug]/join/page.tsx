@@ -51,7 +51,7 @@ export default async function JoinPage({ params }: Props) {
             <p style={{ fontSize: 14, color: 'oklch(0.55 0.02 250)', margin: '0 0 32px', fontWeight: 500, letterSpacing: '0.02em', textTransform: 'uppercase' }}>
               {community.member_count} member{community.member_count !== 1 ? 's' : ''}
             </p>
-            <JoinButton communityId={communityId} />
+            <JoinButton communityId={communityId} communitySlug={slug} />
           </div>
         </div>
       </div>

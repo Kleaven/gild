@@ -6,12 +6,14 @@ import { GILD_FONTS } from '@/components/gild';
 import { useRouter } from 'next/navigation';
 
 interface Props {
+  // UUID drives the server action; slug drives navigation.
   communityId: string;
+  communitySlug: string;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export function CreateCourseModal({ communityId, isOpen, onClose }: Props) {
+export function CreateCourseModal({ communityId, communitySlug, isOpen, onClose }: Props) {
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -33,7 +35,7 @@ export function CreateCourseModal({ communityId, isOpen, onClose }: Props) {
         setTitle('');
         setDescription('');
         onClose();
-        router.push(`/c/${communityId}/courses/${courseId}`);
+        router.push(`/c/${communitySlug}/courses/${courseId}`);
       } catch (err) {
         console.error('Failed to create course', err);
       }

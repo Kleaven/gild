@@ -10,6 +10,7 @@ import type { Course } from '@/lib/courses';
 interface StudioCoursesListProps {
   community: {
     id: string;
+    slug: string;
     name: string;
   };
   courses: Course[];
@@ -113,7 +114,7 @@ export function StudioCoursesList({ community, courses, isAdminOrOwner }: Studio
             <CourseCard
               key={course.id}
               course={course}
-              communityId={community.id}
+              communitySlug={community.slug}
               hue={hueForCourse(course.id, i)}
             />
           ))}
@@ -122,6 +123,7 @@ export function StudioCoursesList({ community, courses, isAdminOrOwner }: Studio
 
       <CreateCourseModal
         communityId={community.id}
+        communitySlug={community.slug}
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
       />
@@ -131,16 +133,16 @@ export function StudioCoursesList({ community, courses, isAdminOrOwner }: Studio
 
 function CourseCard({
   course,
-  communityId,
+  communitySlug,
   hue,
 }: {
   course: Course;
-  communityId: string;
+  communitySlug: string;
   hue: number;
 }) {
   return (
     <Link
-      href={`/c/${communityId}/courses/${course.id}`}
+      href={`/c/${communitySlug}/courses/${course.id}`}
       style={{
         display: 'block',
         textDecoration: 'none',

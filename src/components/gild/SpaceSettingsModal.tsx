@@ -7,7 +7,9 @@ import { useRouter } from 'next/navigation';
 import { Shield, Lock, Globe, Trash2, X, ChevronDown, Check } from 'lucide-react';
 
 interface Props {
+  // UUID drives the server action; slug drives navigation.
   communityId: string;
+  communitySlug: string;
   space: {
     id: string;
     name: string;
@@ -19,7 +21,7 @@ interface Props {
   onClose: () => void;
 }
 
-export function SpaceSettingsModal({ communityId, space, isOpen, onClose }: Props) {
+export function SpaceSettingsModal({ communityId, communitySlug, space, isOpen, onClose }: Props) {
   const router = useRouter();
   const [name, setName] = useState(space.name);
   const [description, setDescription] = useState(space.description || '');
@@ -56,7 +58,7 @@ export function SpaceSettingsModal({ communityId, space, isOpen, onClose }: Prop
       try {
         await deleteSpace(space.id, communityId);
         onClose();
-        router.push(`/c/${communityId}`);
+        router.push(`/c/${communitySlug}`);
       } catch (err) {
         console.error('Failed to delete space', err);
       }

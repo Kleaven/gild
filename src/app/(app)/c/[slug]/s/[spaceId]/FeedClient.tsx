@@ -355,8 +355,9 @@ export default function FeedClient({
         </div>
       </main>
 
-      <SpaceSettingsModal 
+      <SpaceSettingsModal
         communityId={communityId}
+        communitySlug={communitySlug}
         isOpen={isSpaceSettingsOpen}
         onClose={() => setIsSpaceSettingsOpen(false)}
         space={{

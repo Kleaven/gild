@@ -7,14 +7,16 @@ import { useRouter } from 'next/navigation';
 import { Shield, MessageSquare, Reply, Heart, Lock, Globe, ChevronDown, AlertCircle } from 'lucide-react';
 
 interface Props {
+  // UUID drives the server action; slug drives navigation.
   communityId: string;
+  communitySlug: string;
   isOpen: boolean;
   onClose: () => void;
 }
 
 type PermissionRole = 'member' | 'admin' | 'owner';
 
-export function CreateSpaceModal({ communityId, isOpen, onClose }: Props) {
+export function CreateSpaceModal({ communityId, communitySlug, isOpen, onClose }: Props) {
   const router = useRouter();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -65,7 +67,7 @@ export function CreateSpaceModal({ communityId, isOpen, onClose }: Props) {
         setName('');
         setDescription('');
         onClose();
-        router.push(`/c/${communityId}/s/${result.spaceId}`);
+        router.push(`/c/${communitySlug}/s/${result.spaceId}`);
       } catch (err) {
         console.error('Failed to create space', err);
         setError(err instanceof Error ? err.message : 'Failed to create space');

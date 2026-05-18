@@ -8,6 +8,7 @@ import type { CourseWithModules } from '@/lib/courses';
 interface StudioCourseDetailProps {
   community: {
     id: string;
+    slug: string;
     name: string;
   };
   course: CourseWithModules;
@@ -49,7 +50,7 @@ export function StudioCourseDetail({
       {/* Breadcrumb */}
       <div style={{ marginBottom: 20 }}>
         <Link
-          href={`/c/${community.id}/courses`}
+          href={`/c/${community.slug}/courses`}
           style={{
             fontSize: 13,
             color: 'oklch(0.55 0.02 250)',
@@ -228,7 +229,7 @@ export function StudioCourseDetail({
 
           {isAdminOrOwner && (
             <Link
-              href={`/c/${community.id}/courses/${course.id}/manage`}
+              href={`/c/${community.slug}/courses/${course.id}/manage`}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -396,7 +397,7 @@ export function StudioCourseDetail({
                           <li key={lesson.id} style={{ margin: 0, padding: 0 }}>
                             {canOpen ? (
                               <Link
-                                href={`/c/${community.id}/courses/${course.id}/${lesson.id}`}
+                                href={`/c/${community.slug}/courses/${course.id}/${lesson.id}`}
                                 style={rowStyle}
                               >
                                 {inner}

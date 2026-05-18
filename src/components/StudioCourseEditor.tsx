@@ -23,11 +23,13 @@ import {
 import { LessonEditorModal } from './LessonEditorModal';
 
 interface StudioCourseEditorProps {
+  // UUID drives DB-scoped server actions; slug drives navigation.
   communityId: string;
+  communitySlug: string;
   course: CourseWithModules;
 }
 
-export function StudioCourseEditor({ communityId, course }: StudioCourseEditorProps) {
+export function StudioCourseEditor({ communityId, communitySlug, course }: StudioCourseEditorProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [activeTab, setActiveTab] = useState<'settings' | 'curriculum'>('curriculum');
@@ -50,7 +52,7 @@ export function StudioCourseEditor({ communityId, course }: StudioCourseEditorPr
             </p>
           </div>
           <button
-            onClick={() => router.push(`/c/${communityId}/courses/${course.id}`)}
+            onClick={() => router.push(`/c/${communitySlug}/courses/${course.id}`)}
             style={{
               padding: '10px 18px',
               borderRadius: 10,
@@ -79,9 +81,9 @@ export function StudioCourseEditor({ communityId, course }: StudioCourseEditorPr
       </header>
 
       {activeTab === 'settings' ? (
-        <CourseSettingsPanel communityId={communityId} course={course} />
+        <CourseSettingsPanel communityId={communityId} communitySlug={communitySlug} course={course} />
       ) : (
-        <CurriculumPanel communityId={communityId} course={course} onEditLesson={setEditingLesson} />
+        <CurriculumPanel communityId={communityId} communitySlug={communitySlug} course={course} onEditLesson={setEditingLesson} />
       )}
 
       {editingLesson && (

@@ -124,7 +124,7 @@ export default async function LessonPage({ params }: Props) {
 
   return (
     <StudioLessonPlayer
-      community={{ id: communityId, name: community.name }}
+      community={{ id: communityId, slug, name: community.name }}
       course={{ id: courseId, title: course.title }}
       lesson={lesson}
       prevLesson={prevLesson}

@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getSupabaseServerClient } from '../../lib/auth/server';
+import { resolveCommunitySlug } from '../../lib/community/context';
 import {
   createCheckoutSession as libCreateCheckoutSession,
   createBillingPortalSession as libCreateBillingPortalSession,
@@ -96,7 +97,8 @@ export async function cancelSubscription(
   await libCancelSubscription(targetId, validatedType);
 
   if (validatedType === 'community') {
-    revalidatePath(`/c/${targetId}/settings`);
+    const slug = await resolveCommunitySlug(targetId);
+    revalidatePath(`/c/${slug}/settings`);
   } else {
     revalidatePath(`/settings/billing`);
   }

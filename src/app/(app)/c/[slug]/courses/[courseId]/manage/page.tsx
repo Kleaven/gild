@@ -42,6 +42,7 @@ export default async function CourseManagePage({ params }: Props) {
   return (
     <StudioCourseEditor
       communityId={communityId}
+      communitySlug={slug}
       course={course}
     />
   );

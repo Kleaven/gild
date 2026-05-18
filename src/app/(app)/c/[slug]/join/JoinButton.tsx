@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { joinCommunity } from '@/app/actions';
 import { WelcomeModal } from '@/components/gild/WelcomeModal';
 
-type Props = { communityId: string };
+type Props = { communityId: string; communitySlug: string };
 
-export default function JoinButton({ communityId }: Props) {
+export default function JoinButton({ communityId, communitySlug }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [welcomeData, setWelcomeData] = useState<{ name: string; message: string | null } | null>(null);
@@ -50,7 +50,7 @@ export default function JoinButton({ communityId }: Props) {
           isOpen={true}
           onClose={() => {
             setWelcomeData(null);
-            router.push(`/c/${communityId}`);
+            router.push(`/c/${communitySlug}`);
           }}
         />
       )}

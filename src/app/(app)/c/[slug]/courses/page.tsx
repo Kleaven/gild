@@ -28,6 +28,7 @@ export default async function CoursesPage({ params }: Props) {
     <StudioCoursesList
       community={{
         id: communityId,
+        slug,
         name: community.name,
       }}
       courses={courses}

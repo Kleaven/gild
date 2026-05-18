@@ -5,7 +5,10 @@ import { createClient } from '@/lib/supabase/browser';
 import { toast } from 'sonner';
 import { usePathname } from 'next/navigation';
 
-export function useGlobalNotifications(communityId: string) {
+// communitySlug is required to build the click-through URL — routes are
+// slug-keyed, a UUID-based href would 404. Hook still keys realtime by
+// UUID since that's the DB FK.
+export function useGlobalNotifications(communityId: string, communitySlug: string) {
   const pathname = usePathname();
 
   useEffect(() => {
@@ -30,7 +33,7 @@ export function useGlobalNotifications(communityId: string) {
             description: newPost.title || 'A member shared a new post.',
             action: {
               label: 'View',
-              onClick: () => window.location.href = `/c/${communityId}/s/${newPost.space_id}/p/${newPost.id}`,
+              onClick: () => window.location.href = `/c/${communitySlug}/s/${newPost.space_id}/p/${newPost.id}`,
             },
           });
         }
@@ -54,5 +57,5 @@ export function useGlobalNotifications(communityId: string) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [communityId, pathname]);
+  }, [communityId, communitySlug, pathname]);
 }

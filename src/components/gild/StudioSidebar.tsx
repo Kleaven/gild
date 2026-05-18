@@ -361,6 +361,7 @@ export function StudioSidebar({
     <>
       <CreateSpaceModal
         communityId={community.id}
+        communitySlug={community.slug || ''}
         isOpen={isCreateSpaceOpen}
         onClose={() => setIsCreateSpaceOpen(false)}
       />

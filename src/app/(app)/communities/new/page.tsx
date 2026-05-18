@@ -9,9 +9,9 @@ export default function NewCommunityPage() {
   return (
     <div style={{ maxWidth: 520, margin: '60px auto', padding: '0 24px' }}>
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 28 }}>Create a community</h1>
-      <CreateCommunityForm 
+      <CreateCommunityForm
         submitLabel="Create community"
-        onSuccess={(communityId) => router.push(`/c/${communityId}/settings`)}
+        onSuccess={(_communityId, slug) => router.push(`/c/${slug}/settings`)}
       />
     </div>
   );

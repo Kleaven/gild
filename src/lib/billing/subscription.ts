@@ -67,12 +67,13 @@ export async function createCheckoutSession(
 
     // Otherwise, use Stripe Checkout to switch plans (upgrade/downgrade)
     // We update the existing subscription instead of creating a new one.
+    const returnPath = await getReturnPath(targetId, targetType, returnContext);
     const session = await stripe.checkout.sessions.create({
       customer: entity.stripe_customer_id!,
       mode: 'subscription',
       line_items: [{ price: PLANS[plan].priceId, quantity: 1 }],
-      success_url: `${appUrl}${getReturnPath(targetId, targetType, returnContext)}?checkout=success`,
-      cancel_url: `${appUrl}${getReturnPath(targetId, targetType, returnContext)}?checkout=cancelled`,
+      success_url: `${appUrl}${returnPath}?checkout=success`,
+      cancel_url: `${appUrl}${returnPath}?checkout=cancelled`,
       subscription_data: {
         metadata: { targetId, plan, targetType },
       },
@@ -100,12 +101,13 @@ export async function createCheckoutSession(
     customerId = entity.stripe_customer_id;
   }
 
+  const returnPath = await getReturnPath(targetId, targetType, returnContext);
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: 'subscription',
     line_items: [{ price: PLANS[plan].priceId, quantity: 1 }],
-    success_url: `${appUrl}${getReturnPath(targetId, targetType, returnContext)}?checkout=success`,
-    cancel_url: `${appUrl}${getReturnPath(targetId, targetType, returnContext)}?checkout=cancelled`,
+    success_url: `${appUrl}${returnPath}?checkout=success`,
+    cancel_url: `${appUrl}${returnPath}?checkout=cancelled`,
     subscription_data: {
       trial_period_days: 14,
       metadata: { targetId, plan, targetType },
@@ -138,9 +140,10 @@ export async function createBillingPortalSession(
     throw new Error('[gild] no billing account found — complete checkout first');
   }
 
+  const portalReturnPath = await getReturnPath(targetId, targetType, returnContext);
   const session = await stripe.billingPortal.sessions.create({
     customer: row.stripe_customer_id,
-    return_url: `${appUrl}${getReturnPath(targetId, targetType, returnContext)}`,
+    return_url: `${appUrl}${portalReturnPath}`,
   });
 
   return { url: session.url };
@@ -229,9 +232,19 @@ export async function createCommunityJoinSession(
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function getReturnPath(targetId: string, targetType: 'community' | 'platform', context: CheckoutReturnContext): string {
+// Async because the community branch resolves UUID→slug before generating
+// the URL (routes are slug-keyed; a UUID return-path would 404 the user
+// after they finish Stripe checkout).
+async function getReturnPath(
+  targetId: string,
+  targetType: 'community' | 'platform',
+  context: CheckoutReturnContext,
+): Promise<string> {
   if (targetType === 'platform') return '/settings/billing';
-  
+
   if (context === 'onboarding') return `/onboarding/${targetId}/checkout`;
-  return `/c/${targetId}/settings`;
+
+  const { resolveCommunitySlug } = await import('../community/context');
+  const slug = await resolveCommunitySlug(targetId);
+  return `/c/${slug}/settings`;
 }
