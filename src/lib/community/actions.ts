@@ -272,7 +272,16 @@ export async function updateCommunity(
   if (error) throw new Error(error.message);
 }
 
-export async function deleteCommunity(communityId: string): Promise<void> {
+// Discriminated union return — same pattern as createCommunity. The
+// "you're not the owner" branch is a predictable business-rule failure
+// (e.g. an admin sees the settings page and clicks Delete) and must
+// surface inline, not as a Next.js 500 with the message stripped.
+// Genuine DB / RLS errors still throw so they show up in monitoring.
+export type DeleteCommunityResult =
+  | { ok: true }
+  | { ok: false; code: 'insufficient_permissions'; message: string };
+
+export async function deleteCommunity(communityId: string): Promise<DeleteCommunityResult> {
   const supabase = await getSupabaseServerClient();
 
   // Owner-only soft delete. RLS on communities.UPDATE also enforces
@@ -283,7 +292,13 @@ export async function deleteCommunity(communityId: string): Promise<void> {
     p_min_role: 'owner',
   });
   if (roleError) throw new Error(roleError.message);
-  if (!isOwner) throw new Error('[gild] insufficient permissions');
+  if (!isOwner) {
+    return {
+      ok: false,
+      code: 'insufficient_permissions',
+      message: 'Only the community owner can delete this community.',
+    };
+  }
 
   const { error } = await supabase
     .from('communities')
@@ -292,5 +307,9 @@ export async function deleteCommunity(communityId: string): Promise<void> {
     })
     .eq('id', communityId);
 
+  // Unexpected DB error (e.g. RLS denial despite the explicit check, or
+  // network drop). Throw so it shows up as a 500 in monitoring.
   if (error) throw new Error(error.message);
+
+  return { ok: true };
 }

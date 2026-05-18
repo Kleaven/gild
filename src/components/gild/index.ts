@@ -6,6 +6,7 @@ export * from './StudioPostCard';
 export * from './StudioSidebar';
 export * from './StudioRightRail';
 export * from './ConfirmModal';
+export * from './DeleteCommunityModal';
 export * from './NotificationListener';
 export * from './WelcomeModal';
 export * from './WelcomeHandler';

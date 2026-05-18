@@ -12,7 +12,7 @@ import {
   updateCommunity as libUpdateCommunity,
   deleteCommunity as libDeleteCommunity,
 } from '../../lib/community/actions';
-import type { CreateCommunityResult, UpdateCommunityInput } from '../../lib/community/actions';
+import type { CreateCommunityResult, DeleteCommunityResult, UpdateCommunityInput } from '../../lib/community/actions';
 import type { CreateCommunityInput, UpdateMemberRoleInput } from '../../lib/community/types';
 
 // Returns the lib's discriminated union as-is so the form can render a
@@ -122,9 +122,10 @@ export async function updateCommunity(
 
 // Owner-only soft delete. libDeleteCommunity re-proves the role server-side
 // via user_has_min_role('owner') before mutating; this wrapper handles the
-// session check and cache invalidation for the community route + global
-// listings (which now hide the soft-deleted entry).
-export async function deleteCommunity(communityId: string): Promise<void> {
+// session check, propagates the lib's discriminated union as-is so the
+// settings page can render an inline "insufficient permissions" message,
+// and invalidates the community route + global listings on success only.
+export async function deleteCommunity(communityId: string): Promise<DeleteCommunityResult> {
   const supabase = await getSupabaseServerClient();
   const {
     data: { user },
@@ -132,15 +133,19 @@ export async function deleteCommunity(communityId: string): Promise<void> {
   } = await supabase.auth.getUser();
   if (error || !user) throw new Error('[gild] not authenticated');
 
-  // Resolve the slug BEFORE deletion — once deleted_at is set, the row may
-  // not be visible to this client through ordinary queries.
+  // Resolve the slug BEFORE deletion — once deleted_at is set, the row
+  // becomes invisible to this client (queries filter is('deleted_at', null)).
   const slug = await resolveCommunitySlug(communityId);
 
-  await libDeleteCommunity(communityId);
+  const result = await libDeleteCommunity(communityId);
 
-  revalidatePath('/');
-  revalidatePath('/communities');
-  revalidatePath(`/c/${slug}`);
+  if (result.ok) {
+    revalidatePath('/');
+    revalidatePath('/communities');
+    revalidatePath(`/c/${slug}`);
+  }
+
+  return result;
 }
 
 export async function uploadCommunityAsset(

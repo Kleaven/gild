@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { updateCommunity, deleteCommunity, uploadCommunityAsset } from '@/app/actions';
-import { GILD_FONTS } from '@/components/gild';
+import { GILD_FONTS, DeleteCommunityModal } from '@/components/gild';
 import { Camera, Image as ImageIcon, Palette, ShieldAlert } from 'lucide-react';
 import { RolePermissionsEditor } from '@/components/gild';
 
@@ -42,6 +43,10 @@ export default function CommunitySettings({ community }: Props) {
   });
   const [isPending, startTransition] = useTransition();
   const [isUploading, setIsUploading] = useState<'logo' | 'banner' | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const router = useRouter();
 
   function handleUpdate(e: React.FormEvent) {
     e.preventDefault();
@@ -297,20 +302,17 @@ export default function CommunitySettings({ community }: Props) {
       <section style={{ borderTop: '1px solid oklch(0.90 0.01 250)', paddingTop: 32 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, color: 'oklch(0.40 0.15 25)', marginBottom: 12 }}>Danger Zone</h2>
         <p style={{ fontSize: 14, color: 'oklch(0.40 0.02 250)', marginBottom: 20 }}>
-          Permanently delete this community. This action cannot be undone and will remove all spaces, posts, and memberships.
+          Permanently delete this community. This action cannot be undone and
+          will remove all spaces, posts, and memberships. Only the community
+          owner can perform this action.
         </p>
         <button
+          type="button"
           onClick={() => {
-            if (!confirm(`Are you sure you want to delete ${community.name}? This cannot be undone.`)) return;
-            startTransition(async () => {
-              try {
-                await deleteCommunity(community.id);
-              } catch (err) {
-                console.error('Failed to delete community', err);
-              }
-            });
+            setDeleteError(null);
+            setShowDeleteModal(true);
           }}
-          disabled={isPending}
+          disabled={isDeleting}
           style={{
             padding: '10px 20px',
             borderRadius: 8,
@@ -319,14 +321,57 @@ export default function CommunitySettings({ community }: Props) {
             border: '1px solid oklch(0.85 0.05 25)',
             fontSize: 14,
             fontWeight: 600,
-            cursor: isPending ? 'default' : 'pointer',
-            opacity: isPending ? 0.7 : 1,
+            cursor: isDeleting ? 'default' : 'pointer',
+            opacity: isDeleting ? 0.7 : 1,
             fontFamily: 'inherit',
           }}
         >
           Delete Community
         </button>
       </section>
+
+      <DeleteCommunityModal
+        expectedName={community.name}
+        isOpen={showDeleteModal}
+        isPending={isDeleting}
+        error={deleteError}
+        onClose={() => {
+          if (isDeleting) return; // never close mid-flight
+          setShowDeleteModal(false);
+          setDeleteError(null);
+        }}
+        onConfirm={() => {
+          setDeleteError(null);
+          setIsDeleting(true);
+          // Use a manual async block instead of startTransition so we can
+          // hard-redirect on success — once deleted, the current /c/<slug>
+          // route returns notFound() (the layout calls it when
+          // getCommunityContextBySlug returns null), so we navigate the
+          // user to / before that can happen.
+          (async () => {
+            try {
+              const result = await deleteCommunity(community.id);
+              if (!result.ok) {
+                setDeleteError(result.message);
+                setIsDeleting(false);
+                return;
+              }
+              // Success — leave the now-deleted route immediately. router.push
+              // followed by router.refresh() ensures the global community
+              // sidebar refetches and drops the deleted entry.
+              router.push('/');
+              router.refresh();
+            } catch (err) {
+              setDeleteError(
+                err instanceof Error
+                  ? err.message
+                  : 'Unexpected error — the community was not deleted.',
+              );
+              setIsDeleting(false);
+            }
+          })();
+        }}
+      />
     </div>
   );
 }
