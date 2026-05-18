@@ -374,10 +374,12 @@ export default function CommunitySettings({ community }: Props) {
               // (where setAll DOES persist), so the token rotation
               // completes cleanly and the session survives.
               //
-              // We also route to /communities/new (not /) so the user
-              // lands on something actionable instead of the empty
-              // authed-but-no-community home state.
-              window.location.assign('/communities/new');
+              // We also route to /communities (Discover) so the user
+              // lands on a populated, browsable surface — joining an
+              // existing community is the natural next step, and the
+              // page itself surfaces a CTA to /communities/new for
+              // users who'd rather start fresh.
+              window.location.assign('/communities');
             } catch (err) {
               setDeleteError(
                 err instanceof Error
