@@ -74,13 +74,24 @@ export function GlobalSidebar({ user, communities, isOpen, onClose }: GlobalSide
         }}
       />
 
-      {/* Sidebar */}
+      {/* Sidebar.
+          Layout invariants:
+            - height: 100dvh (dynamic viewport height) guarantees the column
+              fills the screen even when the parent has a transform-induced
+              containing block, and respects mobile URL-bar collapse.
+            - The middle row is flex:1 with min-height: 0, so it can shrink
+              when content overflows AND grow to push the footer to the
+              very bottom when content is short. Without min-height: 0,
+              flex children default to min-height: auto = content height,
+              which prevents shrinking AND prevents overflowY: auto from
+              kicking in on small viewports. That was the bug. */}
       <aside style={{
         position: 'fixed',
         top: 0,
         left: 0,
         bottom: 0,
         width: 320,
+        height: '100dvh',
         background: '#fff',
         zIndex: 1001,
         display: 'flex',
@@ -89,12 +100,13 @@ export function GlobalSidebar({ user, communities, isOpen, onClose }: GlobalSide
         animation: 'gild-slide-in 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         fontFamily: GILD_FONTS.sans
       }}>
-        <header style={{ 
-          padding: '24px 20px', 
-          display: 'flex', 
-          alignItems: 'center', 
+        <header style={{
+          padding: '24px 20px',
+          display: 'flex',
+          alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: '1px solid oklch(0.96 0.005 250)'
+          borderBottom: '1px solid oklch(0.96 0.005 250)',
+          flexShrink: 0,
         }}>
           <Wordmark size={22} />
           <button 
@@ -116,7 +128,7 @@ export function GlobalSidebar({ user, communities, isOpen, onClose }: GlobalSide
           </button>
         </header>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '12px 12px 24px' }}>
+        <div style={{ flex: '1 1 0%', minHeight: 0, overflowY: 'auto', padding: '12px 12px 24px' }}>
           {/* Quick Actions */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 24 }}>
              <SidebarItem 
@@ -154,10 +166,11 @@ export function GlobalSidebar({ user, communities, isOpen, onClose }: GlobalSide
         </div>
 
         {/* User Footer */}
-        <footer style={{ 
-          padding: '16px', 
+        <footer style={{
+          padding: '16px',
           borderTop: '1px solid oklch(0.96 0.005 250)',
-          background: 'oklch(0.99 0.002 250)'
+          background: 'oklch(0.99 0.002 250)',
+          flexShrink: 0,
         }}>
           <div style={{ 
             display: 'flex', 
