@@ -12,7 +12,7 @@ import {
   updateCommunity as libUpdateCommunity,
   deleteCommunity as libDeleteCommunity,
 } from '../../lib/community/actions';
-import type { CreateCommunityResult, DeleteCommunityResult, UpdateCommunityInput } from '../../lib/community/actions';
+import type { CreateCommunityResult, DeleteCommunityResult, JoinCommunityResult, UpdateCommunityInput } from '../../lib/community/actions';
 import type { CreateCommunityInput, UpdateMemberRoleInput } from '../../lib/community/types';
 
 // Returns the lib's discriminated union as-is so the form can render a
@@ -38,7 +38,11 @@ export async function createCommunity(
   return result;
 }
 
-export async function joinCommunity(communityId: string): Promise<{ welcome_message: string | null; name: string }> {
+// Returns the lib's discriminated union as-is so the JoinGate / JoinButton
+// can render an inline error (already a member, banned, private, etc.)
+// instead of catching a thrown 500 with the message stripped.
+// Cache invalidation only fires on the success branch.
+export async function joinCommunity(communityId: string): Promise<JoinCommunityResult> {
   const supabase = await getSupabaseServerClient();
   const {
     data: { user },
@@ -48,8 +52,11 @@ export async function joinCommunity(communityId: string): Promise<{ welcome_mess
 
   const result = await libJoinCommunity(communityId);
 
-  const slug = await resolveCommunitySlug(communityId);
-  revalidatePath(`/c/${slug}`);
+  if (result.ok) {
+    const slug = await resolveCommunitySlug(communityId);
+    revalidatePath(`/c/${slug}`);
+  }
+
   return result;
 }
 

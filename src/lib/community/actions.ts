@@ -120,35 +120,82 @@ export async function createCommunity(
   return { ok: true, communityId: communityId as string };
 }
 
-export async function joinCommunity(communityId: string): Promise<{ welcome_message: string | null; name: string }> {
+// Discriminated union — mirrors the pattern in createCommunity /
+// deleteCommunity. Predictable join failures (already a member, banned,
+// private without invite, plan member-limit, community deleted/hidden)
+// return structured data so JoinGate / JoinButton can render an inline
+// message. Unexpected errors still throw → 500 in monitoring.
+export type JoinCommunityResult =
+  | { ok: true; name: string; welcome_message: string | null }
+  | { ok: false; code: 'not_found'; message: string }
+  | { ok: false; code: 'already_member'; message: string }
+  | { ok: false; code: 'banned'; message: string }
+  | { ok: false; code: 'private_invite_required'; message: string }
+  | { ok: false; code: 'member_limit_reached'; message: string };
+
+export async function joinCommunity(communityId: string): Promise<JoinCommunityResult> {
   const supabase = await getSupabaseServerClient();
   const { data: communityData, error: fetchError } = await supabase
     .from('communities')
-    .select('plan, member_count')
+    .select('plan, member_count, name, welcome_message')
     .eq('id', communityId)
-    .single();
-  
-  if (fetchError || !communityData) throw new Error('[gild] community not found');
-  
-  const limit = getMemberLimit(communityData.plan as any);
-  if (communityData.member_count >= limit) {
-    throw new Error(`This community has reached its member limit of ${limit} for the current plan.`);
+    .maybeSingle();
+
+  if (fetchError) throw new Error(fetchError.message);
+  if (!communityData) {
+    return {
+      ok: false,
+      code: 'not_found',
+      message: 'This community no longer exists or you no longer have access to it.',
+    };
   }
 
-  const { data, error } = await supabase.rpc('join_community', {
+  const limit = getMemberLimit(communityData.plan as any);
+  if (communityData.member_count >= limit) {
+    return {
+      ok: false,
+      code: 'member_limit_reached',
+      message: `This community has reached its member limit of ${limit} for the current plan.`,
+    };
+  }
+
+  const { error } = await supabase.rpc('join_community', {
     p_community_id: communityId,
   });
-  if (error) throw new Error(error.message);
 
-  const { data: community } = await supabase
-    .from('communities')
-    .select('name, welcome_message')
-    .eq('id', communityId)
-    .single();
+  if (error) {
+    // join_community RPC raises specific messages we want to surface
+    // inline as structured codes rather than throwing.
+    const m = error.message;
+    if (m.includes('already a member')) {
+      return {
+        ok: false,
+        code: 'already_member',
+        message: 'You are already a member of this community.',
+      };
+    }
+    if (m.includes('banned')) {
+      return {
+        ok: false,
+        code: 'banned',
+        message: 'You are banned from this community and cannot rejoin.',
+      };
+    }
+    if (m.includes('private')) {
+      return {
+        ok: false,
+        code: 'private_invite_required',
+        message: 'This community is private. You need an invitation to join.',
+      };
+    }
+    // Unexpected DB / RLS error — re-raise as 500 for monitoring.
+    throw new Error(m);
+  }
 
-  return { 
-    welcome_message: community?.welcome_message ?? null,
-    name: community?.name ?? 'Community'
+  return {
+    ok: true,
+    name: communityData.name ?? 'Community',
+    welcome_message: communityData.welcome_message,
   };
 }
 

@@ -26,9 +26,11 @@ interface Props {
 export function JoinGate({ community }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
   const hue = community.theme_hue || 250;
 
   function handleJoin() {
+    setError(null);
     startTransition(async () => {
       try {
         if (community.pricing_type === 'paid') {
@@ -38,10 +40,20 @@ export function JoinGate({ community }: Props) {
           return;
         }
 
-        await joinCommunity(community.id);
-        router.push(`/c/${community.slug}?welcome=1`);
+        const result = await joinCommunity(community.id);
+        if (result.ok) {
+          router.push(`/c/${community.slug}?welcome=1`);
+          return;
+        }
+        // Already-a-member is a "soft" failure: they belong here, just
+        // send them in. Other codes need explicit inline messaging.
+        if (result.code === 'already_member') {
+          router.push(`/c/${community.slug}`);
+          return;
+        }
+        setError(result.message);
       } catch (err) {
-        console.error('Failed to join:', err);
+        setError(err instanceof Error ? err.message : 'Failed to join. Please try again.');
       }
     });
   }
@@ -82,13 +94,32 @@ export function JoinGate({ community }: Props) {
               opacity: isPending ? 0.7 : 1
             }}
           >
-            {isPending 
-              ? 'Processing...' 
-              : community.pricing_type === 'paid' 
-                ? `Join for $${community.price_amount}` 
+            {isPending
+              ? 'Processing...'
+              : community.pricing_type === 'paid'
+                ? `Join for $${community.price_amount}`
                 : 'Join Community'}
             {!isPending && <ArrowRight size={18} />}
           </button>
+
+          {error && (
+            <p
+              role="alert"
+              style={{
+                marginTop: 16,
+                padding: '12px 16px',
+                background: 'oklch(0.96 0.04 25)',
+                border: '1px solid oklch(0.88 0.08 25)',
+                borderRadius: 10,
+                color: 'oklch(0.40 0.16 25)',
+                fontSize: 13,
+                lineHeight: 1.5,
+                textAlign: 'center',
+              }}
+            >
+              {error}
+            </p>
+          )}
         </div>
       </div>
     </div>
