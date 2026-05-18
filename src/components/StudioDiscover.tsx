@@ -164,15 +164,19 @@ export function StudioDiscover({ initialCommunities }: StudioDiscoverProps) {
         </div>
 
         {/* Community Grid
-            min(340px, 100%) — collapses to 1 column on viewports < 340px instead
-            of overflowing (the old minmax(320px,1fr) broke on narrow screens
-            because parent padding ate the 320px minimum).
-            gap: 28px row + col on small screens, scales up to 36px on wider ones
-            via clamp on the wrapping container. */}
+            min(340px, 100%) — collapses to 1 column on viewports < 340px
+            instead of overflowing.
+            alignItems: 'start' — CRITICAL: defeats CSS Grid's default
+            `align-items: stretch`, which was making every card balloon to
+            match the tallest cell in the row (combined with the
+            description's flex:1 + min-height, cards were ending up ~585px
+            tall for ~280px of content). With start alignment, each card
+            takes only as much vertical space as its own content needs. */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(min(340px, 100%), 1fr))',
           gap: 'clamp(24px, 3vw, 36px)',
+          alignItems: 'start',
         }}>
           {filtered.map(community => (
             <Link
@@ -183,12 +187,11 @@ export function StudioDiscover({ initialCommunities }: StudioDiscoverProps) {
               <div style={{
                 border: '1px solid oklch(0.93 0.005 250)',
                 borderRadius: 16,
-                padding: 28,
+                padding: 24,
                 background: '#fff',
-                height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 20,
+                gap: 16,
                 transition: 'transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.18s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.18s ease',
                 cursor: 'pointer',
                 boxShadow: '0 1px 2px oklch(0 0 0 / 0.02)',
@@ -268,21 +271,18 @@ export function StudioDiscover({ initialCommunities }: StudioDiscoverProps) {
                   </div>
                 </div>
 
-                {/* Description — flex:1 pushes the footer to the bottom of the card.
-                    Reserves a min-height so cards with short descriptions don't shrink
-                    differently from cards with long descriptions, keeping the grid
-                    visually rhythmic. */}
+                {/* Description — naturally sized, clamps at 3 lines. No flex:1
+                    or min-height: with alignItems:start on the grid, cards take
+                    their content height, so there's no "remaining space" to fill. */}
                 <p style={{
                   fontSize: 14,
-                  lineHeight: 1.6,
+                  lineHeight: 1.55,
                   color: 'oklch(0.42 0.02 250)',
                   margin: 0,
                   display: '-webkit-box',
                   WebkitLineClamp: 3,
                   WebkitBoxOrient: 'vertical',
                   overflow: 'hidden',
-                  flex: 1,
-                  minHeight: 66,
                 }}>
                   {community.description || 'A premium space for collective growth and expert-led discussion.'}
                 </p>
@@ -292,9 +292,8 @@ export function StudioDiscover({ initialCommunities }: StudioDiscoverProps) {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  paddingTop: 16,
+                  paddingTop: 14,
                   borderTop: '1px solid oklch(0.96 0.005 250)',
-                  marginTop: 'auto',
                 }}>
                   <span style={{
                     padding: '4px 10px',
