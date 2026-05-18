@@ -1718,12 +1718,10 @@ export type Database = {
       is_community_owner: { Args: { p_community_id: string }; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
       issue_certificate: { Args: { p_enrollment_id: string }; Returns: string }
-      join_community:
-        | { Args: { p_community_id: string }; Returns: undefined }
-        | {
-            Args: { p_community_id: string; p_invite_token?: string }
-            Returns: undefined
-          }
+      join_community: {
+        Args: { p_community_id: string; p_invite_token?: string }
+        Returns: undefined
+      }
       leave_community: { Args: { p_community_id: string }; Returns: undefined }
       set_broadcast_opt_out: {
         Args: { p_community_id: string; p_opt_out: boolean }
