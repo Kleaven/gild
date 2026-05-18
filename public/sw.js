@@ -1,4 +1,8 @@
-const CACHE_NAME = 'gild-shell-v1';
+// Bumped 2026-05-18: slug-routing hotfix shipped — old SW caches must be
+// purged or returning users see stale UUID-keyed redirects from the prior
+// build. The activate handler deletes any cache key that doesn't match
+// this exact name.
+const CACHE_NAME = 'gild-shell-v2';
 
 // App shell assets to precache on install
 // Only cache static shell — never cache API routes or auth routes
