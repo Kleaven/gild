@@ -1,9 +1,7 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import { joinCommunity } from '@/app/actions';
-import { WelcomeModal } from './WelcomeModal';
 import { GILD_FONTS } from './styles';
 import { CoverArt } from './GildPrimitives';
 import { Users, Sparkles, ArrowRight } from 'lucide-react';
@@ -24,7 +22,6 @@ interface Props {
 }
 
 export function JoinGate({ community }: Props) {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const hue = community.theme_hue || 250;
@@ -42,13 +39,22 @@ export function JoinGate({ community }: Props) {
 
         const result = await joinCommunity(community.id);
         if (result.ok) {
-          router.push(`/c/${community.slug}?welcome=1`);
+          // Hard navigation (not router.push) — the user just transitioned
+          // from non-member to member, and the community layout reads
+          // membership state from the cookie-tied session. router.push
+          // followed by the layout's Server Component re-render can hit
+          // the @supabase/ssr cookie-rotation silent-failure path (see
+          // deleteCommunity fix at c322e5d) and strand the access token,
+          // silently signing the user out a few seconds later. Hard nav
+          // forces a fresh request through middleware so cookies refresh
+          // cleanly.
+          window.location.assign(`/c/${community.slug}?welcome=1`);
           return;
         }
         // Already-a-member is a "soft" failure: they belong here, just
-        // send them in. Other codes need explicit inline messaging.
+        // send them in. Same hard-nav rationale as above.
         if (result.code === 'already_member') {
-          router.push(`/c/${community.slug}`);
+          window.location.assign(`/c/${community.slug}`);
           return;
         }
         setError(result.message);

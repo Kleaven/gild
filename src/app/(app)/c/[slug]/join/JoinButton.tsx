@@ -1,14 +1,12 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import { joinCommunity } from '@/app/actions';
 import { WelcomeModal } from '@/components/gild/WelcomeModal';
 
 type Props = { communityId: string; communitySlug: string };
 
 export default function JoinButton({ communityId, communitySlug }: Props) {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [welcomeData, setWelcomeData] = useState<{ name: string; message: string | null } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -19,15 +17,20 @@ export default function JoinButton({ communityId, communitySlug }: Props) {
       try {
         const result = await joinCommunity(communityId);
         if (result.ok) {
+          // Show the welcome modal first. The modal-close handler does
+          // a hard navigation — see below for why we don't use
+          // router.refresh() / router.push() in this flow.
           setWelcomeData({ name: result.name, message: result.welcome_message });
-          router.refresh();
           return;
         }
         // Predictable failure — surface the message inline. For
         // already_member specifically, the user IS in the community, so
         // we send them in instead of just showing an error.
+        // Hard navigation (not router.push) so middleware refreshes the
+        // membership-aware layout cleanly and to preempt the @supabase/ssr
+        // cookie-rotation hazard that bit deleteCommunity at c322e5d.
         if (result.code === 'already_member') {
-          router.push(`/c/${communitySlug}`);
+          window.location.assign(`/c/${communitySlug}`);
           return;
         }
         setError(result.message);
@@ -81,7 +84,14 @@ export default function JoinButton({ communityId, communitySlug }: Props) {
           isOpen={true}
           onClose={() => {
             setWelcomeData(null);
-            router.push(`/c/${communitySlug}`);
+            // Hard navigation — the user just transitioned from non-member
+            // to member, and the community route's layout reads membership
+            // state from the SSR cookie. router.push + the resulting RSC
+            // re-render can hit the @supabase/ssr token-rotation silent-
+            // failure path (see deleteCommunity fix at c322e5d) and strand
+            // the access token. Hard nav forces a fresh request through
+            // middleware so cookies refresh cleanly.
+            window.location.assign(`/c/${communitySlug}`);
           }}
         />
       )}
