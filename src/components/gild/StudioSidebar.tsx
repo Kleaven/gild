@@ -190,6 +190,11 @@ export function StudioSidebar({
           { label: 'Members', href: `/c/${community.slug}/members` },
           ...(showCourses ? [{ label: 'Courses', href: `/c/${community.slug}/courses` }] : []),
           { label: 'Search', href: `/c/${community.slug}/search` },
+          // Moderation queue — owner/admin only. Lives under Library to match
+          // the existing nav structure for admin-tier surfaces.
+          ...((currentUser.role === 'owner' || currentUser.role === 'admin')
+            ? [{ label: 'Moderation', href: `/c/${community.slug}/moderation` }]
+            : []),
           ...(currentUser.role !== 'owner' ? [{ label: 'Leave Community', onClick: () => setIsLeaveModalOpen(true), danger: true }] : []),
         ].map((item: any) => {
           if (item.onClick) {

@@ -19,6 +19,7 @@ export default async function AdminConsoleLayout({ children }: Props) {
         <AdminNavLink href="/admin" label="Overview" />
         <AdminNavLink href="/admin/communities" label="Communities" />
         <AdminNavLink href="/admin/flags" label="Feature Flags" />
+        <AdminNavLink href="/admin/security" label="Security" />
       </aside>
 
       {/* Main content */}
