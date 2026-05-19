@@ -4,15 +4,15 @@ import React, { useTransition, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createCheckoutSession, createBillingPortalSession, cancelSubscription } from '@/app/actions/billing';
 import { GILD_FONTS } from './styles';
-import { 
-  CreditCard, 
-  Zap, 
-  ShieldCheck, 
-  Clock, 
-  ExternalLink,
+import { ConfirmModal } from './ConfirmModal';
+import {
+  CreditCard,
+  Zap,
+  ShieldCheck,
   ChevronRight,
   AlertCircle,
-  Check
+  Check,
+  X,
 } from 'lucide-react';
 import type { Plan } from '@/lib/billing/plans';
 
@@ -29,6 +29,8 @@ export function GlobalBilling({ user }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [cancelSuccess, setCancelSuccess] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const isActive = user.subscription_status === 'active' || user.subscription_status === 'trialing';
 
@@ -51,6 +53,21 @@ export function GlobalBilling({ user }: Props) {
         router.push(url);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to open billing portal');
+      }
+    });
+  }
+
+  function handleCancel() {
+    setError(null);
+    setCancelSuccess(false);
+    startTransition(async () => {
+      try {
+        await cancelSubscription(user.id, 'platform');
+        setCancelSuccess(true);
+        // Refresh server props so subscription_status updates to 'canceled'.
+        router.refresh();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to cancel subscription');
       }
     });
   }
@@ -128,27 +145,107 @@ export function GlobalBilling({ user }: Props) {
           </span>
         </div>
 
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           {isActive && (
-            <button 
+            <button
               onClick={handlePortal}
               disabled={isPending}
-              style={{ ...secondaryButtonStyle, flex: 1 }}
+              style={{ ...secondaryButtonStyle, flex: '1 1 200px' }}
             >
               <CreditCard size={16} />
               Manage Payment Methods
             </button>
           )}
-          <button 
+          <button
             onClick={() => handlePlanAction('pro')}
             disabled={isPending}
-            style={{ ...primaryButtonStyle, flex: 1 }}
+            style={{ ...primaryButtonStyle, flex: '1 1 200px' }}
           >
             {user.plan === 'pro' ? 'Renew or Upgrade' : 'Switch to Pro Plan'}
             <ChevronRight size={16} />
           </button>
         </div>
+
+        {/* Cancel subscription row — only visible when subscription is
+            active. Subdued styling (text-button) because cancellation is
+            destructive but rare. Confirmation modal gates the action. */}
+        {isActive && (
+          <div
+            style={{
+              marginTop: 20,
+              paddingTop: 20,
+              borderTop: '1px solid oklch(0.96 0.005 250)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 16,
+              flexWrap: 'wrap',
+            }}
+          >
+            <div style={{ minWidth: 0 }}>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'oklch(0.30 0.02 250)' }}>
+                Cancel subscription
+              </p>
+              <p style={{ margin: '2px 0 0', fontSize: 12, color: 'oklch(0.55 0.02 250)', lineHeight: 1.5 }}>
+                You keep access until the end of the current billing period.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowCancelConfirm(true)}
+              disabled={isPending}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '8px 14px',
+                borderRadius: 8,
+                background: 'transparent',
+                color: 'oklch(0.45 0.16 25)',
+                border: '1px solid oklch(0.88 0.06 25)',
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: isPending ? 'default' : 'pointer',
+                fontFamily: 'inherit',
+                flexShrink: 0,
+                opacity: isPending ? 0.6 : 1,
+              }}
+            >
+              <X size={14} />
+              Cancel subscription
+            </button>
+          </div>
+        )}
+
+        {cancelSuccess && (
+          <p
+            role="status"
+            style={{
+              marginTop: 16,
+              padding: '10px 14px',
+              borderRadius: 8,
+              background: 'oklch(0.96 0.05 150)',
+              border: '1px solid oklch(0.85 0.10 150)',
+              color: 'oklch(0.36 0.14 150)',
+              fontSize: 13,
+              lineHeight: 1.4,
+            }}
+          >
+            Subscription canceled. You'll keep access until the end of your current billing period.
+          </p>
+        )}
       </div>
+
+      <ConfirmModal
+        isOpen={showCancelConfirm}
+        onClose={() => setShowCancelConfirm(false)}
+        onConfirm={handleCancel}
+        title="Cancel your Gild subscription?"
+        message="You'll keep full access until the end of the current billing period. After that, your communities will pause until you resubscribe. This action can be reversed at any time before the period ends."
+        confirmLabel="Yes, cancel subscription"
+        cancelLabel="Keep subscription"
+        isDestructive
+      />
 
       {/* Pricing Grid */}
       <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 20 }}>Change your plan</h3>
