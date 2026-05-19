@@ -59,6 +59,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             Discover
           </Link>
           <Link
+            href="/notifications"
+            aria-label="Notifications"
+            style={{ fontSize: 13, color: '#555', textDecoration: 'none' }}
+          >
+            Inbox
+          </Link>
+          <Link
             href="/communities/new"
             style={{ fontSize: 13, color: '#555', textDecoration: 'none' }}
           >
