@@ -120,18 +120,22 @@ function ChatPanel({
           .select('id, display_name, avatar_url')
           .eq('id', recipientId)
           .maybeSingle(),
-        supabase
-          .from('direct_messages')
-          .select('*')
-          .or(`sender_id.eq.${recipientId},receiver_id.eq.${recipientId}`)
-          .order('created_at', { ascending: false })
-          .limit(50),
+        // Use the get_dm_thread RPC instead of an OR-filter on the table —
+        // the RPC uses LEAST/GREATEST so the idx_direct_messages_thread
+        // compound index is walked as a single Index Scan rather than the
+        // planner's previous two-direction OR-scan + sort. See migration
+        // 20260520000001 for rationale.
+        supabase.rpc('get_dm_thread', {
+          p_other_user_id: recipientId,
+          p_limit: 50,
+        }),
       ]);
 
       if (cancelled) return;
       setRecipient(profileRes.data);
-      // Reverse for chronological (oldest → newest) append-render.
-      setMessages((msgRes.data ?? []).reverse() as LocalMessage[]);
+      // RPC returns DESC for the LIMIT optimisation; flip to chronological
+      // for append-render.
+      setMessages(((msgRes.data ?? []) as DirectMessage[]).reverse() as LocalMessage[]);
     }
 
     load().catch(() => {

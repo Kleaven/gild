@@ -135,11 +135,13 @@ export function GlobalBilling({ user }: Props) {
           <span style={{
             padding: '6px 12px',
             borderRadius: 999,
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: 700,
             background: isActive ? 'oklch(0.96 0.04 150)' : 'oklch(0.96 0.005 250)',
             color: isActive ? 'oklch(0.40 0.15 150)' : 'oklch(0.40 0.02 250)',
-            textTransform: 'capitalize'
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            fontFamily: GILD_FONTS.mono,
           }}>
             {(user.subscription_status || 'inactive').replace('_', ' ')}
           </span>
@@ -307,8 +309,8 @@ function PricingCard({ name, price, features, recommended = false, active, onSel
       )}
       <h4 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 8px' }}>{name}</h4>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 20 }}>
-        <span style={{ fontSize: 32, fontWeight: 800 }}>{price}</span>
-        <span style={{ fontSize: 14, color: 'oklch(0.55 0.02 250)' }}>/mo</span>
+        <span style={{ fontSize: 32, fontWeight: 800, fontFamily: GILD_FONTS.mono, letterSpacing: '-0.02em' }}>{price}</span>
+        <span style={{ fontSize: 14, color: 'oklch(0.55 0.02 250)', fontFamily: GILD_FONTS.mono }}>/mo</span>
       </div>
       <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px', flex: 1 }}>
         {features.map((f: string) => (

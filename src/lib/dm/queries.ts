@@ -7,9 +7,19 @@ const DEFAULT_LIMIT = 50;
 
 /**
  * Loads the most recent N messages between the caller and `otherUserId`.
- * RLS guarantees the caller is either sender or receiver — no extra check
- * needed at the query layer. Returned chronologically (oldest → newest)
- * so the UI can append-render without reversing.
+ *
+ * Backed by the `get_dm_thread` SECURITY INVOKER RPC which uses
+ * LEAST/GREATEST on (sender_id, receiver_id) — the same shape as the
+ * idx_direct_messages_thread compound index — so the planner can walk
+ * it as a single Index Scan rather than the previous two-direction
+ * OR-scan + sort.
+ *
+ * RLS still applies (SECURITY INVOKER preserves the caller's auth
+ * context). The RPC merely rewrites the query so the index is usable.
+ *
+ * Returned chronologically (oldest → newest) so the UI can append-render
+ * without reversing — the RPC returns DESC for the LIMIT optimisation,
+ * we flip it at the boundary.
  */
 export async function getConversation(
   supabase: SupabaseClient<Database>,
@@ -18,20 +28,15 @@ export async function getConversation(
 ): Promise<DirectMessage[]> {
   const limit = options.limit ?? DEFAULT_LIMIT;
 
-  // Pair predicate: caller is one side, otherUserId is the other.
-  // We rely on RLS for the "caller is sender or receiver" half — the OR
-  // here is the "otherUserId is the OTHER end" filter.
-  const { data, error } = await supabase
-    .from('direct_messages')
-    .select('*')
-    .or(`sender_id.eq.${otherUserId},receiver_id.eq.${otherUserId}`)
-    .order('created_at', { ascending: false })
-    .limit(limit);
+  const { data, error } = await supabase.rpc('get_dm_thread', {
+    p_other_user_id: otherUserId,
+    p_limit: limit,
+  });
 
   if (error) throw new Error(error.message);
 
   // Reverse to chronological order for append-render.
-  return (data ?? []).reverse();
+  return ((data ?? []) as DirectMessage[]).reverse();
 }
 
 /**

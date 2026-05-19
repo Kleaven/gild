@@ -59,6 +59,7 @@ export function StudioMembers({ community, members, currentUserId, currentUserRo
           fontWeight: 600,
           background: 'oklch(0.96 0.005 250)',
           color: 'oklch(0.40 0.02 250)',
+          fontFamily: GILD_FONTS.mono,
         }}>
           {filter.trim() === '' ? community.member_count : `${filteredMembers.length} of ${community.member_count}`}
         </span>
@@ -156,7 +157,7 @@ export function StudioMembers({ community, members, currentUserId, currentUserRo
                     textTransform: 'capitalize',
                   }}>{member.role.replace('_', ' ')}</span>
                 </td>
-                <td style={{ padding: '10px 8px', color: 'oklch(0.40 0.02 250)' }}>
+                <td style={{ padding: '10px 8px', color: 'oklch(0.40 0.02 250)', fontFamily: GILD_FONTS.mono, fontSize: 12 }}>
                   {new Date(member.joined_at).toLocaleDateString()}
                 </td>
                 <td style={{ 

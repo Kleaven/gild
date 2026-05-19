@@ -33,8 +33,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Typecheck
-        run: npm run typecheck
+      - name: Typecheck (baseline ratchet)
+        # Compares the current `tsc --noEmit` error count against the
+        # committed .tsc-baseline. Fails only on net-new errors so the
+        # existing tail (95 pre-existing as of bootstrap) doesn't block
+        # commits, but regressions are caught immediately. Local cleanup
+        # workflow: fix errors → `npm run typecheck:baseline` → commit.
+        run: npm run typecheck:ratchet
 
       - name: Lint
         run: npm run lint

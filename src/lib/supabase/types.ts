@@ -1697,6 +1697,10 @@ export type Database = {
       delete_community: { Args: { p_community_id: string }; Returns: undefined }
       delete_post: { Args: { p_post_id: string }; Returns: undefined }
       enroll_in_course: { Args: { p_course_id: string }; Returns: string }
+      get_dm_thread: {
+        Args: { p_other_user_id: string; p_limit?: number }
+        Returns: Database["public"]["Tables"]["direct_messages"]["Row"][]
+      }
       get_certificate_by_token: {
         Args: { p_token: string }
         Returns: {

@@ -32,8 +32,9 @@ function StatusBadge({ status }: { status: string | null }) {
   );
 }
 
+// Mono headers — Gild spec calls for JetBrains Mono on table headers / system labels.
 const thClass =
-  'px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wide';
+  'px-4 py-3 text-left text-xs font-mono font-medium text-neutral-500 uppercase tracking-wider';
 
 export default async function AdminCommunitiesPage({ searchParams }: Props) {
   await requirePlatformAdmin();
