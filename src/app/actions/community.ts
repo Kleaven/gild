@@ -42,7 +42,13 @@ export async function createCommunity(
 // can render an inline error (already a member, banned, private, etc.)
 // instead of catching a thrown 500 with the message stripped.
 // Cache invalidation only fires on the success branch.
-export async function joinCommunity(communityId: string): Promise<JoinCommunityResult> {
+// inviteToken is optional — when present, redeems a shared invite link
+// (bypasses the private-community gate + increments the link's `uses`
+// counter inside the join_community RPC). Public communities ignore it.
+export async function joinCommunity(
+  communityId: string,
+  inviteToken?: string | null,
+): Promise<JoinCommunityResult> {
   const supabase = await getSupabaseServerClient();
   const {
     data: { user },
@@ -50,7 +56,7 @@ export async function joinCommunity(communityId: string): Promise<JoinCommunityR
   } = await supabase.auth.getUser();
   if (error || !user) throw new Error('[gild] not authenticated');
 
-  const result = await libJoinCommunity(communityId);
+  const result = await libJoinCommunity(communityId, inviteToken);
 
   if (result.ok) {
     const slug = await resolveCommunitySlug(communityId);

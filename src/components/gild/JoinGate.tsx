@@ -37,7 +37,15 @@ export function JoinGate({ community }: Props) {
           return;
         }
 
-        const result = await joinCommunity(community.id);
+        // Read invite token from the URL if present — admins generate
+        // these in InviteModal as /c/<slug>?invite=<token>. The RPC
+        // validates the token against community_invite_links and
+        // bypasses the private-community gate on success.
+        const inviteToken =
+          typeof window !== 'undefined'
+            ? new URLSearchParams(window.location.search).get('invite')
+            : null;
+        const result = await joinCommunity(community.id, inviteToken);
         if (result.ok) {
           // Hard navigation (not router.push) — the user just transitioned
           // from non-member to member, and the community layout reads

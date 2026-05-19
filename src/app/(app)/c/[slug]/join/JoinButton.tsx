@@ -15,7 +15,11 @@ export default function JoinButton({ communityId, communitySlug }: Props) {
     setError(null);
     startTransition(async () => {
       try {
-        const result = await joinCommunity(communityId);
+        const inviteToken =
+          typeof window !== 'undefined'
+            ? new URLSearchParams(window.location.search).get('invite')
+            : null;
+        const result = await joinCommunity(communityId, inviteToken);
         if (result.ok) {
           // Show the welcome modal first. The modal-close handler does
           // a hard navigation — see below for why we don't use

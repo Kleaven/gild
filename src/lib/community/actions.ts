@@ -133,7 +133,10 @@ export type JoinCommunityResult =
   | { ok: false; code: 'private_invite_required'; message: string }
   | { ok: false; code: 'member_limit_reached'; message: string };
 
-export async function joinCommunity(communityId: string): Promise<JoinCommunityResult> {
+export async function joinCommunity(
+  communityId: string,
+  inviteToken?: string | null,
+): Promise<JoinCommunityResult> {
   const supabase = await getSupabaseServerClient();
   const { data: communityData, error: fetchError } = await supabase
     .from('communities')
@@ -159,8 +162,13 @@ export async function joinCommunity(communityId: string): Promise<JoinCommunityR
     };
   }
 
+  // p_invite_token defaults to NULL in the RPC — passing undefined or null
+  // skips the token-redemption branch and only works for public communities.
+  // Passing a valid token bypasses the private-community gate AND increments
+  // the link's `uses` counter.
   const { error } = await supabase.rpc('join_community', {
     p_community_id: communityId,
+    p_invite_token: inviteToken ?? undefined,
   });
 
   if (error) {
