@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { FlagName } from '@/lib/feature-flags';
 import type { AdminCommunityRow } from '@/lib/admin';
+import { GILD_ADMIN_TOKENS, GILD_FONTS } from '@/components/gild/styles';
 import {
   setGlobalFlag,
   setCommunityFlag,
@@ -17,6 +18,18 @@ type Override = { communityId: string; communityName: string; enabled: boolean }
 type Props = {
   globalFlags: Record<FlagName, boolean>;
   communities: AdminCommunityRow[];
+};
+
+// ─── Shared style fragments ──────────────────────────────────────────────────
+
+const sectionLabelStyle: React.CSSProperties = {
+  fontSize: 11,
+  fontWeight: 600,
+  color: GILD_ADMIN_TOKENS.text.subtle,
+  textTransform: 'uppercase',
+  letterSpacing: '0.08em',
+  marginBottom: 12,
+  fontFamily: GILD_FONTS.mono,
 };
 
 // ─── FlagToggle ───────────────────────────────────────────────────────────────
@@ -35,14 +48,34 @@ function FlagToggle({ enabled, onChange, pending = false }: FlagToggleProps) {
       disabled={pending}
       role="switch"
       aria-checked={enabled}
-      className={`relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-neutral-600 ${
-        enabled ? 'bg-emerald-500' : 'bg-neutral-700'
-      } ${pending ? 'opacity-50 cursor-not-allowed' : ''}`}
+      style={{
+        position: 'relative',
+        display: 'inline-flex',
+        height: 20,
+        width: 36,
+        flexShrink: 0,
+        borderRadius: 9999,
+        border: 'none',
+        padding: 0,
+        cursor: pending ? 'not-allowed' : 'pointer',
+        opacity: pending ? 0.5 : 1,
+        background: enabled ? GILD_ADMIN_TOKENS.accent.success : GILD_ADMIN_TOKENS.bg.track,
+        transition: 'background-color 200ms ease-in-out',
+      }}
     >
       <span
-        className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition duration-200 ease-in-out mt-0.5 ${
-          enabled ? 'translate-x-4' : 'translate-x-0.5'
-        }`}
+        style={{
+          pointerEvents: 'none',
+          display: 'inline-block',
+          height: 16,
+          width: 16,
+          borderRadius: 9999,
+          background: GILD_ADMIN_TOKENS.text.primary,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+          transform: enabled ? 'translateX(18px)' : 'translateX(2px)',
+          marginTop: 2,
+          transition: 'transform 200ms ease-in-out',
+        }}
       />
     </button>
   );
@@ -52,9 +85,17 @@ function FlagToggle({ enabled, onChange, pending = false }: FlagToggleProps) {
 
 function OverrideSkeleton() {
   return (
-    <div className="space-y-2">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {[0, 1, 2].map((i) => (
-        <div key={i} className="h-12 bg-neutral-800 rounded-lg animate-pulse" />
+        <div
+          key={i}
+          style={{
+            height: 48,
+            background: GILD_ADMIN_TOKENS.bg.raised,
+            borderRadius: 8,
+            animation: 'gild-pulse 1.6s ease-in-out infinite',
+          }}
+        />
       ))}
     </div>
   );
@@ -78,6 +119,7 @@ function AddOverrideRow({
   const [selectedCommunityId, setSelectedCommunityId] = useState('');
   const [selectedEnabled, setSelectedEnabled] = useState(true);
   const [pending, setPending] = useState(false);
+  const [addHover, setAddHover] = useState(false);
 
   const available = communities.filter(
     (c) => !existingOverrideCommunityIds.includes(c.id),
@@ -95,16 +137,26 @@ function AddOverrideRow({
     }
   };
 
+  const disabled = !selectedCommunityId || pending;
+
   return (
     <div>
-      <h4 className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-3">
-        Add Override
-      </h4>
-      <div className="flex items-center gap-3">
+      <h4 style={sectionLabelStyle}>Add Override</h4>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <select
           value={selectedCommunityId}
           onChange={(e) => setSelectedCommunityId(e.target.value)}
-          className="flex-1 bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-neutral-600"
+          style={{
+            flex: 1,
+            background: GILD_ADMIN_TOKENS.bg.surface,
+            border: `1px solid ${GILD_ADMIN_TOKENS.border.default}`,
+            borderRadius: 8,
+            padding: '8px 12px',
+            fontSize: 14,
+            color: GILD_ADMIN_TOKENS.text.primary,
+            fontFamily: GILD_FONTS.sans,
+            outline: 'none',
+          }}
         >
           <option value="">Select community...</option>
           {available.map((c) => (
@@ -117,10 +169,80 @@ function AddOverrideRow({
         <button
           type="button"
           onClick={handleAdd}
-          disabled={!selectedCommunityId || pending}
-          className="px-3 py-2 bg-neutral-800 hover:bg-neutral-700 disabled:opacity-40 rounded-lg text-sm font-medium text-white transition-colors"
+          disabled={disabled}
+          onMouseEnter={() => setAddHover(true)}
+          onMouseLeave={() => setAddHover(false)}
+          style={{
+            padding: '8px 12px',
+            background: disabled
+              ? GILD_ADMIN_TOKENS.bg.raised
+              : addHover
+                ? GILD_ADMIN_TOKENS.bg.raisedHover
+                : GILD_ADMIN_TOKENS.bg.raised,
+            border: 'none',
+            borderRadius: 8,
+            fontSize: 14,
+            fontWeight: 500,
+            color: GILD_ADMIN_TOKENS.text.primary,
+            cursor: disabled ? 'not-allowed' : 'pointer',
+            opacity: disabled ? 0.4 : 1,
+            transition: 'background-color 150ms ease',
+            fontFamily: GILD_FONTS.sans,
+          }}
         >
           Add
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── OverrideRow ──────────────────────────────────────────────────────────────
+
+type OverrideRowProps = {
+  override: Override;
+  isLast: boolean;
+  pending: boolean;
+  onToggle: (val: boolean) => void;
+  onClear: () => void;
+};
+
+function OverrideRow({ override, isLast, pending, onToggle, onClear }: OverrideRowProps) {
+  const [clearHover, setClearHover] = useState(false);
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '12px 16px',
+        borderBottom: isLast ? 'none' : `1px solid ${GILD_ADMIN_TOKENS.border.subtle}`,
+      }}
+    >
+      <span style={{ fontSize: 14, color: GILD_ADMIN_TOKENS.text.secondary }}>
+        {override.communityName}
+      </span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <FlagToggle enabled={override.enabled} onChange={onToggle} pending={pending} />
+        <button
+          type="button"
+          onClick={onClear}
+          onMouseEnter={() => setClearHover(true)}
+          onMouseLeave={() => setClearHover(false)}
+          style={{
+            fontSize: 11,
+            color: clearHover ? GILD_ADMIN_TOKENS.accent.danger : GILD_ADMIN_TOKENS.text.faint,
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            fontFamily: GILD_FONTS.mono,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            transition: 'color 150ms ease',
+            padding: 0,
+          }}
+        >
+          Clear
         </button>
       </div>
     </div>
@@ -154,46 +276,50 @@ function FlagDetailPanel({
 }: FlagDetailPanelProps) {
   return (
     <div>
-      <div className="mb-6">
-        <h3 className="text-base font-semibold text-white mb-1">{flagName}</h3>
-        <p className="text-sm text-neutral-500">
+      <div style={{ marginBottom: 24 }}>
+        <h3
+          style={{
+            fontSize: 16,
+            fontWeight: 600,
+            color: GILD_ADMIN_TOKENS.text.primary,
+            marginBottom: 4,
+            fontFamily: GILD_FONTS.mono,
+          }}
+        >
+          {flagName}
+        </h3>
+        <p style={{ fontSize: 14, color: GILD_ADMIN_TOKENS.text.subtle }}>
           Global default: {globalEnabled ? 'ON' : 'OFF'}
         </p>
       </div>
 
-      <div className="mb-6">
-        <h4 className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-3">
+      <div style={{ marginBottom: 24 }}>
+        <h4 style={sectionLabelStyle}>
           Community Overrides {!loadingOverrides && `(${overrides.length})`}
         </h4>
         {loadingOverrides ? (
           <OverrideSkeleton />
         ) : overrides.length === 0 ? (
-          <p className="text-sm text-neutral-600">
+          <p style={{ fontSize: 14, color: GILD_ADMIN_TOKENS.text.faint }}>
             No community overrides. All communities use the global default.
           </p>
         ) : (
-          <div className="rounded-xl border border-neutral-800 overflow-hidden">
-            {overrides.map((o) => (
-              <div
+          <div
+            style={{
+              borderRadius: 12,
+              border: `1px solid ${GILD_ADMIN_TOKENS.border.default}`,
+              overflow: 'hidden',
+            }}
+          >
+            {overrides.map((o, idx) => (
+              <OverrideRow
                 key={o.communityId}
-                className="flex items-center justify-between px-4 py-3 border-b border-neutral-800/60 last:border-0"
-              >
-                <span className="text-sm text-neutral-300">{o.communityName}</span>
-                <div className="flex items-center gap-3">
-                  <FlagToggle
-                    enabled={o.enabled}
-                    onChange={(val) => onOverrideToggle(o.communityId, val)}
-                    pending={pending}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => onClearOverride(o.communityId)}
-                    className="text-xs text-neutral-600 hover:text-red-400 transition-colors"
-                  >
-                    Clear
-                  </button>
-                </div>
-              </div>
+                override={o}
+                isLast={idx === overrides.length - 1}
+                pending={pending}
+                onToggle={(val) => onOverrideToggle(o.communityId, val)}
+                onClear={() => onClearOverride(o.communityId)}
+              />
             ))}
           </div>
         )}
@@ -206,6 +332,56 @@ function FlagDetailPanel({
         onAdded={onAdded}
       />
     </div>
+  );
+}
+
+// ─── FlagListRow ──────────────────────────────────────────────────────────────
+
+type FlagListRowProps = {
+  flag: FlagName;
+  enabled: boolean;
+  selected: boolean;
+  pending: boolean;
+  onSelect: () => void;
+  onToggle: (val: boolean) => void;
+};
+
+function FlagListRow({ flag, enabled, selected, pending, onSelect, onToggle }: FlagListRowProps) {
+  const [hover, setHover] = useState(false);
+  const background = selected
+    ? GILD_ADMIN_TOKENS.bg.raised
+    : hover
+      ? GILD_ADMIN_TOKENS.bg.surface
+      : 'transparent';
+  const color = selected || hover ? GILD_ADMIN_TOKENS.text.primary : GILD_ADMIN_TOKENS.text.muted;
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '12px 16px',
+        fontSize: 14,
+        border: 'none',
+        borderBottom: `1px solid ${GILD_ADMIN_TOKENS.border.faint}`,
+        background,
+        color,
+        cursor: 'pointer',
+        transition: 'background-color 150ms ease, color 150ms ease',
+      }}
+    >
+      <span style={{ fontFamily: GILD_FONTS.mono, fontSize: 12 }}>{flag}</span>
+      <FlagToggle
+        enabled={enabled}
+        onChange={onToggle}
+        pending={pending}
+      />
+    </button>
   );
 }
 
@@ -284,40 +460,49 @@ export default function FlagManager({ globalFlags, communities }: Props) {
   const flagKeys = Object.keys(localGlobalFlags) as FlagName[];
 
   return (
-    <div className="flex w-full h-full">
+    <div style={{ display: 'flex', width: '100%', height: '100%' }}>
       {/* Left panel — global flags list */}
-      <div className="w-64 shrink-0 border-r border-neutral-800 overflow-y-auto">
-        <div className="px-4 py-3 border-b border-neutral-800">
-          <h2 className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
-            Global Flags
-          </h2>
+      <div
+        style={{
+          width: 256,
+          flexShrink: 0,
+          borderRight: `1px solid ${GILD_ADMIN_TOKENS.border.default}`,
+          overflowY: 'auto',
+        }}
+      >
+        <div
+          style={{
+            padding: '12px 16px',
+            borderBottom: `1px solid ${GILD_ADMIN_TOKENS.border.default}`,
+          }}
+        >
+          <h2 style={sectionLabelStyle}>Global Flags</h2>
         </div>
         {flagKeys.map((flag) => (
-          <button
+          <FlagListRow
             key={flag}
-            type="button"
-            onClick={() => setSelectedFlag(flag)}
-            className={`w-full flex items-center justify-between px-4 py-3 text-sm transition-colors border-b border-neutral-800/40 ${
-              selectedFlag === flag
-                ? 'bg-neutral-800 text-white'
-                : 'text-neutral-400 hover:bg-neutral-900 hover:text-white'
-            }`}
-          >
-            <span className="font-mono text-xs">{flag}</span>
-            <FlagToggle
-              enabled={localGlobalFlags[flag] ?? false}
-              onChange={(val) => void handleGlobalToggle(flag, val)}
-              pending={pending}
-            />
-          </button>
+            flag={flag}
+            enabled={localGlobalFlags[flag] ?? false}
+            selected={selectedFlag === flag}
+            pending={pending}
+            onSelect={() => setSelectedFlag(flag)}
+            onToggle={(val) => void handleGlobalToggle(flag, val)}
+          />
         ))}
       </div>
 
       {/* Right panel — context / detail */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
         {!selectedFlag ? (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-neutral-600 text-sm">
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+            }}
+          >
+            <p style={{ color: GILD_ADMIN_TOKENS.text.faint, fontSize: 14 }}>
               Select a flag to view community overrides
             </p>
           </div>
@@ -338,7 +523,21 @@ export default function FlagManager({ globalFlags, communities }: Props) {
 
       {/* Error toast */}
       {errorMessage && (
-        <div className="fixed bottom-4 right-4 bg-red-900/80 text-red-200 text-sm px-4 py-3 rounded-lg shadow-lg z-50">
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 16,
+            right: 16,
+            background: GILD_ADMIN_TOKENS.status.errorToastBg,
+            color: GILD_ADMIN_TOKENS.status.errorToastText,
+            fontSize: 14,
+            padding: '12px 16px',
+            borderRadius: 8,
+            border: `1px solid ${GILD_ADMIN_TOKENS.status.errorBorder}`,
+            boxShadow: '0 10px 25px rgba(0,0,0,0.4)',
+            zIndex: 50,
+          }}
+        >
           {errorMessage}
         </div>
       )}

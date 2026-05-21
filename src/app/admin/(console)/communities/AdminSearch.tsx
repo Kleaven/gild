@@ -1,13 +1,15 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+import { GILD_ADMIN_TOKENS, GILD_FONTS } from '@/components/gild/styles';
 
 type Props = { defaultValue: string };
 
 export default function AdminSearch({ defaultValue }: Props) {
   const router = useRouter();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [focused, setFocused] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -26,8 +28,22 @@ export default function AdminSearch({ defaultValue }: Props) {
       type="search"
       defaultValue={defaultValue}
       onChange={handleChange}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
       placeholder="Search communities..."
-      className="w-full max-w-sm bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-600"
+      style={{
+        width: '100%',
+        maxWidth: 384,
+        background: GILD_ADMIN_TOKENS.bg.surface,
+        border: `1px solid ${focused ? GILD_ADMIN_TOKENS.border.focus : GILD_ADMIN_TOKENS.border.default}`,
+        borderRadius: 8,
+        padding: '8px 16px',
+        fontSize: 14,
+        fontFamily: GILD_FONTS.sans,
+        color: GILD_ADMIN_TOKENS.text.primary,
+        outline: 'none',
+        transition: 'border-color 150ms ease',
+      }}
     />
   );
 }

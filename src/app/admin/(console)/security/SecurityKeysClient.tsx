@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { KeyRound, Trash2, ShieldCheck, ShieldAlert, Smartphone, Usb } from 'lucide-react';
+import { GILD_ADMIN_TOKENS, GILD_FONTS } from '@/components/gild/styles';
 import { deleteWebAuthnKey } from '@/app/actions';
 
 type Credential = {
@@ -37,6 +38,151 @@ function transportIcon(transports: string[] | null) {
   return KeyRound;
 }
 
+type CredentialRowProps = {
+  credential: Credential;
+  lastKey: boolean;
+  busy: boolean;
+  onDelete: () => void;
+};
+
+function CredentialRow({ credential: c, lastKey, busy, onDelete }: CredentialRowProps) {
+  const Icon = transportIcon(c.transports);
+  const [hover, setHover] = useState(false);
+  const disabled = lastKey || busy;
+
+  const buttonBorder = disabled
+    ? GILD_ADMIN_TOKENS.border.default
+    : hover
+      ? GILD_ADMIN_TOKENS.status.errorHoverBorder
+      : GILD_ADMIN_TOKENS.border.default;
+  const buttonColor = disabled
+    ? GILD_ADMIN_TOKENS.text.muted
+    : hover
+      ? GILD_ADMIN_TOKENS.status.errorHoverText
+      : GILD_ADMIN_TOKENS.text.muted;
+  const buttonBg = disabled || !hover ? 'transparent' : GILD_ADMIN_TOKENS.status.errorHoverBg;
+
+  return (
+    <li
+      style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 12,
+        borderRadius: 8,
+        border: `1px solid ${GILD_ADMIN_TOKENS.border.default}`,
+        background: GILD_ADMIN_TOKENS.bg.surfaceFaint,
+        padding: 16,
+        opacity: busy ? 0.5 : 1,
+      }}
+    >
+      <div
+        style={{
+          flexShrink: 0,
+          width: 40,
+          height: 40,
+          borderRadius: 8,
+          background: GILD_ADMIN_TOKENS.bg.raised,
+          color: GILD_ADMIN_TOKENS.text.secondary,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Icon size={18} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: GILD_ADMIN_TOKENS.text.body }}>
+            {c.friendly_name ?? 'Unnamed key'}
+          </span>
+          {c.backed_up && (
+            <span
+              style={{
+                borderRadius: 4,
+                padding: '2px 6px',
+                fontSize: 10,
+                fontFamily: GILD_FONTS.mono,
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                background: GILD_ADMIN_TOKENS.status.badgeOkBg,
+                color: GILD_ADMIN_TOKENS.status.badgeOkText,
+                border: `1px solid ${GILD_ADMIN_TOKENS.status.badgeOkBorder}`,
+              }}
+            >
+              Backed up
+            </span>
+          )}
+          <span
+            style={{
+              borderRadius: 4,
+              padding: '2px 6px',
+              fontSize: 10,
+              fontFamily: GILD_FONTS.mono,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              color: GILD_ADMIN_TOKENS.text.subtle,
+              border: `1px solid ${GILD_ADMIN_TOKENS.border.default}`,
+            }}
+          >
+            {c.device_type === 'singleDevice'
+              ? 'Single device'
+              : c.device_type === 'multiDevice'
+                ? 'Multi-device'
+                : 'Unknown'}
+          </span>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            flexWrap: 'wrap',
+            fontSize: 11,
+            color: GILD_ADMIN_TOKENS.text.subtle,
+            fontFamily: GILD_FONTS.mono,
+            letterSpacing: '0.02em',
+          }}
+        >
+          <span>ID: {c.credential_id.slice(0, 12)}…</span>
+          <span>Last used: {relativeTime(c.last_used_at)}</span>
+          <span>Added: {relativeTime(c.created_at)}</span>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={onDelete}
+        disabled={disabled}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        title={lastKey ? 'Register a backup key before revoking your only key' : 'Revoke key'}
+        style={{
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          borderRadius: 6,
+          padding: '6px 10px',
+          fontSize: 11,
+          fontWeight: 600,
+          border: `1px solid ${buttonBorder}`,
+          color: buttonColor,
+          background: buttonBg,
+          cursor: disabled ? 'not-allowed' : 'pointer',
+          opacity: disabled ? 0.4 : 1,
+          transition: 'color 150ms ease, border-color 150ms ease, background-color 150ms ease',
+          fontFamily: GILD_FONTS.mono,
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+        }}
+      >
+        <Trash2 size={12} />
+        Revoke
+      </button>
+    </li>
+  );
+}
+
 export default function SecurityKeysClient({ credentials: initial }: Props) {
   const [creds, setCreds] = useState(initial);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +192,7 @@ export default function SecurityKeysClient({ credentials: initial }: Props) {
   const lastKey = creds.length === 1;
 
   function handleDelete(id: string) {
-    if (lastKey) return; // belt-and-braces; button is also disabled
+    if (lastKey) return;
     if (!confirm('Revoke this security key? This cannot be undone.')) return;
 
     const snapshot = creds;
@@ -65,17 +211,31 @@ export default function SecurityKeysClient({ credentials: initial }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-5">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Banner — only one key registered */}
       {lastKey && (
         <div
           role="status"
-          className="flex items-start gap-3 rounded-lg border border-amber-700/40 bg-amber-950/30 p-4"
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 12,
+            borderRadius: 8,
+            border: `1px solid ${GILD_ADMIN_TOKENS.status.warnBannerBorder}`,
+            background: GILD_ADMIN_TOKENS.status.warnBannerBg,
+            padding: 16,
+          }}
         >
-          <ShieldAlert className="text-amber-400 flex-shrink-0 mt-0.5" size={18} />
-          <div className="text-sm leading-relaxed">
-            <p className="font-semibold text-amber-200 mb-1">Single point of failure</p>
-            <p className="text-amber-100/70">
+          <ShieldAlert
+            color={GILD_ADMIN_TOKENS.accent.warning}
+            style={{ flexShrink: 0, marginTop: 2 }}
+            size={18}
+          />
+          <div style={{ fontSize: 14, lineHeight: 1.5 }}>
+            <p style={{ fontWeight: 600, color: GILD_ADMIN_TOKENS.status.warnBannerHead, marginBottom: 4 }}>
+              Single point of failure
+            </p>
+            <p style={{ color: GILD_ADMIN_TOKENS.status.warnBannerBody }}>
               You only have one key registered. Lose this device and recovery
               requires running an SQL migration to bootstrap a new admin.
               Register a backup before doing anything else here.
@@ -85,17 +245,59 @@ export default function SecurityKeysClient({ credentials: initial }: Props) {
       )}
 
       {/* Add key — placeholder until the register-new-key ceremony is built */}
-      <div className="rounded-lg border border-neutral-800 bg-neutral-900/40 p-5">
-        <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-neutral-800 text-neutral-300 flex items-center justify-center">
+      <div
+        style={{
+          borderRadius: 8,
+          border: `1px solid ${GILD_ADMIN_TOKENS.border.default}`,
+          background: GILD_ADMIN_TOKENS.bg.surfaceFaint,
+          padding: 20,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+          <div
+            style={{
+              flexShrink: 0,
+              width: 40,
+              height: 40,
+              borderRadius: 8,
+              background: GILD_ADMIN_TOKENS.bg.raised,
+              color: GILD_ADMIN_TOKENS.text.secondary,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
             <KeyRound size={18} />
           </div>
-          <div className="flex-1 min-w-0">
-            <h2 className="text-base font-semibold mb-1">Add a security key</h2>
-            <p className="text-sm text-neutral-400 leading-relaxed max-w-prose">
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h2
+              style={{
+                fontSize: 16,
+                fontWeight: 600,
+                marginBottom: 4,
+                color: GILD_ADMIN_TOKENS.text.primary,
+                fontFamily: GILD_FONTS.display,
+              }}
+            >
+              Add a security key
+            </h2>
+            <p
+              style={{
+                fontSize: 14,
+                color: GILD_ADMIN_TOKENS.text.muted,
+                lineHeight: 1.5,
+                maxWidth: '65ch',
+              }}
+            >
               Browser-side WebAuthn ceremony required. The registration flow
               uses the same API as the initial bootstrap — head to{' '}
-              <Link href="/admin/setup" className="text-neutral-200 underline hover:text-white">
+              <Link
+                href="/admin/setup"
+                style={{
+                  color: GILD_ADMIN_TOKENS.text.body,
+                  textDecoration: 'underline',
+                }}
+              >
                 /admin/setup
               </Link>{' '}
               and re-run it with your second device. (A dedicated add-key
@@ -106,70 +308,56 @@ export default function SecurityKeysClient({ credentials: initial }: Props) {
       </div>
 
       {error && (
-        <p role="alert" className="rounded-lg border border-red-800/50 bg-red-950/30 px-4 py-3 text-sm text-red-200">
+        <p
+          role="alert"
+          style={{
+            borderRadius: 8,
+            border: `1px solid ${GILD_ADMIN_TOKENS.status.errorBorder}`,
+            background: GILD_ADMIN_TOKENS.status.errorBg,
+            padding: '12px 16px',
+            fontSize: 14,
+            color: GILD_ADMIN_TOKENS.status.errorText,
+            margin: 0,
+          }}
+        >
           {error}
         </p>
       )}
 
       {/* Key list */}
       {creds.length === 0 ? (
-        <div className="rounded-lg border border-neutral-800 bg-neutral-900/40 p-10 text-center">
-          <ShieldCheck className="text-neutral-600 mx-auto mb-3" size={28} />
-          <p className="text-sm font-semibold text-neutral-200 mb-1">No keys registered</p>
-          <p className="text-xs text-neutral-500">
+        <div
+          style={{
+            borderRadius: 8,
+            border: `1px solid ${GILD_ADMIN_TOKENS.border.default}`,
+            background: GILD_ADMIN_TOKENS.bg.surfaceFaint,
+            padding: 40,
+            textAlign: 'center',
+          }}
+        >
+          <ShieldCheck
+            color={GILD_ADMIN_TOKENS.text.faint}
+            style={{ margin: '0 auto 12px', display: 'block' }}
+            size={28}
+          />
+          <p style={{ fontSize: 14, fontWeight: 600, color: GILD_ADMIN_TOKENS.text.body, marginBottom: 4 }}>
+            No keys registered
+          </p>
+          <p style={{ fontSize: 12, color: GILD_ADMIN_TOKENS.text.subtle }}>
             You should not be able to see this page without a registered key. Contact platform support.
           </p>
         </div>
       ) : (
-        <ul className="flex flex-col gap-2 list-none p-0 m-0">
-          {creds.map((c) => {
-            const Icon = transportIcon(c.transports);
-            return (
-              <li
-                key={c.id}
-                className="flex items-start gap-3 rounded-lg border border-neutral-800 bg-neutral-900/40 p-4"
-                style={{ opacity: busyId === c.id ? 0.5 : 1 }}
-              >
-                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-neutral-800 text-neutral-300 flex items-center justify-center">
-                  <Icon size={18} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="text-sm font-semibold text-neutral-100">
-                      {c.friendly_name ?? 'Unnamed key'}
-                    </span>
-                    {c.backed_up && (
-                      <span className="rounded px-1.5 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider bg-emerald-950 text-emerald-300 border border-emerald-700/40">
-                        Backed up
-                      </span>
-                    )}
-                    <span className="rounded px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider text-neutral-500 border border-neutral-800">
-                      {c.device_type === 'singleDevice'
-                        ? 'Single device'
-                        : c.device_type === 'multiDevice'
-                          ? 'Multi-device'
-                          : 'Unknown'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3 flex-wrap text-[11px] text-neutral-500 font-mono tracking-wide">
-                    <span>ID: {c.credential_id.slice(0, 12)}…</span>
-                    <span>Last used: {relativeTime(c.last_used_at)}</span>
-                    <span>Added: {relativeTime(c.created_at)}</span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(c.id)}
-                  disabled={lastKey || busyId === c.id}
-                  title={lastKey ? 'Register a backup key before revoking your only key' : 'Revoke key'}
-                  className="flex-shrink-0 flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold border border-neutral-800 text-neutral-400 hover:border-red-900/50 hover:text-red-300 hover:bg-red-950/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-neutral-400 disabled:hover:border-neutral-800"
-                >
-                  <Trash2 size={12} />
-                  Revoke
-                </button>
-              </li>
-            );
-          })}
+        <ul style={{ display: 'flex', flexDirection: 'column', gap: 8, listStyle: 'none', padding: 0, margin: 0 }}>
+          {creds.map((c) => (
+            <CredentialRow
+              key={c.id}
+              credential={c}
+              lastKey={lastKey}
+              busy={busyId === c.id}
+              onDelete={() => handleDelete(c.id)}
+            />
+          ))}
         </ul>
       )}
     </div>

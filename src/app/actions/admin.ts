@@ -48,7 +48,7 @@ export async function initializeInfrastructure(): Promise<{ ok: boolean; message
   let createdCount = 0;
 
   for (const bucketName of buckets) {
-    const { data: bucket, error: getError } = await serviceClient.storage.getBucket(bucketName);
+    const { error: getError } = await serviceClient.storage.getBucket(bucketName);
     
     if (getError && (getError as any).message?.includes('not found')) {
       const { error: createError } = await serviceClient.storage.createBucket(bucketName, {

@@ -1,7 +1,7 @@
 import { getSupabaseServiceClient } from '@/lib/auth/server';
 import db from '@/lib/db';
 import { env } from '@/lib/env';
-import { AlertCircle, CheckCircle2, Database, Shield, Box, HardDrive, RefreshCcw } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Database, Shield, Box, RefreshCcw } from 'lucide-react';
 import { GILD_FONTS } from '@/components/gild';
 import HealthClient from './HealthClient';
 
@@ -72,7 +72,7 @@ export default async function HealthPage() {
   const buckets = ['media', 'avatars', 'branding'];
   for (const bucketName of buckets) {
     try {
-      const { data: bucket, error } = await supabase.storage.getBucket(bucketName);
+      const { error } = await supabase.storage.getBucket(bucketName);
       status.push({
         name: `Bucket: ${bucketName}`,
         ok: !error,

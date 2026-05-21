@@ -11,7 +11,7 @@ export default async function AdminFlagsPage() {
   ]);
 
   return (
-    <div className="flex h-[calc(100vh-0px)] overflow-hidden">
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
       <FlagManager globalFlags={globalFlags} communities={communities} />
     </div>
   );

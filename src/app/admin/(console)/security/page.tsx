@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { requirePlatformAdmin } from '@/lib/admin/guards';
 import { getSupabaseServerClient } from '@/lib/auth/server';
+import { GILD_ADMIN_TOKENS, GILD_FONTS } from '@/components/gild/styles';
 import SecurityKeysClient from './SecurityKeysClient';
 
 export const dynamic = 'force-dynamic';
@@ -28,10 +29,28 @@ export default async function SecurityPage() {
     : { data: [] };
 
   return (
-    <div className="px-8 py-10 max-w-3xl">
-      <header className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight mb-1">Security keys</h1>
-        <p className="text-sm text-neutral-400 max-w-prose">
+    <div style={{ padding: '40px 32px', maxWidth: 768 }}>
+      <header style={{ marginBottom: 32 }}>
+        <h1
+          style={{
+            fontSize: 24,
+            fontWeight: 700,
+            letterSpacing: '-0.01em',
+            marginBottom: 4,
+            color: GILD_ADMIN_TOKENS.text.primary,
+            fontFamily: GILD_FONTS.display,
+          }}
+        >
+          Security keys
+        </h1>
+        <p
+          style={{
+            fontSize: 14,
+            color: GILD_ADMIN_TOKENS.text.muted,
+            maxWidth: '65ch',
+            lineHeight: 1.5,
+          }}
+        >
           Your WebAuthn credentials are the only way to authenticate into this
           admin console. Register at least two keys — losing your only one
           means recovery requires direct database access.
