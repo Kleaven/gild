@@ -1514,6 +1514,7 @@ export type Database = {
         Row: {
           community_id: string
           created_at: string
+          emoji: string
           id: string
           target_id: string
           target_type: Database["public"]["Enums"]["vote_target_type"]
@@ -1522,6 +1523,7 @@ export type Database = {
         Insert: {
           community_id: string
           created_at?: string
+          emoji?: string
           id?: string
           target_id: string
           target_type: Database["public"]["Enums"]["vote_target_type"]
@@ -1530,6 +1532,7 @@ export type Database = {
         Update: {
           community_id?: string
           created_at?: string
+          emoji?: string
           id?: string
           target_id?: string
           target_type?: Database["public"]["Enums"]["vote_target_type"]
@@ -1734,10 +1737,23 @@ export type Database = {
       toggle_vote: {
         Args: {
           p_community_id: string
+          p_emoji?: string
           p_target_id: string
           p_target_type: Database["public"]["Enums"]["vote_target_type"]
         }
         Returns: boolean
+      }
+      get_reactions_for_targets: {
+        Args: {
+          p_target_ids: string[]
+          p_target_type: Database["public"]["Enums"]["vote_target_type"]
+        }
+        Returns: {
+          target_id: string
+          emoji: string
+          count: number
+          viewer_reacted: boolean
+        }[]
       }
       transfer_community_ownership: {
         Args: { p_community_id: string; p_new_owner_id: string }

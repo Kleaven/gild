@@ -1,4 +1,5 @@
 import type { Database } from '../supabase/types';
+import type { ReactionTally } from '../reactions';
 
 type PostRow = Database['public']['Tables']['posts']['Row'];
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
@@ -10,6 +11,7 @@ export type FeedPost = PostRow & {
   viewer_has_voted: boolean;
   viewer_voted_option?: string | null;
   poll_results?: Record<string, number>;
+  reactions: ReactionTally[];
 };
 
 export type CreatePostInput = {

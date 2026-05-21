@@ -3,6 +3,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { Avatar, Reactions, PollRenderer } from './index';
+import ReactionPicker from './ReactionPicker';
+import type { ReactionTally } from '@/lib/reactions';
 import { GILD_FONTS } from './styles';
 import { ConfirmModal } from './ConfirmModal';
 import type { Person } from './types';
@@ -28,11 +30,13 @@ interface StudioPostCardProps {
     poll_options?: { id: string; text: string }[] | null;
     poll_results?: Record<string, number> | null;
     viewer_voted_option?: string | null;
+    reactions?: ReactionTally[];
   };
   communitySlug: string;
   spaceId: string;
   hue?: number;
   canPin?: boolean;
+  reactionsEnabled?: boolean;
   onDelete?: (postId: string) => void;
   onPin?: (postId: string, pin: boolean) => void;
   onVote?: (postId: string, optionId: string) => void;
@@ -58,6 +62,7 @@ export function StudioPostCard({
   spaceId,
   hue = 220,
   canPin = false,
+  reactionsEnabled = false,
   onDelete,
   onPin,
   onVote,
@@ -282,7 +287,24 @@ export function StudioPostCard({
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <Reactions items={[['❤️', post.like_count]]} hue={hue} />
+          {reactionsEnabled ? (
+            <ReactionPicker
+              targetId={post.id}
+              targetType="post"
+              initialReactions={post.reactions ?? []}
+              enabled={!isOptimistic}
+              hue={hue}
+            />
+          ) : (
+            <Reactions
+              items={
+                (post.reactions ?? []).length > 0
+                  ? (post.reactions ?? []).map((r) => [r.emoji, r.count] as [string, number])
+                  : [['❤️', post.like_count]]
+              }
+              hue={hue}
+            />
+          )}
           {isOptimistic ? (
             <span
               style={{

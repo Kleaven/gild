@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { getSupabaseServerClient } from '../auth/server';
 import { rateLimit } from '../rate-limit/index';
 import { normalizeRole } from '../permissions/roles';
+import { assertFlag } from '../feature-flags';
 import type { CreateCommentInput } from './types';
 
 const createCommentSchema = z.object({
@@ -158,10 +159,22 @@ export async function updateComment(commentId: string, body: string): Promise<vo
   if (updateError) throw new Error(updateError.message);
 }
 
+export const REACTION_EMOJI_WHITELIST = ['❤️', '👍', '🎉', '😂', '😮', '😢'] as const;
+export type ReactionEmoji = (typeof REACTION_EMOJI_WHITELIST)[number];
+
+function isReactionEmoji(value: string): value is ReactionEmoji {
+  return (REACTION_EMOJI_WHITELIST as readonly string[]).includes(value);
+}
+
 export async function toggleVote(
   targetId: string,
   targetType: 'post' | 'comment',
+  emoji: ReactionEmoji = '❤️',
 ): Promise<void> {
+  if (!isReactionEmoji(emoji)) {
+    throw new Error('[gild] unsupported reaction emoji');
+  }
+
   const supabase = await getSupabaseServerClient();
 
   let communityId: string;
@@ -217,10 +230,18 @@ export async function toggleVote(
     if (!hasPerm) throw new Error(`Insufficient permissions to react in this space. Required: ${requiredRole}`);
   }
 
+  // Gate emoji reactions on the flag — '❤️' (default) is the legacy "like"
+  // path, which must keep working regardless of the flag. Any other emoji
+  // requires the reactions feature to be enabled for the community.
+  if (emoji !== '❤️') {
+    await assertFlag('reactions', communityId);
+  }
+
   const { error } = await supabase.rpc('toggle_vote', {
     p_target_type: targetType,
     p_target_id: targetId,
     p_community_id: communityId,
+    p_emoji: emoji,
   });
   if (error) throw new Error(error.message);
 }

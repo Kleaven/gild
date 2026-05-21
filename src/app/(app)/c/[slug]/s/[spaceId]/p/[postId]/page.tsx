@@ -5,6 +5,7 @@ import { getCommunityContextBySlug } from '@/lib/community/context';
 import { getPost, getBroadcastStatus } from '@/lib/feed';
 import BroadcastStatusBadge from './BroadcastStatusBadge';
 import { getComments } from '@/lib/comments';
+import { getFlag } from '@/lib/feature-flags';
 import { Avatar, GILD_FONTS } from '@/components/gild';
 import PostActions from './PostActions';
 import CommentList from './CommentList';
@@ -35,12 +36,16 @@ export default async function PostPage({ params }: Props) {
     notFound();
   }
 
-  const { membership } = communityContext;
+  const { community, membership } = communityContext;
+  if (!community) {
+    notFound();
+  }
 
   const { data: { user } } = await supabase.auth.getUser();
   const isAuthor = user?.id === post.author_id;
   const isMod = membership?.role === 'owner' || membership?.role === 'admin' || membership?.role === 'moderator';
   const canDelete = isAuthor || isMod;
+  const reactionsFlag = await getFlag('reactions', community.id);
   // Broadcast send status is sensitive (reveals member reach + delivery
   // failures) — visible only to owners/admins of the community. Skip the
   // query entirely for everyone else to avoid the per-post round-trip.
@@ -109,6 +114,8 @@ export default async function PostPage({ params }: Props) {
           spaceId={spaceId}
           likeCount={post.like_count}
           viewerHasVoted={post.viewer_has_voted}
+          reactions={post.reactions}
+          reactionsEnabled={reactionsFlag.enabled}
           canDelete={canDelete}
         />
         {broadcastStatus && <BroadcastStatusBadge status={broadcastStatus} />}

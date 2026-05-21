@@ -64,6 +64,7 @@ type Props = {
   isPrivate?: boolean;
   currentUserRole?: string;
   communityMemberCount?: number;
+  reactionsEnabled?: boolean;
 };
 
 // ─── FeedClient ───────────────────────────────────────────────────────────────
@@ -100,6 +101,7 @@ export default function FeedClient({
   isPrivate = false,
   currentUserRole,
   communityMemberCount = 0,
+  reactionsEnabled = false,
 }: Props) {
   const [, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
@@ -164,6 +166,7 @@ export default function FeedClient({
         type: spaceType as FeedPost['space']['type'],
       },
       viewer_has_voted: false,
+      reactions: [],
       _optimistic: true,
     };
 
@@ -347,6 +350,7 @@ export default function FeedClient({
             spaceName={spaceName}
             hue={spaceHue}
             canPin={canPin}
+            reactionsEnabled={reactionsEnabled}
             currentUserId={currentUserId}
             onDelete={handleDelete}
             onPin={handlePin}

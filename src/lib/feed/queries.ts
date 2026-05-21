@@ -9,6 +9,7 @@ import {
   type CursorInput,
   type PaginatedResult,
 } from '../pagination/cursor';
+import { fetchReactionsMap } from '../reactions';
 import type { FeedPost } from './types';
 
 // ─── Broadcast status ────────────────────────────────────────────────────────
@@ -135,22 +136,23 @@ export async function getFeedPosts(
   if (error) throw new Error(error.message);
 
   const posts = rawPosts ?? [];
-  const votedIds = await fetchVotedSet(
-    supabase,
-    posts.map((p) => p.id),
-    'post',
-  );
-  
-  const { results: pollResults, viewerVotes: pollViewerVotes } = await fetchPollData(
-    supabase,
-    posts.map(p => p.id).filter(id => posts.find(p => p.id === id)?.type === 'poll')
-  );
+  const postIds = posts.map((p) => p.id);
+  const [votedIds, reactionsMap, pollData] = await Promise.all([
+    fetchVotedSet(supabase, postIds, 'post'),
+    fetchReactionsMap(supabase, 'post', postIds),
+    fetchPollData(
+      supabase,
+      postIds.filter((id) => posts.find((p) => p.id === id)?.type === 'poll'),
+    ),
+  ]);
+  const { results: pollResults, viewerVotes: pollViewerVotes } = pollData;
 
   const feedPosts = posts.map((post) => ({
     ...post,
     viewer_has_voted: votedIds.has(post.id),
     viewer_voted_option: pollViewerVotes[post.id] || null,
     poll_results: pollResults[post.id] || null,
+    reactions: reactionsMap[post.id] ?? [],
   })) as FeedPost[];
 
   let nextCursor: string | null = null;
@@ -181,13 +183,18 @@ export async function getPost(
   if (error) throw new Error(error.message);
   if (!post) return null;
 
-  const votedIds = await fetchVotedSet(supabase, [postId], 'post');
-  const { results, viewerVotes } = await fetchPollData(supabase, [postId]);
+  const [votedIds, pollData, reactionsMap] = await Promise.all([
+    fetchVotedSet(supabase, [postId], 'post'),
+    fetchPollData(supabase, [postId]),
+    fetchReactionsMap(supabase, 'post', [postId]),
+  ]);
+  const { results, viewerVotes } = pollData;
 
   return {
     ...post,
     viewer_has_voted: votedIds.has(postId),
     viewer_voted_option: viewerVotes[postId] || null,
     poll_results: results[postId] || null,
+    reactions: reactionsMap[postId] ?? [],
   } as FeedPost;
 }

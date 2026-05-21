@@ -8,6 +8,7 @@ import {
   type CursorInput,
   type PaginatedResult,
 } from '../pagination/cursor';
+import { fetchReactionsMap } from '../reactions';
 import type { CommentNode } from './types';
 
 const DEFAULT_LIMIT = 20;
@@ -78,15 +79,17 @@ export async function getComments(
   const comments = rawComments ?? [];
   const commentIds = comments.map((c) => c.id);
 
-  const [votedIds, replyCountMap] = await Promise.all([
+  const [votedIds, replyCountMap, reactionsMap] = await Promise.all([
     fetchVotedSet(supabase, commentIds, 'comment'),
     fetchReplyCounts(supabase, commentIds),
+    fetchReactionsMap(supabase, 'comment', commentIds),
   ]);
 
   const nodes = comments.map((comment) => ({
     ...comment,
     reply_count: replyCountMap.get(comment.id) ?? 0,
     viewer_has_voted: votedIds.has(comment.id),
+    reactions: reactionsMap[comment.id] ?? [],
   })) as CommentNode[];
 
   let nextCursor: string | null = null;
@@ -130,12 +133,16 @@ export async function getReplies(
   const replies = rawReplies ?? [];
   const replyIds = replies.map((r) => r.id);
 
-  const votedIds = await fetchVotedSet(supabase, replyIds, 'comment');
+  const [votedIds, reactionsMap] = await Promise.all([
+    fetchVotedSet(supabase, replyIds, 'comment'),
+    fetchReactionsMap(supabase, 'comment', replyIds),
+  ]);
 
   const nodes = replies.map((reply) => ({
     ...reply,
     reply_count: 0,
     viewer_has_voted: votedIds.has(reply.id),
+    reactions: reactionsMap[reply.id] ?? [],
   })) as CommentNode[];
 
   let nextCursor: string | null = null;

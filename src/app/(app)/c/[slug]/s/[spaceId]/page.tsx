@@ -4,6 +4,7 @@ import { requireAuth } from '@/lib/auth';
 import { getSpace } from '@/lib/community';
 import { getCommunityContextBySlug } from '@/lib/community/context';
 import { getFeedPosts } from '@/lib/feed';
+import { getFlag } from '@/lib/feature-flags';
 import FeedClient from './FeedClient';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -32,7 +33,10 @@ export default async function SpacePage({ params }: Props) {
   }
 
   const communityId = community.id;
-  const postsResult = await getFeedPosts(supabase, communityId, spaceId, { limit: 20 });
+  const [postsResult, reactionsFlag] = await Promise.all([
+    getFeedPosts(supabase, communityId, spaceId, { limit: 20 }),
+    getFlag('reactions', communityId),
+  ]);
 
   // Moderators and owners can pin AND delete any post
   const canPin =
@@ -65,6 +69,7 @@ export default async function SpacePage({ params }: Props) {
       isPrivate={space.is_private}
       currentUserRole={membership?.role}
       communityMemberCount={community.member_count}
+      reactionsEnabled={reactionsFlag.enabled}
     />
   );
 }

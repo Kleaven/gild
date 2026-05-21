@@ -6,6 +6,7 @@ import {
   createComment as libCreateComment,
   deleteComment as libDeleteComment,
   toggleVote as libToggleVote,
+  type ReactionEmoji,
 } from '../../lib/comments/actions';
 import type { CreateCommentInput } from '../../lib/comments/types';
 
@@ -42,6 +43,7 @@ export async function deleteComment(commentId: string): Promise<void> {
 export async function toggleVote(
   targetId: string,
   targetType: 'post' | 'comment',
+  emoji: ReactionEmoji = '❤️',
 ): Promise<void> {
   const supabase = await getSupabaseServerClient();
   const {
@@ -50,7 +52,7 @@ export async function toggleVote(
   } = await supabase.auth.getUser();
   if (error || !user) throw new Error('[gild] not authenticated');
 
-  await libToggleVote(targetId, targetType);
+  await libToggleVote(targetId, targetType, emoji);
 
   revalidateTag(`${targetType}-${targetId}`);
 }

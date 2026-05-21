@@ -3,7 +3,8 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { toggleVote, deletePost } from '@/app/actions';
-import { ConfirmModal } from '@/components/gild';
+import { ConfirmModal, ReactionPicker } from '@/components/gild';
+import type { ReactionTally } from '@/lib/reactions';
 
 type Props = {
   postId: string;
@@ -11,6 +12,8 @@ type Props = {
   spaceId: string;
   likeCount: number;
   viewerHasVoted: boolean;
+  reactions?: ReactionTally[];
+  reactionsEnabled?: boolean;
   canDelete?: boolean;
 };
 
@@ -20,6 +23,8 @@ export default function PostActions({
   spaceId,
   likeCount,
   viewerHasVoted,
+  reactions = [],
+  reactionsEnabled = false,
   canDelete = false,
 }: Props) {
   const router = useRouter();
@@ -61,29 +66,38 @@ export default function PostActions({
         confirmLabel="Delete"
         isDestructive
       />
-      <button
-        onClick={handleVote}
-        disabled={isPending}
-        style={{
-          background: voted ? 'oklch(0.20 0.02 250)' : 'oklch(0.96 0.005 250)',
-          color: voted ? '#fff' : 'oklch(0.30 0.02 250)',
-          border: '1px solid',
-          borderColor: voted ? 'transparent' : 'oklch(0.90 0.01 250)',
-          borderRadius: 8,
-          padding: '8px 14px',
-          fontSize: 13,
-          fontWeight: 600,
-          cursor: isPending ? 'default' : 'pointer',
-          fontFamily: 'inherit',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          transition: 'all 0.2s',
-        }}
-      >
-        <span style={{ fontSize: 14 }}>{voted ? '▲' : '△'}</span>
-        {count}
-      </button>
+      {reactionsEnabled ? (
+        <ReactionPicker
+          targetId={postId}
+          targetType="post"
+          initialReactions={reactions}
+          enabled
+        />
+      ) : (
+        <button
+          onClick={handleVote}
+          disabled={isPending}
+          style={{
+            background: voted ? 'oklch(0.20 0.02 250)' : 'oklch(0.96 0.005 250)',
+            color: voted ? '#fff' : 'oklch(0.30 0.02 250)',
+            border: '1px solid',
+            borderColor: voted ? 'transparent' : 'oklch(0.90 0.01 250)',
+            borderRadius: 8,
+            padding: '8px 14px',
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: isPending ? 'default' : 'pointer',
+            fontFamily: 'inherit',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            transition: 'all 0.2s',
+          }}
+        >
+          <span style={{ fontSize: 14 }}>{voted ? '▲' : '△'}</span>
+          {count}
+        </button>
+      )}
       {canDelete && (
         <button
           onClick={() => setShowConfirm(true)}

@@ -14,6 +14,7 @@ type Props = {
   currentUserId: string;
   hue?: number;
   canPin?: boolean;
+  reactionsEnabled?: boolean;
   onDelete: (postId: string) => void;
   onPin: (postId: string, pin: boolean) => void;
   onVote: (postId: string, optionId: string) => void;
@@ -30,6 +31,7 @@ export default function PostList({
   currentUserId,
   hue,
   canPin = false,
+  reactionsEnabled = false,
   onDelete,
   onPin,
   onVote,
@@ -60,6 +62,7 @@ export default function PostList({
               spaceId={spaceId}
               hue={hue}
               canPin={canPin}
+              reactionsEnabled={reactionsEnabled}
               onDelete={canDelete ? onDelete : undefined}
               onPin={onPin}
               onVote={onVote}
