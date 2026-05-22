@@ -6,9 +6,9 @@ import {
   createComment as libCreateComment,
   deleteComment as libDeleteComment,
   toggleVote as libToggleVote,
-  type ReactionEmoji,
 } from '../../lib/comments/actions';
 import type { CreateCommentInput } from '../../lib/comments/types';
+import type { ReactionEmoji } from '../../lib/reactions';
 
 export async function createComment(
   input: CreateCommentInput,

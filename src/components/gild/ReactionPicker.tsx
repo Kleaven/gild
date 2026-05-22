@@ -3,10 +3,9 @@
 import { useState, useTransition, useEffect, useRef } from 'react';
 import { GILD_FONTS } from './styles';
 import { toggleVote } from '@/app/actions/comments';
-import type { ReactionTally } from '@/lib/reactions';
+import { REACTION_EMOJI_WHITELIST, type ReactionEmoji, type ReactionTally } from '@/lib/reactions';
 
-const PICKER_EMOJI = ['❤️', '👍', '🎉', '😂', '😮', '😢'] as const;
-type PickerEmoji = (typeof PICKER_EMOJI)[number];
+type PickerEmoji = ReactionEmoji;
 
 type Props = {
   targetId: string;
@@ -146,7 +145,7 @@ export default function ReactionPicker({
                 zIndex: 20,
               }}
             >
-              {PICKER_EMOJI.map((emoji) => (
+              {REACTION_EMOJI_WHITELIST.map((emoji) => (
                 <button
                   key={emoji}
                   type="button"

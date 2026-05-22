@@ -5,6 +5,7 @@ import { getSupabaseServerClient } from '../auth/server';
 import { rateLimit } from '../rate-limit/index';
 import { normalizeRole } from '../permissions/roles';
 import { assertFlag } from '../feature-flags';
+import { isReactionEmoji, type ReactionEmoji } from '../reactions';
 import type { CreateCommentInput } from './types';
 
 const createCommentSchema = z.object({
@@ -157,13 +158,6 @@ export async function updateComment(commentId: string, body: string): Promise<vo
     .eq('id', commentId);
 
   if (updateError) throw new Error(updateError.message);
-}
-
-export const REACTION_EMOJI_WHITELIST = ['❤️', '👍', '🎉', '😂', '😮', '😢'] as const;
-export type ReactionEmoji = (typeof REACTION_EMOJI_WHITELIST)[number];
-
-function isReactionEmoji(value: string): value is ReactionEmoji {
-  return (REACTION_EMOJI_WHITELIST as readonly string[]).includes(value);
 }
 
 export async function toggleVote(
