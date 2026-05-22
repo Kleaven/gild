@@ -287,22 +287,29 @@ export default function SecurityKeysClient({ credentials: initial }: Props) {
                 color: GILD_ADMIN_TOKENS.text.muted,
                 lineHeight: 1.5,
                 maxWidth: '65ch',
+                marginBottom: 12,
               }}
             >
-              Browser-side WebAuthn ceremony required. The registration flow
-              uses the same API as the initial bootstrap — head to{' '}
-              <Link
-                href="/admin/setup"
-                style={{
-                  color: GILD_ADMIN_TOKENS.text.body,
-                  textDecoration: 'underline',
-                }}
-              >
-                /admin/setup
-              </Link>{' '}
-              and re-run it with your second device. (A dedicated add-key
-              page is on the backlog.)
+              Register another authenticator — a second device, a passkey on
+              your phone, or a hardware security key — so losing one device
+              doesn&rsquo;t cost you the console.
             </p>
+            <Link
+              href="/admin/security/register"
+              style={{
+                display: 'inline-block',
+                background: GILD_ADMIN_TOKENS.text.primary,
+                color: GILD_ADMIN_TOKENS.bg.canvas,
+                borderRadius: 6,
+                padding: '6px 12px',
+                fontSize: 13,
+                fontWeight: 600,
+                textDecoration: 'none',
+                fontFamily: GILD_FONTS.sans,
+              }}
+            >
+              Register a security key
+            </Link>
           </div>
         </div>
       </div>
