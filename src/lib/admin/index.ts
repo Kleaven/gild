@@ -102,7 +102,7 @@ export async function getAdminCommunities(
       c.subscription_status,
       c.trial_ends_at,
       c.created_at,
-      p.email AS owner_email,
+      u.email AS owner_email,
       (SELECT count(*)::int FROM community_members cm
        WHERE cm.community_id = c.id
          AND cm.role != 'banned') AS member_count
@@ -110,8 +110,8 @@ export async function getAdminCommunities(
     LEFT JOIN community_members owner_cm
       ON owner_cm.community_id = c.id
      AND owner_cm.role = 'owner'
-    LEFT JOIN profiles p
-      ON p.id = owner_cm.user_id
+    LEFT JOIN auth.users u
+      ON u.id = owner_cm.user_id
     WHERE (${pattern} IS NULL
       OR c.name ILIKE ${pattern}
       OR c.slug ILIKE ${pattern})
