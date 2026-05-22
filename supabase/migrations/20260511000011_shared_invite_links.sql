@@ -1,11 +1,18 @@
 -- Migration: Shared Join Links
 -- Adds support for multi-use invite links for communities.
+--
+-- Note: pgcrypto's gen_random_bytes is installed in the `extensions` schema
+-- on Supabase. Schema-qualify the call so this migration is portable across
+-- session search_path states (matters for fresh-bootstrap pushes that don't
+-- inherit search_path from earlier migrations).
+
+SET search_path = public, extensions;
 
 CREATE TABLE IF NOT EXISTS public.community_invite_links (
   id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   community_id uuid NOT NULL REFERENCES public.communities (id) ON DELETE CASCADE,
   creator_id   uuid NOT NULL REFERENCES public.profiles (id) ON DELETE CASCADE,
-  token        text NOT NULL UNIQUE DEFAULT encode(gen_random_bytes(12), 'hex'),
+  token        text NOT NULL UNIQUE DEFAULT encode(extensions.gen_random_bytes(12), 'hex'),
   max_uses     integer NULL, -- NULL for unlimited
   uses         integer NOT NULL DEFAULT 0,
   expires_at   timestamptz NULL,
