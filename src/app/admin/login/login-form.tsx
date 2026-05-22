@@ -1,12 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { startAuthentication } from '@simplewebauthn/browser';
 import { getAuthOptions, verifyAuthAndExchangeToken } from './actions';
 
 export default function WebAuthnLoginForm() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,14 +36,20 @@ export default function WebAuthnLoginForm() {
         throw new Error(verifyError || 'Authentication failed');
       }
 
-      router.push('/admin');
+      // Hard navigate — the @supabase/ssr session cookie just written by
+      // verifyOtp inside the server action is silently dropped by the
+      // RSC re-render that follows router.push, which strands middleware
+      // on the pre-login session (no auth.uid()) and redirects the admin
+      // to landing. window.location.assign forces a fresh request that
+      // includes the new cookie.
+      window.location.assign('/admin');
+      return;
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
       } else {
         setError('An unexpected error occurred');
       }
-    } finally {
       setLoading(false);
     }
   };

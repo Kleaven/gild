@@ -1,13 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { startRegistration } from '@simplewebauthn/browser';
 import { GILD_ADMIN_TOKENS, GILD_FONTS } from '@/components/gild/styles';
 import { getAddKeyRegistrationOptions, verifyAndAddKey } from './actions';
 
 export default function AddKeyForm() {
-  const router = useRouter();
   const [friendlyName, setFriendlyName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,8 +41,13 @@ export default function AddKeyForm() {
         throw new Error(verifyResult.message);
       }
 
-      router.push('/admin/security');
-      router.refresh();
+      // Hard navigate — codebase rule: never router.refresh() after auth-
+      // related mutations because the @supabase/ssr SSR pattern silently
+      // drops cookie writes during RSC re-renders, occasionally signing
+      // the admin out a few seconds later. Hard nav also guarantees the
+      // SecurityKeysClient list reflects the new credential immediately.
+      window.location.assign('/admin/security');
+      return;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
     } finally {

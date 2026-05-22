@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { startRegistration } from '@simplewebauthn/browser';
 import { getRegistrationOptions, verifyAndExchangeToken } from './actions';
 
@@ -14,7 +13,6 @@ export default function WebAuthnSetupForm({
   adminEmail: string;
   setupToken: string;
 }) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,7 +43,13 @@ export default function WebAuthnSetupForm({
         throw new Error(verifyError || 'Verification failed');
       }
 
-      router.push('/admin');
+      // Hard navigate — verifyAndExchangeToken just minted a session via
+      // verifyOtp; the @supabase/ssr cookie write doesn't survive a
+      // router.push soft navigation reliably (RSC re-render races the
+      // cookie commit). Hard nav forces a fresh request with the new
+      // session attached.
+      window.location.assign('/admin');
+      return;
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
