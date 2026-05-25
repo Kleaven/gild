@@ -42,3 +42,6 @@ supabase/.temp/
 # Local tooling and design references
 .claude/
 preferred_UI/
+
+# Sentry Config File
+.env.sentry-build-plugin

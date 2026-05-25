@@ -1,26 +1,19 @@
-// Sentry server-side init.
-// Loaded by Next.js via instrumentation.ts on Node.js runtime startup.
+// This file configures the initialization of Sentry on the server.
+// The config you add here will be used whenever the server handles a request.
+// https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
-import * as Sentry from '@sentry/nextjs';
+import * as Sentry from "@sentry/nextjs";
 
-const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
+Sentry.init({
+  dsn: "https://a2f45666bbc274664412c5feaebcd287@o4511448798527488.ingest.us.sentry.io/4511448810455040",
 
-if (dsn) {
-  Sentry.init({
-    dsn,
-    environment: process.env.NODE_ENV,
+  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
+  tracesSampleRate: 1,
 
-    tracesSampleRate: 0.1,
+  // Enable logs to be sent to Sentry
+  enableLogs: true,
 
-    // Drop noise we expect in normal operation.
-    ignoreErrors: [
-      // Webhook handler rejecting events for unknown customers is correct
-      // behaviour, not a bug worth alerting on. The handler logs these
-      // anyway via the error column in webhook_events.
-      'Entity not found for customer',
-      // RLS denials from anon users probing routes — by design.
-      'PGRST301',
-      'PGRST302',
-    ],
-  });
-}
+  // Enable sending user PII (Personally Identifiable Information)
+  // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii
+  sendDefaultPii: true,
+});
