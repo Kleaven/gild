@@ -1,6 +1,9 @@
 // Sentry client-side init.
-// Loaded automatically by @sentry/nextjs on every browser page.
-// DSN is the only secret needed here — it's safe to expose (it identifies
+// File MUST be named instrumentation-client.ts at the project root for
+// Next.js 15.3+ / @sentry/nextjs v10. The legacy sentry.client.config.ts
+// is no longer auto-detected — the SDK silently fails to initialize,
+// taking the /monitoring/* tunnel route registration with it.
+// DSN is the only value needed here; it's safe to expose (it identifies
 // the project but doesn't grant write access beyond ingestion).
 
 import * as Sentry from '@sentry/nextjs';

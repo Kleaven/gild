@@ -87,6 +87,9 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|api/).*)',
+    // Excludes Next.js internals, static assets, API routes, and the
+    // Sentry ingest tunnel at /monitoring/* (registered by withSentryConfig
+    // — must not be intercepted by auth-aware middleware or it 404s).
+    '/((?!_next/static|_next/image|favicon.ico|api/|monitoring/).*)',
   ],
 };
