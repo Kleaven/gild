@@ -1,31 +1,62 @@
-// This file configures the initialization of Sentry on the client.
-// The added config here will be used whenever a users loads a page in their browser.
+// Sentry client SDK init. Loaded automatically by Next.js on every browser
+// page. File location (src/instrumentation-client.ts) is required by
+// Next.js 15.3+; do not move to project root.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
-import * as Sentry from "@sentry/nextjs";
+import * as Sentry from '@sentry/nextjs';
 
 Sentry.init({
-  dsn: "https://a2f45666bbc274664412c5feaebcd287@o4511448798527488.ingest.us.sentry.io/4511448810455040",
+  dsn: 'https://a2f45666bbc274664412c5feaebcd287@o4511448798527488.ingest.us.sentry.io/4511448810455040',
 
-  // Add optional integrations for additional features
+  environment: process.env.NODE_ENV,
+
+  // Session Replay only when an error occurs. Baseline 0% (privacy +
+  // free-tier preservation), 10% on errors so we can rewatch what the
+  // user did just before things broke.
   integrations: [Sentry.replayIntegration()],
+  replaysSessionSampleRate: 0,
+  replaysOnErrorSampleRate: 0.1,
 
-  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-  tracesSampleRate: 1,
-  // Enable logs to be sent to Sentry
-  enableLogs: true,
+  // 10% performance trace sampling — the YC balance between signal and
+  // quota usage. Bump up after launch if free tier proves too sparse.
+  tracesSampleRate: 0.1,
 
-  // Define how likely Replay events are sampled.
-  // This sets the sample rate to be 10%. You may want this to be 100% while
-  // in development and sample at a lower rate in production
-  replaysSessionSampleRate: 0.1,
+  // Logs OFF by default — too easy to accidentally leak data via
+  // console.log. Selectively enable for high-value contexts later.
+  enableLogs: false,
 
-  // Define how likely Replay events are sampled when an error occurs.
-  replaysOnErrorSampleRate: 1.0,
+  // PII OFF by default — only collect what we explicitly opt in to via
+  // Sentry.setUser(). Re-evaluate at launch when GDPR/PDPA scope is set.
+  sendDefaultPii: false,
 
-  // Enable sending user PII (Personally Identifiable Information)
-  // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii
-  sendDefaultPii: true,
+  // Filter known benign noise so we don't burn quota on recoverable
+  // events.
+  ignoreErrors: [
+    // Supabase auth refresh failures are recoverable and frequent.
+    'AuthRetryableFetchError',
+    'AuthApiError: refresh_token_already_used',
+    // Browser extensions injecting fetch errors we can't act on.
+    'ResizeObserver loop limit exceeded',
+    'Non-Error promise rejection captured',
+  ],
+
+  // Strip secrets from any captured URL params before transmission.
+  beforeSend(event) {
+    if (event.request?.url) {
+      try {
+        const url = new URL(event.request.url);
+        for (const secretParam of ['token', 'setup_token', 'access_token']) {
+          if (url.searchParams.has(secretParam)) {
+            url.searchParams.set(secretParam, '[REDACTED]');
+          }
+        }
+        event.request.url = url.toString();
+      } catch {
+        // URL parse failed — leave as-is.
+      }
+    }
+    return event;
+  },
 });
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
