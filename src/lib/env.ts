@@ -21,6 +21,10 @@ const serverSchema = z.object({
   GOOGLE_CLIENT_ID: z.string().min(1),
   GOOGLE_CLIENT_SECRET: z.string().min(1),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  // Sentry — optional. Source-map upload skipped if any are missing.
+  SENTRY_AUTH_TOKEN: z.string().optional(),
+  SENTRY_ORG: z.string().optional(),
+  SENTRY_PROJECT: z.string().optional(),
 });
 
 const clientSchema = z.object({
@@ -28,6 +32,9 @@ const clientSchema = z.object({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
   NEXT_PUBLIC_APP_URL: z.string().url(),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().startsWith('pk_'),
+  // Sentry DSN is safe to expose (publishable identifier). Optional — when
+  // empty, both client and server Sentry.init() short-circuit without error.
+  NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
 });
 
 type ServerEnv = z.infer<typeof serverSchema>;
@@ -51,6 +58,9 @@ const SERVER_KEYS = new Set<string>([
   'GOOGLE_CLIENT_ID',
   'GOOGLE_CLIENT_SECRET',
   'NODE_ENV',
+  'SENTRY_AUTH_TOKEN',
+  'SENTRY_ORG',
+  'SENTRY_PROJECT',
 ]);
 
 function formatIssues(label: string, issues: readonly z.ZodIssue[]): string[] {
@@ -120,6 +130,9 @@ function validateEnv(): Env {
     GOOGLE_CLIENT_ID: '',
     GOOGLE_CLIENT_SECRET: '',
     NODE_ENV: 'development',
+    SENTRY_AUTH_TOKEN: undefined,
+    SENTRY_ORG: undefined,
+    SENTRY_PROJECT: undefined,
     ...clientResult.data,
   };
 }
