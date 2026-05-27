@@ -12,6 +12,29 @@ import type { SearchPostResult, SearchCommunityResult, SearchMemberResult } from
 
 const DEFAULT_LIMIT = 20;
 
+// Escape every HTML-significant char before any user-controlled string
+// reaches dangerouslySetInnerHTML. Defence in depth: the same callsites
+// also pass through this function, so if a different DB column ever ends
+// up rendered as HTML, it's protected.
+function escapeHtml(input: string): string {
+  return input
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Convert ts_headline's safe markers (⟦MATCH⟧…⟦/MATCH⟧) into <mark> tags
+// after escaping. The markers were picked to be characters Postgres won't
+// alter and that won't appear in real post bodies.
+function renderSafeSnippet(raw: string): string {
+  const escaped = escapeHtml(raw);
+  return escaped
+    .replace(/⟦MATCH⟧/g, '<mark>')
+    .replace(/⟦\/MATCH⟧/g, '</mark>');
+}
+
 type PostSearchRow = {
   id: string;
   title: string | null;
@@ -60,6 +83,14 @@ export async function searchPosts(
 
   // Two-policy SELECT: ts_rank + ts_headline require raw SQL; postgres-js used
   // directly. RLS is bypassed, so membership is enforced via EXISTS subquery.
+  //
+  // XSS hardening: ts_headline by default returns HTML markup (<b>…</b>)
+  // around match hits, and rendering it raw via dangerouslySetInnerHTML
+  // would let any user with post-create permission inject script tags
+  // through their post body. We tell ts_headline to use non-HTML markers
+  // (⟦MATCH⟧ / ⟦/MATCH⟧) instead, then escape the snippet and convert the
+  // markers back to <mark> tags below — preserving highlighting without
+  // trusting the input.
   const rows = await db<PostSearchRow[]>`
     SELECT
       p.id,
@@ -68,7 +99,7 @@ export async function searchPosts(
         'simple',
         coalesce(p.body, ''),
         websearch_to_tsquery('simple', ${trimmed}),
-        'MaxWords=35,MinWords=15,MaxFragments=1'
+        'MaxWords=35,MinWords=15,MaxFragments=1,StartSel=⟦MATCH⟧,StopSel=⟦/MATCH⟧'
       )                        AS snippet,
       pr.display_name          AS author_display_name,
       s.name                   AS space_name,
@@ -97,7 +128,7 @@ export async function searchPosts(
   const data: SearchPostResult[] = rows.map((r) => ({
     id: r.id,
     title: r.title,
-    snippet: r.snippet,
+    snippet: renderSafeSnippet(r.snippet),
     author_display_name: r.author_display_name,
     space_name: r.space_name,
     space_id: r.space_id,

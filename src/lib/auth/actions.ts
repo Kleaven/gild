@@ -1,8 +1,24 @@
 'use server';
 
+import { headers } from 'next/headers';
 import { getSupabaseServerClient, getSupabaseServiceClient } from './server';
 import { parseAuthError } from './errors';
+import { rateLimit } from '../rate-limit';
 import type { AuthError, AuthResult, AuthSession, AuthenticatedUser } from './types';
+
+// Extract caller IP for IP-scoped rate-limit buckets. Vercel populates
+// x-forwarded-for; we take the first hop. Falls back to a constant for
+// localhost development so we never accidentally let unbounded calls
+// through just because the header is missing.
+async function getCallerIp(): Promise<string> {
+  const hdrs = await headers();
+  const fwd = hdrs.get('x-forwarded-for');
+  if (fwd) {
+    const first = fwd.split(',')[0]?.trim();
+    if (first) return first;
+  }
+  return hdrs.get('x-real-ip')?.trim() ?? 'unknown';
+}
 
 export async function signUp(formData: FormData): Promise<AuthResult<AuthenticatedUser>> {
   const email = formData.get('email');
@@ -21,6 +37,18 @@ export async function signUp(formData: FormData): Promise<AuthResult<Authenticat
   }
   if (typeof username !== 'string' || !username.trim()) {
     return { data: null, error: { code: 'UNKNOWN', message: 'Username is required' } };
+  }
+
+  // IP-scoped sign-up cap: 5 per hour. Defence in depth on top of any
+  // Supabase Auth rate limit — necessary because email confirmation is
+  // off in dev/staging, so each signup creates a usable account.
+  const ip = await getCallerIp();
+  const rl = await rateLimit.signUp(ip);
+  if (!rl.allowed) {
+    return {
+      data: null,
+      error: { code: 'UNKNOWN', message: 'Too many sign-up attempts. Try again later.' },
+    };
   }
 
   const supabase = await getSupabaseServerClient();
@@ -74,6 +102,17 @@ export async function signIn(formData: FormData): Promise<AuthResult<Authenticat
   }
   if (typeof password !== 'string' || !password) {
     return { data: null, error: { code: 'UNKNOWN', message: 'Password is required' } };
+  }
+
+  // IP-scoped sign-in cap: 10 per minute. Slows credential-stuffing
+  // attacks across multiple accounts from the same source.
+  const ip = await getCallerIp();
+  const rl = await rateLimit.signIn(ip);
+  if (!rl.allowed) {
+    return {
+      data: null,
+      error: { code: 'UNKNOWN', message: 'Too many sign-in attempts. Try again later.' },
+    };
   }
 
   const supabase = await getSupabaseServerClient();
