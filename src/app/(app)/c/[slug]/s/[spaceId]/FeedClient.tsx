@@ -3,6 +3,7 @@
 import { useOptimistic, useTransition, useState, useEffect, useMemo } from 'react';
 import type { FeedPost } from '@/lib/feed';
 import { createPost, deletePost, pinPost, voteInPoll } from '@/app/actions';
+import { trackPostPublished } from '@/lib/analytics/events';
 import { useRealtimePresence } from '@/hooks';
 import PostForm from './PostForm';
 import PostList from './PostList';
@@ -181,6 +182,7 @@ export default function FeedClient({
       if (result.error) {
         throw new Error(result.error);
       }
+      trackPostPublished(communityId, spaceId, type);
       setIsFormVisible(false);
     } catch (err) {
       startTransition(() => {

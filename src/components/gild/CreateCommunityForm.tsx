@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { createCommunity } from '@/app/actions';
+import { trackCommunityCreated } from '@/lib/analytics/events';
 import { MessageSquare, Heart, Info, Lock, Globe, Crown, ArrowRight } from 'lucide-react';
 import { GILD_FONTS } from './styles';
 
@@ -72,6 +73,9 @@ export function CreateCommunityForm({ onSuccess, submitLabel = 'Create community
       });
 
       if (result.ok) {
+        // Communities are created in 'trial' state on a paid plan — the trial
+        // converts to a real subscription only after Stripe checkout succeeds.
+        trackCommunityCreated(result.communityId, pricingType === 'free' ? 'hobby' : 'trial');
         onSuccess(result.communityId, slug);
         return;
       }

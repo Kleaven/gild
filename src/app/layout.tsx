@@ -53,6 +53,7 @@ export const viewport: Viewport = {
 };
 
 import { Toaster } from 'sonner';
+import PostHogProvider from '@/components/PostHogProvider';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -60,7 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body style={{ margin: 0, fontFamily: 'system-ui, sans-serif' }}>
         <style dangerouslySetInnerHTML={{ __html: gildKeyframes }} />
         <Toaster richColors position="bottom-right" />
-        {children}
+        <PostHogProvider>{children}</PostHogProvider>
         <Script
           id="sw-registration"
           strategy="afterInteractive"

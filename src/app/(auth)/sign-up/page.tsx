@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Wordmark, GILD_FONTS } from '@/components/gild';
 import { signUp } from '@/lib/auth/actions';
+import { trackSignup } from '@/lib/analytics/events';
 
 export default function SignUpPage() {
   const [email, setEmail] = useState('');
@@ -35,9 +36,11 @@ export default function SignUpPage() {
       }
       
       if (data?.user) {
+        trackSignup('email_password');
         // Refresh the page or redirect to onboarding
         window.location.href = '/onboarding';
       } else {
+        trackSignup('email_password');
         setDone(true);
       }
     } catch (err) {

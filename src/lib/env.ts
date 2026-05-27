@@ -35,6 +35,11 @@ const clientSchema = z.object({
   // Sentry DSN is safe to expose (publishable identifier). Optional — when
   // empty, both client and server Sentry.init() short-circuit without error.
   NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
+  // PostHog project API key — publishable, designed to live in browser
+  // bundles. Host is the ingest endpoint (us.i.posthog.com or eu.i…).
+  // Both optional so dev/preview without analytics still validates.
+  NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
+  NEXT_PUBLIC_POSTHOG_HOST: z.string().url().optional(),
 });
 
 type ServerEnv = z.infer<typeof serverSchema>;
