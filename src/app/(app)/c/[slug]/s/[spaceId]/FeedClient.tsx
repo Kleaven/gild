@@ -7,8 +7,8 @@ import { trackPostPublished } from '@/lib/analytics/events';
 import { useRealtimePresence } from '@/hooks';
 import PostForm from './PostForm';
 import PostList from './PostList';
-import { GILD_FONTS, CoverArt, LivePill, StudioRightRail, SpaceSettingsModal } from '@/components/gild';
-import { MoreHorizontal, Plus, PenSquare } from 'lucide-react';
+import { GILD_FONTS, CoverArt, LivePill, SpaceSettingsModal } from '@/components/gild';
+import { MoreHorizontal, PenSquare } from 'lucide-react';
 import { useRef } from 'react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -106,7 +106,7 @@ export default function FeedClient({
 }: Props) {
   const [, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
+  const [, setIsMobile] = useState(false);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [showSpaceMenu, setShowSpaceMenu] = useState(false);
   const [isSpaceSettingsOpen, setIsSpaceSettingsOpen] = useState(false);
@@ -127,8 +127,11 @@ export default function FeedClient({
     online: true,
   }), [currentUserId, author]);
 
-  // Using any to sidestep exact type mismatch between useRealtimePresence types and Avatar
-  const onlineUsers = useRealtimePresence(`space-${spaceId}`, currentUserPresence as any);
+  // Subscribe for presence side-effects (broadcasts this client's presence to
+  // the space channel). The returned roster isn't rendered here yet.
+  // currentUserPresence is cast because useRealtimePresence's PresenceState
+  // shape is stricter than this lightweight literal.
+  useRealtimePresence(`space-${spaceId}`, currentUserPresence as unknown as Parameters<typeof useRealtimePresence>[1]);
 
   const [optimisticPosts, dispatch] = useOptimistic<
     OptimisticFeedPost[],

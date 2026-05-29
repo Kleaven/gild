@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Shield, Check, X, Info } from 'lucide-react';
+import { Shield, Info } from 'lucide-react';
 
 interface PermissionConfig {
   can_post: boolean;

@@ -4,7 +4,7 @@ import React, { useState, useTransition } from 'react';
 import { updateSpace, deleteSpace } from '@/app/actions';
 import { GILD_FONTS } from '@/components/gild';
 import { useRouter } from 'next/navigation';
-import { Shield, Lock, Globe, Trash2, X, ChevronDown, Check } from 'lucide-react';
+import { Shield, Lock, Globe, Trash2, X, Check } from 'lucide-react';
 
 interface Props {
   // UUID drives the server action; slug drives navigation.

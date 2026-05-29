@@ -209,11 +209,13 @@ export async function toggleVote(
       .select('space_id')
       .eq('id', comment.post_id)
       .single();
-    
+
+    if (!parentPost) throw new Error('[gild] parent post not found');
+
     const { data: targetSpace } = await supabase
       .from('spaces')
       .select('permissions')
-      .eq('id', parentPost?.space_id)
+      .eq('id', parentPost.space_id)
       .single();
 
     const requiredRole = normalizeRole((targetSpace?.permissions as any)?.react);

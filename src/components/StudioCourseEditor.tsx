@@ -31,7 +31,6 @@ interface StudioCourseEditorProps {
 
 export function StudioCourseEditor({ communityId, communitySlug, course }: StudioCourseEditorProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
   const [activeTab, setActiveTab] = useState<'settings' | 'curriculum'>('curriculum');
   const [editingLesson, setEditingLesson] = useState<any>(null);
 
@@ -288,7 +287,7 @@ function CourseSettingsPanel({ communityId, course }: StudioCourseEditorProps) {
 
 function CurriculumPanel({ communityId, course, onEditLesson }: StudioCourseEditorProps & { onEditLesson: (lesson: any) => void }) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   async function handleAddModule() {
     startTransition(async () => {
@@ -329,7 +328,7 @@ function CurriculumPanel({ communityId, course, onEditLesson }: StudioCourseEdit
       ) : (
         <>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {course.modules.map((module, idx) => (
+            {course.modules.map((module) => (
               <ModuleItem key={module.id} module={module} communityId={communityId} courseId={course.id} onEditLesson={onEditLesson} />
             ))}
           </div>
@@ -350,7 +349,7 @@ function ModuleItem({ module, communityId, courseId, onEditLesson }: { module: C
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(module.title);
   const [isExpanded, setIsExpanded] = useState(true);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   async function handleUpdateTitle() {
     if (title === module.title) {
@@ -436,7 +435,7 @@ function ModuleItem({ module, communityId, courseId, onEditLesson }: { module: C
 
       {isExpanded && (
         <div style={{ padding: '8px 0' }}>
-          {module.lessons.map((lesson, idx) => (
+          {module.lessons.map((lesson) => (
             <LessonItem key={lesson.id} lesson={lesson} communityId={communityId} courseId={courseId} onEdit={onEditLesson} />
           ))}
           <button
@@ -468,8 +467,7 @@ function ModuleItem({ module, communityId, courseId, onEditLesson }: { module: C
 
 function LessonItem({ lesson, communityId, courseId, onEdit }: { lesson: any, communityId: string, courseId: string, onEdit: (lesson: any) => void }) {
   const router = useRouter();
-  const [isEditing, setIsEditing] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   async function handleDelete() {
     if (!confirm('Delete this lesson?')) return;
@@ -501,7 +499,6 @@ function LessonItem({ lesson, communityId, courseId, onEdit }: { lesson: any, co
       alignItems: 'center', 
       gap: 12,
       borderTop: '1px solid oklch(0.97 0.002 250)',
-      group: 'lesson'
     }}>
       <div style={{ 
         width: 32, 

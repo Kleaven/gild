@@ -32,7 +32,7 @@ const CATEGORIES = [
 export function StudioDiscover({ initialCommunities }: StudioDiscoverProps) {
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [communities, setCommunities] = useState(initialCommunities);
+  const [communities] = useState(initialCommunities);
 
   // Note: For a real app, we'd debounced search here, but for v1, 
   // we'll do client-side filtering of the initial batch or use the search param.

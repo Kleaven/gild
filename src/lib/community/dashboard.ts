@@ -41,6 +41,13 @@ export async function getDashboardStats(communityId: string): Promise<DashboardS
          WHERE community_id = ${communityId} AND created_at > now() - interval '30 days')::numeric AS "monthlyRevenue"
     `;
 
+    // The correlated-subcount query always returns exactly one row, but the
+    // array destructure above is typed as possibly-undefined. Guard explicitly
+    // so downstream Number(...) coercions never see undefined.
+    if (!basicStats) {
+      throw new Error('[getDashboardStats] aggregate query returned no row');
+    }
+
     const revSeries = await db`
       SELECT 
         d.date::date as date,

@@ -24,7 +24,7 @@ export default function SignUpPage() {
     formData.append('email', email);
     formData.append('password', password);
     formData.append('displayName', displayName);
-    formData.append('username', email.split('@')[0]); // Default username
+    formData.append('username', email.split('@')[0] ?? email); // Default username
 
     try {
       const { data, error: authError } = await signUp(formData);

@@ -1,12 +1,10 @@
 'use client';
 
-import React, { useState, useTransition, useEffect } from 'react';
-import { GILD_FONTS } from '@/components/gild';
-import { Shield, Key, Smartphone, Mail, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Shield, Key, Smartphone, CheckCircle2 } from 'lucide-react';
 import { getSupabaseBrowserClient } from '@/lib/auth/client';
 
 export function SecurityPanel() {
-  const [isPending, startTransition] = useTransition();
   const [mfaStatus, setMfaStatus] = useState<'none' | 'partial' | 'full'>('none');
   const [enrollmentData, setEnrollmentData] = useState<any>(null);
   const [otpCode, setOtpCode] = useState('');
@@ -20,7 +18,7 @@ export function SecurityPanel() {
   }, []);
 
   async function checkMfaStatus() {
-    const { data, error } = await supabase.auth.mfa.listFactors();
+    const { data } = await supabase.auth.mfa.listFactors();
     if (data?.all?.length) {
       const active = data.all.filter(f => f.status === 'verified');
       if (active.length > 0) setMfaStatus('full');
@@ -45,7 +43,7 @@ export function SecurityPanel() {
 
   async function verifyMfa() {
     setError(null);
-    const { data, error } = await supabase.auth.mfa.challengeAndVerify({
+    const { error } = await supabase.auth.mfa.challengeAndVerify({
       factorId: enrollmentData.id,
       code: otpCode
     });

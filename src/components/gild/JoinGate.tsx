@@ -76,7 +76,7 @@ export function JoinGate({ community }: Props) {
     <div style={containerStyle}>
       <div style={cardStyle}>
         <CoverArt 
-          space={{ id: community.id, name: community.name, hue }} 
+          space={{ id: community.id, name: community.name, hue, desc: community.description ?? '' }}
           height={180} 
           variant="rays" 
         />

@@ -11,9 +11,10 @@ type Props = {
   plan: Plan;
   label: string;
   returnContext: CheckoutReturnContext;
+  disabled?: boolean;
 };
 
-export default function PlanSelector({ communityId, plan, label, returnContext }: Props) {
+export default function PlanSelector({ communityId, plan, label, returnContext, disabled = false }: Props) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -25,6 +26,7 @@ export default function PlanSelector({ communityId, plan, label, returnContext }
         const { url } = await createCheckoutSession(
           communityId,
           plan,
+          'community',
           returnContext,
         );
         router.push(url);
@@ -38,7 +40,7 @@ export default function PlanSelector({ communityId, plan, label, returnContext }
     <div>
       <button
         onClick={handleChoose}
-        disabled={isPending}
+        disabled={isPending || disabled}
         style={{
           display: 'block',
           width: '100%',

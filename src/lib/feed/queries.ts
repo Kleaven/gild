@@ -89,9 +89,9 @@ async function fetchPollData(
   const currentUserId = (await supabase.auth.getUser()).data.user?.id;
 
   (votes ?? []).forEach((v) => {
-    if (!results[v.post_id]) results[v.post_id] = {};
-    results[v.post_id][v.option_id] = (results[v.post_id][v.option_id] || 0) + 1;
-    
+    const tally = (results[v.post_id] ??= {});
+    tally[v.option_id] = (tally[v.option_id] || 0) + 1;
+
     if (v.user_id === currentUserId) {
       viewerVotes[v.post_id] = v.option_id;
     }

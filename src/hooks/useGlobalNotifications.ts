@@ -48,7 +48,7 @@ export function useGlobalNotifications(communityId: string, communitySlug: strin
           // but we can subscribe to all and filter on client or check RLS.
           // For now, let's stick to posts which have community_id.
         },
-        (payload: any) => {
+        () => {
           // Future: comment notifications
         }
       )

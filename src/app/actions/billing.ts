@@ -12,7 +12,7 @@ import {
 import type { CheckoutReturnContext } from '../../lib/billing/subscription';
 import type { Plan } from '../../lib/billing/plans';
 
-const returnContextSchema = z.enum(['settings', 'onboarding', 'global']);
+const returnContextSchema = z.enum(['settings', 'onboarding', 'global', 'billing']);
 const targetTypeSchema = z.enum(['community', 'platform']);
 
 export async function createCheckoutSession(

@@ -29,7 +29,7 @@ type BillingRow = {
   plan: string | null;
 };
 
-export type CheckoutReturnContext = 'settings' | 'onboarding' | 'global';
+export type CheckoutReturnContext = 'settings' | 'onboarding' | 'global' | 'billing';
 
 // ─── createCheckoutSession ────────────────────────────────────────────────────
 // Handles both Community and Platform (User) level checkouts.
@@ -246,5 +246,5 @@ async function getReturnPath(
 
   const { resolveCommunitySlug } = await import('../community/context');
   const slug = await resolveCommunitySlug(targetId);
-  return `/c/${slug}/settings`;
+  return context === 'billing' ? `/c/${slug}/billing` : `/c/${slug}/settings`;
 }

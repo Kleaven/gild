@@ -38,8 +38,18 @@ export function Avatar({
       boxShadow: ring ? `0 0 0 2px ${ring}` : 'none',
       flexShrink: 0,
       fontFamily: GILD_FONTS.sans,
+      overflow: 'hidden',
     }}>
-      {initials}
+      {person.avatar_url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={person.avatar_url}
+          alt={person.name}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+        />
+      ) : (
+        initials
+      )}
       {presence && person.online && (
         <span style={{
           position: 'absolute', 

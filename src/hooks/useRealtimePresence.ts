@@ -18,7 +18,10 @@ export function useRealtimePresence(channelId: string, currentUser: PresenceStat
     channel
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState();
-        const users = Object.values(state).flatMap((s) => s as PresenceState[]);
+        // Supabase types presence payloads as `{ presence_ref }[]`; the
+        // tracked object carries the full PresenceState fields too, so go
+        // through `unknown` to assert the richer shape we actually stored.
+        const users = Object.values(state).flatMap((s) => s as unknown as PresenceState[]);
         
         // Deduplicate by user_id
         const uniqueUsers = Array.from(new Map(users.map(u => [u.user_id, u])).values());

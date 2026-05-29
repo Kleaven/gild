@@ -2,8 +2,7 @@
 
 import React, { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Wordmark, Avatar, GILD_FONTS } from '@/components/gild';
-import type { Person } from '@/components/gild';
+import { Avatar, GILD_FONTS } from '@/components/gild';
 import { updateProfile, uploadAvatar, requestDataExport, requestAccountDeletion } from '@/app/actions';
 import { signOut } from '@/lib/auth/actions';
 import { Camera, Shield, User, Trash2, LogOut } from 'lucide-react';
@@ -22,16 +21,7 @@ interface StudioSettingsProps {
 }
 
 export function StudioSettings({ user }: StudioSettingsProps) {
-  const router = useRouter();
   const [tab, setTab] = useState<Tab>('profile');
-
-  const currentUser: Person = {
-    id: user.id,
-    name: user.display_name,
-    role: 'free_member',
-    hue: user.id.charCodeAt(0) * 10 % 360,
-    online: true,
-  };
 
   return (
     <div style={{ fontFamily: GILD_FONTS.sans, background: '#fff', minHeight: '100vh', color: '#202020' }}>

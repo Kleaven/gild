@@ -47,7 +47,7 @@ export type CreateSpaceInput = {
   isPrivate?: boolean;
   minRole?: Database['public']['Enums']['member_role'];
   slug?: string;
-  permissions?: Record<string, string>;
+  role_permissions?: Record<string, unknown>;
 };
 
 export type UpdateSpaceInput = {
@@ -55,5 +55,5 @@ export type UpdateSpaceInput = {
   description?: string;
   isPrivate?: boolean;
   minRole?: Database['public']['Enums']['member_role'];
-  permissions?: Record<string, string>;
+  role_permissions?: Record<string, unknown>;
 };

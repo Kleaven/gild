@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState } from 'react';
 import { GILD_FONTS } from '@/components/gild';
 import { updateLesson } from '@/app/actions/courses';
 import { uploadMedia } from '@/app/actions/media';
@@ -21,7 +21,7 @@ export function LessonEditorModal({ communityId, courseId, lesson, isOpen, onClo
   const [videoUrl, setVideoUrl] = useState(lesson.video_url || '');
   const [imageUrl, setImageUrl] = useState(lesson.image_url || '');
   const [attachmentUrls, setAttachmentUrls] = useState<string[]>(lesson.attachment_urls || []);
-  const [isUploading, setIsUploading] = useState<string | null>(null);
+  const [, setIsUploading] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   if (!isOpen) return null;

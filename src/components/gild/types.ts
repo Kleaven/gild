@@ -5,10 +5,11 @@ export interface Person {
   name: string;
   handle?: string | null;
   email?: string;
-  role: MemberRole;
+  role?: MemberRole;
   hue: number;
   online?: boolean;
   initial?: string;
+  avatar_url?: string | null;
 }
 
 export interface Space {

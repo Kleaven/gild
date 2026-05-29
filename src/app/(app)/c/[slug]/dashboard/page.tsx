@@ -11,7 +11,7 @@ type Props = {
 export default async function DashboardPage({ params }: Props) {
   const { slug } = await params;
 
-  const { profile } = await requireAuth();
+  await requireAuth();
   const { community, membership } = await getCommunityContextBySlug(slug);
 
   if (!community) {
@@ -34,13 +34,7 @@ export default async function DashboardPage({ params }: Props) {
         plan: community.plan,
         subscription_status: community.subscription_status,
       }}
-      membership={{ role: membership!.role }}
       stats={stats}
-      user={{
-        id: profile.id,
-        display_name: profile.display_name,
-        avatar_url: profile.avatar_url,
-      }}
     />
   );
 }

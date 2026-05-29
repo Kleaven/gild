@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { GILD_FONTS } from '@/components/gild';
 import type { DashboardStats } from '@/lib/community';
 import { 
@@ -278,8 +278,9 @@ function GodTierChart({ data }: { data: { date: string; posts: number; comments:
   };
 
   const renderPath = (points: { x: number, y: number }[], hue: number, fill = false) => {
-    if (!points || points.length < 1) return null;
-    let d = `M ${points[0].x} ${points[0].y}`;
+    const first = points[0];
+    if (!first) return null;
+    let d = `M ${first.x} ${first.y}`;
     for (let i = 0; i < points.length - 1; i++) {
       const p0 = points[i];
       const p1 = points[i + 1];
@@ -294,7 +295,7 @@ function GodTierChart({ data }: { data: { date: string; posts: number; comments:
     if (fill) {
       const lastPoint = points[points.length - 1];
       if (!lastPoint) return null;
-      const fillD = `${d} L ${lastPoint.x} 100 L ${points[0].x} 100 Z`;
+      const fillD = `${d} L ${lastPoint.x} 100 L ${first.x} 100 Z`;
       return <path d={fillD} fill={`url(#grad-${hue})`} opacity="0.1" />;
     }
     return <path d={d} fill="none" stroke={`oklch(0.60 0.18 ${hue})`} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />;

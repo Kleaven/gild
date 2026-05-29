@@ -88,7 +88,7 @@ const createSpaceSchema = z.object({
   description: z.string().max(500).optional(),
   isPrivate: z.boolean().default(false),
   minRole: z.enum(MEMBER_ROLES).default('free_member'),
-  role_permissions: z.record(z.any()).optional(),
+  role_permissions: z.record(z.string(), z.any()).optional(),
 });
 
 const updateSpaceSchema = z.object({
@@ -96,7 +96,7 @@ const updateSpaceSchema = z.object({
   description: z.string().max(500).optional(),
   isPrivate: z.boolean().optional(),
   minRole: z.enum(MEMBER_ROLES).optional(),
-  role_permissions: z.record(z.any()).optional(),
+  role_permissions: z.record(z.string(), z.any()).optional(),
 });
 
 export async function createSpace(

@@ -7,7 +7,6 @@ import { env } from '@/lib/env';
 import { resolvePlan, extractCustomerId } from '@/lib/billing/plans';
 import type { WebhookHandlerMap } from '@/lib/billing';
 import db from '@/lib/db';
-import { queueDunningEmail } from '@/lib/billing/dunning';
 import { processWebhookEvent } from '@/lib/billing';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -76,7 +75,7 @@ async function handleSubscriptionDeleted(event: Stripe.Event): Promise<void> {
 }
 
 async function handleCheckoutSessionCompleted(event: Stripe.Event): Promise<void> {
-  const session = event.data.object as Stripe.CheckoutSession;
+  const session = event.data.object as Stripe.Checkout.Session;
   const { type, communityId, userId, targetType, targetId, plan } = session.metadata || {};
 
   // Case 1: One-time Community Join (idempotent — ON CONFLICT DO NOTHING handles replays)

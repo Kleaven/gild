@@ -26,7 +26,7 @@ interface StudioPostCardProps {
     /** Set on optimistic items before server confirms. */
     _optimistic?: boolean;
     media_urls?: string[] | null;
-    type?: 'post' | 'poll';
+    type?: string;
     poll_options?: { id: string; text: string }[] | null;
     poll_results?: Record<string, number> | null;
     viewer_voted_option?: string | null;
@@ -199,7 +199,7 @@ export function StudioPostCard({
             {post.body.length > 500 ? post.body.slice(0, 500) + '…' : post.body}
           </p>
           {ytId && (
-            <div style={{ marginBottom: 14, borderRadius: 12, overflow: 'hidden', aspectPadding: '56.25%', position: 'relative', width: '100%', paddingBottom: '56.25%', height: 0 }}>
+            <div style={{ marginBottom: 14, borderRadius: 12, overflow: 'hidden', position: 'relative', width: '100%', paddingBottom: '56.25%', height: 0 }}>
               <iframe
                 src={`https://www.youtube.com/embed/${ytId}`}
                 style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}

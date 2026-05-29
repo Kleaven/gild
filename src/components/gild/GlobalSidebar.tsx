@@ -1,19 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Wordmark, Avatar, GILD_FONTS } from '@/components/gild';
 import { signOut } from '@/lib/auth/actions';
-import { 
-  Users, 
-  Settings, 
-  LogOut, 
-  Plus, 
-  ChevronRight, 
+import {
+  LogOut,
+  Plus,
+  ChevronRight,
   Search,
-  LayoutGrid,
-  ShieldCheck,
   User,
   CreditCard
 } from 'lucide-react';

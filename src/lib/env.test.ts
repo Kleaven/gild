@@ -11,6 +11,13 @@ const validEnv: Record<string, string> = {
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test_fake',
   STRIPE_SECRET_KEY: 'sk_test_fake',
   STRIPE_WEBHOOK_SECRET: 'whsec_test_fake',
+  STRIPE_HOBBY_PRICE_ID: 'price_hobby_test',
+  STRIPE_PRO_PRICE_ID: 'price_pro_test',
+  CRON_SECRET: 'cron_test',
+  RESEND_API_KEY: 're_test',
+  RESEND_FROM_EMAIL: 'test@example.com',
+  GOOGLE_CLIENT_ID: 'gid_test',
+  GOOGLE_CLIENT_SECRET: 'gsecret_test',
   NODE_ENV: 'test',
   UPSTASH_REDIS_REST_URL: 'https://fake.upstash.io',
   UPSTASH_REDIS_REST_TOKEN: 'fake_token',
@@ -76,7 +83,7 @@ describe('env validation', () => {
     applyEnv({ ...validEnv, SUPABASE_SERVICE_ROLE_KEY: undefined });
     spyExitThrow();
     const errors = captureConsoleError();
-    await expect(import('./env')).rejects.toThrow(/process\.exit/);
+    await expect(import('./env')).rejects.toThrow(/Invalid environment variables/);
     expect(errors.read()).toContain('SUPABASE_SERVICE_ROLE_KEY');
   });
 
@@ -84,7 +91,7 @@ describe('env validation', () => {
     applyEnv({ ...validEnv, NEXT_PUBLIC_SUPABASE_URL: 'not-a-url' });
     spyExitThrow();
     const errors = captureConsoleError();
-    await expect(import('./env')).rejects.toThrow(/process\.exit/);
+    await expect(import('./env')).rejects.toThrow(/Invalid environment variables/);
     expect(errors.read()).toContain('NEXT_PUBLIC_SUPABASE_URL');
   });
 
@@ -100,7 +107,7 @@ describe('env validation', () => {
     applyEnv({ ...validEnv, DATABASE_URL: '' });
     spyExitThrow();
     const errors = captureConsoleError();
-    await expect(import('./env')).rejects.toThrow(/process\.exit/);
+    await expect(import('./env')).rejects.toThrow(/Invalid environment variables/);
     expect(errors.read()).toContain('DATABASE_URL');
   });
 });

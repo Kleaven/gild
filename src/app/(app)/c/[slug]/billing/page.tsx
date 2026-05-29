@@ -1,10 +1,9 @@
 import { notFound } from 'next/navigation';
-import { getSupabaseServerClient } from '@/lib/auth/server';
 import { getCommunityContextBySlug } from '@/lib/community/context';
 import { PLANS, type PlanConfig } from '@/lib/billing';
 import { GILD_FONTS } from '@/components/gild';
 import PlanSelector from '@/app/(app)/onboarding/[communityId]/plan/PlanSelector';
-import { CreditCard, Check, Zap, Crown } from 'lucide-react';
+import { CreditCard, Check, Crown } from 'lucide-react';
 
 type Props = { params: Promise<{ slug: string }> };
 

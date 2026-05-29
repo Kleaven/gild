@@ -32,7 +32,7 @@ async function seed() {
       community_id: paidCommunity.id,
       name: 'Alpha Membership',
       price_month_usd: 97,
-      features: ['Exclusive Content', 'Weekly Calls', 'Alpha Chat'],
+      description: 'Exclusive Content · Weekly Calls · Alpha Chat',
     });
     console.log('Created Paid Community:', paidCommunity.name);
   } else {

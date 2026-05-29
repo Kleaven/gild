@@ -90,9 +90,10 @@ export default async function PostPage({ params }: Props) {
         <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
           <Avatar 
             person={{
-              id: post.author_id,
+              id: post.author_id ?? '',
               name: post.author?.display_name ?? 'Unknown',
               avatar_url: post.author?.avatar_url ?? undefined,
+              hue: (post.author?.display_name?.charCodeAt(0) || 0) * 10 % 360,
             }}
             size={36}
           />

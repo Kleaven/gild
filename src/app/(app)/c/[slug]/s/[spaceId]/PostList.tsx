@@ -57,7 +57,15 @@ export default function PostList({
           return (
             <StudioPostCard
               key={post.id}
-              post={{ ...post, author: post.author ?? undefined }}
+              post={{
+                ...post,
+                author: post.author ?? undefined,
+                // poll_options is a Json column in the DB; it stores this
+                // structured shape when type === 'poll'. Assert it here at
+                // the render boundary rather than threading the cast through
+                // the whole feed pipeline.
+                poll_options: post.poll_options as { id: string; text: string }[] | null,
+              }}
               communitySlug={communitySlug}
               spaceId={spaceId}
               hue={hue}

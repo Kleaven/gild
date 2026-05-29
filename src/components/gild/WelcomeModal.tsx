@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Wordmark, GILD_FONTS } from './styles';
+import { GILD_FONTS } from './styles';
 import { Sparkles, X } from 'lucide-react';
 
 interface Props {

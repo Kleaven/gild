@@ -12,12 +12,14 @@ async function seed() {
   if (!communities) return;
 
   for (let i = 0; i < communities.length; i++) {
+    const community = communities[i];
+    if (!community) continue;
     const category = categories[i % categories.length];
     await supabase
       .from('communities')
       .update({ category })
-      .eq('id', communities[i].id);
-    console.log(`Updated community ${communities[i].id} with category ${category}`);
+      .eq('id', community.id);
+    console.log(`Updated community ${community.id} with category ${category}`);
   }
 }
 

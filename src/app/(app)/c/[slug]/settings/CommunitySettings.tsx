@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react';
 import { updateCommunity, deleteCommunity, uploadCommunityAsset } from '@/app/actions';
 import { GILD_FONTS, DeleteCommunityModal } from '@/components/gild';
-import { Camera, Image as ImageIcon, Palette, ShieldAlert } from 'lucide-react';
+import { Camera, Image as ImageIcon, Palette } from 'lucide-react';
 import { RolePermissionsEditor } from '@/components/gild';
 
 interface Props {
@@ -11,7 +11,7 @@ interface Props {
     id: string;
     name: string;
     description: string | null;
-    theme_hue: number;
+    theme_hue: number | null;
     logo_url: string | null;
     banner_url: string | null;
     is_private: boolean;

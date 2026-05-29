@@ -1,5 +1,3 @@
-import { notFound } from 'next/navigation';
-import { getSupabaseServerClient } from '@/lib/auth/server';
 import { requireAuth } from '@/lib/auth';
 import { GILD_FONTS } from '@/components/gild';
 import { Mail, Shield } from 'lucide-react';

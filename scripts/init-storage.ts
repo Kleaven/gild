@@ -21,7 +21,7 @@ async function initBuckets() {
   console.log('Initializing Supabase storage buckets...');
 
   for (const bucketName of buckets) {
-    const { data: bucket, error: getError } = await supabase.storage.getBucket(bucketName);
+    const { error: getError } = await supabase.storage.getBucket(bucketName);
 
     if (getError && getError.message.includes('not found')) {
       console.log(`Creating bucket: ${bucketName}`);

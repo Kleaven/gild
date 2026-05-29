@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { Avatar, GILD_FONTS, ConfirmModal, useGildChat } from '@/components/gild';
 import type { Person, MemberRole } from '@/components/gild';
 import { updateMemberRole } from '@/app/actions';

@@ -161,7 +161,7 @@ const PostForm = forwardRef<HTMLFormElement, Props>(({ communityId, hue = 250, c
 
     try {
       const res = await uploadMedia(communityId, formData);
-      if (res.ok && res.url) {
+      if (res.ok) {
         setAttachments([...attachments, res.url]);
       } else {
         setLocalError(res.error || 'Upload failed');

@@ -13,7 +13,7 @@ interface Props {
   onVote: (optionId: string) => void;
 }
 
-export function PollRenderer({ postId, options, results, viewerVotedOption, hue = 250, onVote }: Props) {
+export function PollRenderer({ options, results, viewerVotedOption, hue = 250, onVote }: Props) {
   const [isVoting, setIsVoting] = useState(false);
   
   const totalVotes = Object.values(results || {}).reduce((a, b) => a + b, 0);

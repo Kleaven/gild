@@ -2,7 +2,7 @@
 
 import React, { useTransition } from 'react';
 import { GILD_FONTS } from './styles';
-import { Heart, X, AlertTriangle } from 'lucide-react';
+import { X, AlertTriangle } from 'lucide-react';
 import { leaveCommunity } from '@/app/actions';
 import { useRouter } from 'next/navigation';
 

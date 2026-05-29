@@ -32,14 +32,14 @@ interface Props {
 export function CreateCommunityForm({ onSuccess, submitLabel = 'Create community' }: Props) {
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
-  const [description, setDescription] = useState('');
+  const [description] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
   const [category, setCategory] = useState('');
   const [welcomeMessage, setWelcomeMessage] = useState('');
   const [goodbyeMessage, setGoodbyeMessage] = useState('');
   const [pricingType, setPricingType] = useState<'free' | 'paid'>('free');
   const [priceAmount, setPriceAmount] = useState(0);
-  const [priceCurrency, setPriceCurrency] = useState('USD');
+  const [priceCurrency] = useState('USD');
   const [pricingPeriod, setPricingPeriod] = useState<'one_time' | 'monthly' | 'yearly'>('one_time');
   const [error, setError] = useState<string | null>(null);
   const [paywallMessage, setPaywallMessage] = useState<string | null>(null);

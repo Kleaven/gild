@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getSupabaseServerClient } from '../../lib/auth/server';
-import { Wordmark } from '@/components/gild';
 import { getUserCommunities } from '@/lib/community/queries';
 import { GlobalNav } from '@/components/gild/GlobalNav';
 
