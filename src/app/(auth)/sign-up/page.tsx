@@ -35,15 +35,17 @@ export default function SignUpPage() {
         return;
       }
       
-      if (data?.user) {
-        trackSignup('email_password');
-        // Refresh the page or redirect to onboarding
-        window.location.href = '/onboarding';
-      } else {
-        trackSignup('email_password');
+      trackSignup('email_password');
+
+      // No session yet → email confirmation is pending. Show the inbox
+      // notice instead of pushing into /onboarding, which the middleware
+      // would bounce straight back to /sign-in for an unauthenticated user.
+      if (data?.needsEmailConfirmation) {
         setDone(true);
+      } else {
+        window.location.href = '/onboarding';
       }
-    } catch (err) {
+    } catch {
       setLoading(false);
       setError('An unexpected error occurred. Please try again.');
     }
@@ -212,6 +214,26 @@ export default function SignUpPage() {
                   {loading ? 'Creating account…' : 'Sign up'}
                 </button>
               </form>
+
+              <p
+                style={{
+                  marginTop: 16,
+                  fontSize: 13,
+                  lineHeight: 1.5,
+                  color: 'oklch(0.55 0.02 250)',
+                  textAlign: 'center',
+                }}
+              >
+                By creating an account, you agree to our{' '}
+                <Link href="/terms" style={{ color: '#111', fontWeight: 600, textDecoration: 'underline' }}>
+                  Terms of Service
+                </Link>{' '}
+                and{' '}
+                <Link href="/privacy" style={{ color: '#111', fontWeight: 600, textDecoration: 'underline' }}>
+                  Privacy Policy
+                </Link>
+                .
+              </p>
 
               <p
                 style={{

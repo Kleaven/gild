@@ -53,7 +53,7 @@ export async function signUp(formData: FormData): Promise<AuthResult<Authenticat
 
   const supabase = await getSupabaseServerClient();
   const {
-    data: { user },
+    data: { user, session },
     error: signUpError,
   } = await supabase.auth.signUp({ email: email.trim(), password });
 
@@ -63,6 +63,12 @@ export async function signUp(formData: FormData): Promise<AuthResult<Authenticat
   if (!user) {
     return { data: null, error: { code: 'UNKNOWN', message: 'Sign-up failed — no user returned' } };
   }
+
+  // When email confirmation is enabled, Supabase returns a user but NO
+  // session — the account is dormant until the link is clicked. The client
+  // uses this flag to show a "check your inbox" notice rather than pushing
+  // the visitor into /onboarding (which would bounce them back to /sign-in).
+  const needsEmailConfirmation = session === null;
 
   // Use service client for profile insert — bypasses RLS (profiles_insert
   // requires authenticated session but sign-up hasn't set cookies yet).
@@ -90,7 +96,7 @@ export async function signUp(formData: FormData): Promise<AuthResult<Authenticat
     };
   }
 
-  return { data: { user, profile }, error: null };
+  return { data: { user, profile, needsEmailConfirmation }, error: null };
 }
 
 export async function signIn(formData: FormData): Promise<AuthResult<AuthenticatedUser>> {

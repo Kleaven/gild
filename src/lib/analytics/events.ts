@@ -1,8 +1,8 @@
 // Client-side analytics event helpers. Wraps posthog.capture() with named
 // events + typed properties so we never spell event names wrong or drift
-// between call sites. Server-side captures (e.g., from webhook handlers)
-// happen via posthog-node in a future iteration — for now everything is
-// client-fired.
+// between call sites. The `subscription_started` event is fired SERVER-side
+// from the Stripe webhook (see lib/analytics/server.ts) — it must not also be
+// fired here, or it would double-count.
 
 import posthog from 'posthog-js';
 
@@ -21,17 +21,5 @@ export function trackPostPublished(communityId: string, spaceId: string, postTyp
     community_id: communityId,
     space_id: spaceId,
     post_type: postType,
-  });
-}
-
-export function trackSubscriptionStarted(
-  communityId: string,
-  plan: 'hobby' | 'pro',
-  trial: boolean,
-): void {
-  posthog.capture('subscription_started', {
-    community_id: communityId,
-    plan,
-    trial,
   });
 }

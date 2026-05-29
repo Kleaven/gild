@@ -31,6 +31,25 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
         </Link>
       </nav>
       {children}
+      <footer
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: 24,
+          padding: '32px',
+          borderTop: '1px solid #eee',
+          fontSize: 13,
+          color: '#888',
+        }}
+      >
+        <span>© {new Date().getFullYear()} Gild</span>
+        <Link href="/terms" style={{ color: '#888', textDecoration: 'none' }}>
+          Terms
+        </Link>
+        <Link href="/privacy" style={{ color: '#888', textDecoration: 'none' }}>
+          Privacy
+        </Link>
+      </footer>
     </>
   );
 }

@@ -8,6 +8,7 @@ import { resolvePlan, extractCustomerId } from '@/lib/billing/plans';
 import type { WebhookHandlerMap } from '@/lib/billing';
 import db from '@/lib/db';
 import { processWebhookEvent } from '@/lib/billing';
+import { trackSubscriptionStartedServer } from '@/lib/analytics/server';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -45,16 +46,41 @@ async function handleSubscriptionUpsert(event: Stripe.Event): Promise<void> {
   }
 
   const table = targetType === 'community' ? 'communities' : 'profiles';
+  const plan = resolvePlan(sub);
 
   await db`
     UPDATE public.${db(table)}
     SET
       stripe_subscription_id = ${sub.id},
       subscription_status    = ${sub.status},
-      plan                   = ${resolvePlan(sub)},
+      plan                   = ${plan},
       updated_at             = now()
     WHERE id = ${targetId}
   `;
+
+  // Fire the server-side `subscription_started` analytics event only on the
+  // initial `created` webhook — the reliable signal regardless of whether the
+  // customer's browser ever returned from Stripe Checkout. distinct_id is the
+  // Supabase user id so it lines up with client-side identify().
+  if (event.type === 'customer.subscription.created') {
+    let distinctId = targetId;
+    let communityId: string | null = null;
+
+    if (targetType === 'community') {
+      communityId = targetId;
+      const owner = await db<{ owner_id: string }[]>`
+        SELECT owner_id FROM public.communities WHERE id = ${targetId} LIMIT 1
+      `;
+      if (owner[0]?.owner_id) distinctId = owner[0].owner_id;
+    }
+
+    await trackSubscriptionStartedServer({
+      distinctId,
+      communityId,
+      plan,
+      trial: sub.status === 'trialing',
+    });
+  }
 }
 
 async function handleSubscriptionDeleted(event: Stripe.Event): Promise<void> {
@@ -158,7 +184,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(rawBody, sig, env.STRIPE_WEBHOOK_SECRET);
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Verification failed' }, { status: 400 });
   }
 
