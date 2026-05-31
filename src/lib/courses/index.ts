@@ -23,9 +23,9 @@ export {
   completeLesson,
 } from './actions';
 
-export { getQuiz, getQuizResult } from './quiz.queries';
+export { getQuiz, getQuizResult, getQuizForEdit } from './quiz.queries';
 
-export { submitQuiz } from './quiz.actions';
+export { submitQuiz, saveQuiz, deleteQuiz } from './quiz.actions';
 
 export { getCertificate, getCertificateByToken } from './certificate.queries';
 
@@ -59,6 +59,10 @@ export type {
   SubmitQuizInput,
   QuizAnswerBreakdown,
   QuizAttemptResult,
+  EditableQuiz,
+  EditableQuizQuestion,
+  EditableQuizOption,
+  SaveQuizInput,
 } from './quiz.types';
 
 export type { Certificate, PublicCertificate } from './certificate.types';

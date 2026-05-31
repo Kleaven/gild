@@ -8,7 +8,7 @@ export type DashboardStats = {
   reactionCount: number;
   spaceCount: number;
   courseCount: number;
-  // New SOTA Insights
+  // Engagement insights
   activeUsers7d: number;
   growthRate30d: number; 
   topSpaces: { name: string; count: number }[];

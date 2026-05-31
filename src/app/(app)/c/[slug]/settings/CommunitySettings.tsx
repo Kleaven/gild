@@ -270,7 +270,6 @@ export default function CommunitySettings({ community }: Props) {
         <section style={{ marginTop: 24, borderTop: '1px solid oklch(0.90 0.01 250)', paddingTop: 40 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
             <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Governance & Permissions</h2>
-            <span style={{ fontSize: 10, background: 'oklch(0.94 0.01 250)', color: 'oklch(0.40 0.15 250)', padding: '2px 8px', borderRadius: 999, fontWeight: 800 }}>SOTA CONTROLS</span>
           </div>
 
           <RolePermissionsEditor 

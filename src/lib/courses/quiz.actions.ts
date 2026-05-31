@@ -8,6 +8,7 @@ import type {
   SubmitQuizInput,
   QuizAttemptResult,
   QuizAnswerBreakdown,
+  SaveQuizInput,
 } from './quiz.types';
 
 // ─── Zod schema ───────────────────────────────────────────────────────────────
@@ -151,4 +152,141 @@ export async function submitQuiz(input: SubmitQuizInput): Promise<QuizAttemptRes
     correctCount,
     breakdown,
   };
+}
+
+// ─── Authoring: saveQuiz ──────────────────────────────────────────────────────
+// Full upsert of a lesson's quiz. Creates the quiz row if absent, then replaces
+// the entire question set. Admin role is enforced by RLS on every write; we add
+// an application-layer community resolution to gate the feature flag. correct_id
+// is validated to be one of the question's own option ids.
+
+const saveQuizSchema = z.object({
+  lessonId: z.string().uuid(),
+  title: z.string().min(1).max(200),
+  passScore: z.number().int().min(1).max(100),
+  questions: z
+    .array(
+      z
+        .object({
+          body: z.string().min(1).max(1000),
+          options: z
+            .array(
+              z.object({
+                id: z.string().min(1),
+                text: z.string().min(1).max(200),
+              }),
+            )
+            .min(2)
+            .max(6),
+          correctId: z.string().min(1),
+        })
+        .refine((q) => q.options.some((o) => o.id === q.correctId), {
+          message: 'correctId must match one of the question options',
+        }),
+    )
+    .min(1)
+    .max(50),
+});
+
+export async function saveQuiz(input: SaveQuizInput): Promise<{ quizId: string }> {
+  const parsed = saveQuizSchema.safeParse(input);
+  if (!parsed.success) throw new Error('[gild] invalid quiz input');
+
+  const supabase = await getSupabaseServerClient();
+  const {
+    data: { user },
+    error: authErr,
+  } = await supabase.auth.getUser();
+  if (authErr || !user) throw new Error('[gild] not authenticated');
+
+  const { lessonId, title, passScore, questions } = parsed.data;
+
+  // Resolve community for the feature-flag gate. RLS enforces the admin role
+  // on the quiz/question writes themselves.
+  const { data: lesson, error: lessonErr } = await supabase
+    .from('lessons')
+    .select('module_id')
+    .eq('id', lessonId)
+    .maybeSingle();
+  if (lessonErr) throw new Error(lessonErr.message);
+  if (!lesson) throw new Error('[gild] lesson not found');
+
+  const { data: mod, error: modErr } = await supabase
+    .from('modules')
+    .select('course_id')
+    .eq('id', lesson.module_id)
+    .maybeSingle();
+  if (modErr) throw new Error(modErr.message);
+  if (!mod) throw new Error('[gild] module not found');
+
+  const { data: courseRow, error: courseErr } = await supabase
+    .from('courses')
+    .select('community_id')
+    .eq('id', mod.course_id)
+    .maybeSingle();
+  if (courseErr || !courseRow) throw new Error('[gild] course not found');
+  await assertFlag('quizzes', courseRow.community_id);
+
+  // Upsert the quiz row (one per lesson, enforced by the UNIQUE on lesson_id).
+  const { data: existing, error: existingErr } = await supabase
+    .from('quizzes')
+    .select('id')
+    .eq('lesson_id', lessonId)
+    .maybeSingle();
+  if (existingErr) throw new Error(existingErr.message);
+
+  let quizId: string;
+  if (existing) {
+    quizId = existing.id;
+    const { error: updateErr } = await supabase
+      .from('quizzes')
+      .update({ title, pass_score: passScore })
+      .eq('id', quizId);
+    if (updateErr) throw new Error(updateErr.message);
+  } else {
+    const { data: inserted, error: insertErr } = await supabase
+      .from('quizzes')
+      .insert({ lesson_id: lessonId, title, pass_score: passScore })
+      .select('id')
+      .single();
+    if (insertErr) throw new Error(insertErr.message);
+    quizId = inserted.id;
+  }
+
+  // Replace the full question set: clear then insert in submitted order.
+  // quiz_attempts reference quiz_id (not question rows) and snapshot their
+  // own answer breakdown, so swapping questions never corrupts past attempts.
+  const { error: deleteErr } = await supabase
+    .from('quiz_questions')
+    .delete()
+    .eq('quiz_id', quizId);
+  if (deleteErr) throw new Error(deleteErr.message);
+
+  const rows = questions.map((q, index) => ({
+    quiz_id: quizId,
+    body: q.body,
+    options: q.options as unknown as Json,
+    correct_id: q.correctId,
+    position: index,
+  }));
+  const { error: questionsErr } = await supabase.from('quiz_questions').insert(rows);
+  if (questionsErr) throw new Error(questionsErr.message);
+
+  return { quizId };
+}
+
+// ─── Authoring: deleteQuiz ────────────────────────────────────────────────────
+// Removes a lesson's quiz entirely. Questions and attempts cascade via FK.
+// Admin role enforced by RLS on the DELETE.
+
+export async function deleteQuiz(lessonId: string): Promise<void> {
+  const supabase = await getSupabaseServerClient();
+  const {
+    data: { user },
+    error: authErr,
+  } = await supabase.auth.getUser();
+  if (authErr || !user) throw new Error('[gild] not authenticated');
+
+  const { error } = await supabase.from('quizzes').delete().eq('lesson_id', lessonId);
+  if (error) throw new Error(error.message);
 }

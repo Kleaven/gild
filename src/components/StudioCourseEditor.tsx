@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useTransition, useOptimistic } from 'react';
 import { useRouter } from 'next/navigation';
 import { GILD_FONTS } from '@/components/gild';
 import type { CourseWithModules } from '@/lib/courses';
-import { updateCourse, createModule, updateModule, deleteModule, createLesson, updateLesson, deleteLesson } from '@/app/actions/courses';
+import { updateCourse, deleteCourse, createModule, updateModule, deleteModule, createLesson, updateLesson, deleteLesson } from '@/app/actions/courses';
 import { uploadMedia } from '@/app/actions/media';
 import { 
   Plus, 
@@ -18,9 +18,14 @@ import {
   Save,
   Eye,
   EyeOff,
-  GripVertical
+  GripVertical,
+  ListChecks,
+  AlertTriangle,
+  X
 } from 'lucide-react';
 import { LessonEditorModal } from './LessonEditorModal';
+import { QuizEditorModal } from './QuizEditorModal';
+import { ConfirmDialog } from './ConfirmDialog';
 
 interface StudioCourseEditorProps {
   // UUID drives DB-scoped server actions; slug drives navigation.
@@ -123,13 +128,31 @@ function TabButton({ active, onClick, children }: { active: boolean, onClick: ()
 
 // ─── Settings Panel ───────────────────────────────────────────────────────────
 
-function CourseSettingsPanel({ communityId, course }: StudioCourseEditorProps) {
+function CourseSettingsPanel({ communityId, communitySlug, course }: StudioCourseEditorProps) {
+  const router = useRouter();
   const [title, setTitle] = useState(course.title);
   const [description, setDescription] = useState(course.description || '');
   const [imageUrl, setImageUrl] = useState(course.image_url || '');
   const [isPublished, setIsPublished] = useState(course.is_published);
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [saveMsg, setSaveMsg] = useState<string | null>(null);
+
+  async function performDelete() {
+    setActionError(null);
+    setIsDeleting(true);
+    try {
+      await deleteCourse(course.id, communityId);
+      router.push(`/c/${communitySlug}/courses`);
+    } catch {
+      setActionError('Could not delete the course. Please try again.');
+      setConfirmOpen(false);
+      setIsDeleting(false);
+    }
+  }
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -144,8 +167,8 @@ function CourseSettingsPanel({ communityId, course }: StudioCourseEditorProps) {
       if (res.ok && res.url) {
         setImageUrl(res.url);
       }
-    } catch (err) {
-      console.error('Upload failed', err);
+    } catch {
+      setActionError('Image upload failed. Please try again.');
     } finally {
       setIsUploading(false);
     }
@@ -153,6 +176,8 @@ function CourseSettingsPanel({ communityId, course }: StudioCourseEditorProps) {
 
   async function handleSave() {
     setIsSaving(true);
+    setActionError(null);
+    setSaveMsg(null);
     try {
       await updateCourse(course.id, communityId, {
         title,
@@ -160,10 +185,9 @@ function CourseSettingsPanel({ communityId, course }: StudioCourseEditorProps) {
         imageUrl,
         isPublished
       });
-      alert('Course saved!');
-    } catch (err) {
-      console.error('Failed to save course', err);
-      alert('Failed to save course');
+      setSaveMsg('All changes saved.');
+    } catch {
+      setActionError('Could not save changes. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -279,38 +303,206 @@ function CourseSettingsPanel({ communityId, course }: StudioCourseEditorProps) {
       >
         {isSaving ? 'Saving...' : <><Save size={18} /> Save Changes</>}
       </button>
+
+      {saveMsg && (
+        <p style={{ margin: '-12px 0 0', fontSize: 13, fontWeight: 600, color: 'oklch(0.50 0.15 150)' }}>{saveMsg}</p>
+      )}
+      {actionError && (
+        <ErrorBanner message={actionError} onDismiss={() => setActionError(null)} />
+      )}
+
+      {/* Danger zone — destructive, hard-confirmed, visually separated. */}
+      <div style={{
+        marginTop: 16,
+        padding: 20,
+        borderRadius: 12,
+        border: '1px solid oklch(0.88 0.06 25)',
+        background: 'oklch(0.985 0.01 25)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 16,
+        flexWrap: 'wrap',
+      }}>
+        <div style={{ minWidth: 0 }}>
+          <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'oklch(0.40 0.16 25)' }}>Delete course</p>
+          <p style={{ margin: '2px 0 0', fontSize: 13, color: 'oklch(0.50 0.06 25)', lineHeight: 1.5 }}>
+            Permanently removes this course and all of its modules and lessons.
+          </p>
+        </div>
+        <button
+          onClick={() => { setActionError(null); setConfirmOpen(true); }}
+          disabled={isDeleting}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '10px 16px',
+            borderRadius: 10,
+            background: 'oklch(0.55 0.20 25)',
+            color: '#fff',
+            border: 'none',
+            fontSize: 14,
+            fontWeight: 700,
+            cursor: isDeleting ? 'default' : 'pointer',
+            opacity: isDeleting ? 0.7 : 1,
+            flexShrink: 0,
+            fontFamily: 'inherit',
+          }}
+        >
+          <Trash2 size={16} /> {isDeleting ? 'Deleting…' : 'Delete Course'}
+        </button>
+      </div>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete course?"
+        message={`This permanently removes "${course.title}" and all of its modules and lessons. This cannot be undone.`}
+        confirmLabel="Delete Course"
+        busy={isDeleting}
+        onConfirm={performDelete}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }
 
 // ─── Curriculum Panel ─────────────────────────────────────────────────────────
 
+type ModuleT = CourseWithModules['modules'][number];
+type LessonT = ModuleT['lessons'][number];
+
+type OptimisticAction =
+  | { type: 'addModule'; module: ModuleT }
+  | { type: 'deleteModule'; moduleId: string }
+  | { type: 'addLesson'; moduleId: string; lesson: LessonT }
+  | { type: 'deleteLesson'; moduleId: string; lessonId: string };
+
+function curriculumReducer(state: ModuleT[], action: OptimisticAction): ModuleT[] {
+  switch (action.type) {
+    case 'addModule':
+      return [...state, action.module];
+    case 'deleteModule':
+      return state.filter((m) => m.id !== action.moduleId);
+    case 'addLesson':
+      return state.map((m) =>
+        m.id === action.moduleId ? { ...m, lessons: [...m.lessons, action.lesson] } : m,
+      );
+    case 'deleteLesson':
+      return state.map((m) =>
+        m.id === action.moduleId
+          ? { ...m, lessons: m.lessons.filter((l) => l.id !== action.lessonId) }
+          : m,
+      );
+    default:
+      return state;
+  }
+}
+
 function CurriculumPanel({ communityId, course, onEditLesson }: StudioCourseEditorProps & { onEditLesson: (lesson: any) => void }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  // Pending destructive action awaiting confirmation in the in-app dialog.
+  const [confirmTarget, setConfirmTarget] = useState<
+    | { kind: 'module'; moduleId: string }
+    | { kind: 'lesson'; moduleId: string; lessonId: string }
+    | null
+  >(null);
+  // Optimistic overlay on top of the server-rendered modules. After each
+  // server action completes we router.refresh(); the transition stays pending
+  // until fresh props arrive, at which point the optimistic state resets to the
+  // real data. On failure we surface an inline message and refresh to snap back.
+  const [optimisticModules, applyOptimistic] = useOptimistic(course.modules, curriculumReducer);
 
-  async function handleAddModule() {
+  function handleAddModule() {
+    const tempModule = {
+      id: `temp-${crypto.randomUUID()}`,
+      title: 'Untitled Module',
+      position: optimisticModules.length,
+      lessons: [],
+    } as unknown as ModuleT;
     startTransition(async () => {
+      applyOptimistic({ type: 'addModule', module: tempModule });
       try {
-        await createModule({
-          courseId: course.id,
-          title: 'Untitled Module',
-          position: course.modules.length
-        }, communityId);
-        router.refresh();
-      } catch (err) {
-        console.error('Failed to create module', err);
+        await createModule({ courseId: course.id, title: 'Untitled Module', position: optimisticModules.length }, communityId);
+      } catch {
+        setError('Could not add the module. Please try again.');
       }
+      router.refresh();
     });
+  }
+
+  function performDeleteModule(moduleId: string) {
+    startTransition(async () => {
+      applyOptimistic({ type: 'deleteModule', moduleId });
+      try {
+        await deleteModule(moduleId, communityId, course.id);
+      } catch {
+        setError('Could not delete the module. Please try again.');
+      }
+      router.refresh();
+    });
+  }
+
+  function handleAddLesson(moduleId: string, position: number) {
+    const tempLesson = {
+      id: `temp-${crypto.randomUUID()}`,
+      title: 'Untitled Lesson',
+      position,
+      is_published: false,
+      video_url: null,
+    } as unknown as LessonT;
+    startTransition(async () => {
+      applyOptimistic({ type: 'addLesson', moduleId, lesson: tempLesson });
+      try {
+        await createLesson({ moduleId, title: 'Untitled Lesson', position }, communityId, course.id);
+      } catch {
+        setError('Could not add the lesson. Please try again.');
+      }
+      router.refresh();
+    });
+  }
+
+  function performDeleteLesson(moduleId: string, lessonId: string) {
+    startTransition(async () => {
+      applyOptimistic({ type: 'deleteLesson', moduleId, lessonId });
+      try {
+        await deleteLesson(lessonId, communityId, course.id);
+      } catch {
+        setError('Could not delete the lesson. Please try again.');
+      }
+      router.refresh();
+    });
+  }
+
+  // Trash buttons request confirmation; the dialog performs the delete.
+  function requestDeleteModule(moduleId: string) {
+    setError(null);
+    setConfirmTarget({ kind: 'module', moduleId });
+  }
+
+  function requestDeleteLesson(moduleId: string, lessonId: string) {
+    setError(null);
+    setConfirmTarget({ kind: 'lesson', moduleId, lessonId });
+  }
+
+  function handleConfirmDelete() {
+    const target = confirmTarget;
+    setConfirmTarget(null);
+    if (!target) return;
+    if (target.kind === 'module') performDeleteModule(target.moduleId);
+    else performDeleteLesson(target.moduleId, target.lessonId);
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {course.modules.length === 0 ? (
-        <div style={{ 
-          padding: '60px 20px', 
-          textAlign: 'center', 
-          border: '2px dashed oklch(0.92 0.01 250)', 
+      {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
+      {optimisticModules.length === 0 ? (
+        <div style={{
+          padding: '60px 20px',
+          textAlign: 'center',
+          border: '2px dashed oklch(0.92 0.01 250)',
           borderRadius: 16,
           background: 'oklch(0.99 0.002 250)'
         }}>
@@ -318,7 +510,7 @@ function CurriculumPanel({ communityId, course, onEditLesson }: StudioCourseEdit
           <p style={{ color: 'oklch(0.55 0.02 250)', fontSize: 14, margin: '0 0 24px' }}>
             Start by adding your first module.
           </p>
-          <button 
+          <button
             onClick={handleAddModule}
             style={primaryBtnStyle}
           >
@@ -328,11 +520,21 @@ function CurriculumPanel({ communityId, course, onEditLesson }: StudioCourseEdit
       ) : (
         <>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {course.modules.map((module) => (
-              <ModuleItem key={module.id} module={module} communityId={communityId} courseId={course.id} onEditLesson={onEditLesson} />
+            {optimisticModules.map((module) => (
+              <ModuleItem
+                key={module.id}
+                module={module}
+                communityId={communityId}
+                courseId={course.id}
+                onEditLesson={onEditLesson}
+                onDeleteModule={requestDeleteModule}
+                onAddLesson={handleAddLesson}
+                onDeleteLesson={requestDeleteLesson}
+                onError={setError}
+              />
             ))}
           </div>
-          <button 
+          <button
             onClick={handleAddModule}
             style={{ ...primaryBtnStyle, alignSelf: 'flex-start', background: 'transparent', border: '1px solid oklch(0.90 0.01 250)', color: '#111' }}
           >
@@ -340,11 +542,33 @@ function CurriculumPanel({ communityId, course, onEditLesson }: StudioCourseEdit
           </button>
         </>
       )}
+
+      <ConfirmDialog
+        open={confirmTarget !== null}
+        title={confirmTarget?.kind === 'lesson' ? 'Delete lesson?' : 'Delete module?'}
+        message={
+          confirmTarget?.kind === 'lesson'
+            ? 'This permanently removes the lesson and its content. This cannot be undone.'
+            : 'This permanently removes the module and every lesson inside it. This cannot be undone.'
+        }
+        confirmLabel={confirmTarget?.kind === 'lesson' ? 'Delete Lesson' : 'Delete Module'}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirmTarget(null)}
+      />
     </div>
   );
 }
 
-function ModuleItem({ module, communityId, courseId, onEditLesson }: { module: CourseWithModules['modules'][0], communityId: string, courseId: string, onEditLesson: (lesson: any) => void }) {
+function ModuleItem({ module, communityId, courseId, onEditLesson, onDeleteModule, onAddLesson, onDeleteLesson, onError }: {
+  module: ModuleT,
+  communityId: string,
+  courseId: string,
+  onEditLesson: (lesson: any) => void,
+  onDeleteModule: (moduleId: string) => void,
+  onAddLesson: (moduleId: string, position: number) => void,
+  onDeleteLesson: (moduleId: string, lessonId: string) => void,
+  onError: (message: string) => void,
+}) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(module.title);
@@ -361,37 +585,16 @@ function ModuleItem({ module, communityId, courseId, onEditLesson }: { module: C
         await updateModule(module.id, { title }, communityId, courseId);
         setIsEditing(false);
         router.refresh();
-      } catch (err) {
-        console.error(err);
+      } catch {
+        setTitle(module.title);
+        setIsEditing(false);
+        onError('Could not rename the module. Please try again.');
       }
     });
   }
 
-  async function handleDelete() {
-    if (!confirm('Are you sure? All lessons in this module will be deleted.')) return;
-    startTransition(async () => {
-      try {
-        await deleteModule(module.id, communityId, courseId);
-        router.refresh();
-      } catch (err) {
-        console.error(err);
-      }
-    });
-  }
-
-  async function handleAddLesson() {
-    startTransition(async () => {
-      try {
-        await createLesson({
-          moduleId: module.id,
-          title: 'Untitled Lesson',
-          position: module.lessons.length
-        }, communityId, courseId);
-        router.refresh();
-      } catch (err) {
-        console.error(err);
-      }
-    });
+  function handleAddLesson() {
+    onAddLesson(module.id, module.lessons.length);
   }
 
   return (
@@ -427,7 +630,7 @@ function ModuleItem({ module, communityId, courseId, onEditLesson }: { module: C
           <IconButton onClick={() => setIsExpanded(!isExpanded)} title={isExpanded ? 'Collapse' : 'Expand'}>
             {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </IconButton>
-          <IconButton onClick={handleDelete} title="Delete Module" danger>
+          <IconButton onClick={() => onDeleteModule(module.id)} title="Delete Module" danger>
             <Trash2 size={16} />
           </IconButton>
         </div>
@@ -436,7 +639,15 @@ function ModuleItem({ module, communityId, courseId, onEditLesson }: { module: C
       {isExpanded && (
         <div style={{ padding: '8px 0' }}>
           {module.lessons.map((lesson) => (
-            <LessonItem key={lesson.id} lesson={lesson} communityId={communityId} courseId={courseId} onEdit={onEditLesson} />
+            <LessonItem
+              key={lesson.id}
+              lesson={lesson}
+              communityId={communityId}
+              courseId={courseId}
+              onEdit={onEditLesson}
+              onDelete={() => onDeleteLesson(module.id, lesson.id)}
+              onError={onError}
+            />
           ))}
           <button
             onClick={handleAddLesson}
@@ -465,29 +676,21 @@ function ModuleItem({ module, communityId, courseId, onEditLesson }: { module: C
   );
 }
 
-function LessonItem({ lesson, communityId, courseId, onEdit }: { lesson: any, communityId: string, courseId: string, onEdit: (lesson: any) => void }) {
+function LessonItem({ lesson, communityId, courseId, onEdit, onDelete, onError }: { lesson: any, communityId: string, courseId: string, onEdit: (lesson: any) => void, onDelete: () => void, onError: (message: string) => void }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
-
-  async function handleDelete() {
-    if (!confirm('Delete this lesson?')) return;
-    startTransition(async () => {
-      try {
-        await deleteLesson(lesson.id, communityId, courseId);
-        router.refresh();
-      } catch (err) {
-        console.error(err);
-      }
-    });
-  }
+  const [quizOpen, setQuizOpen] = useState(false);
+  // Temp (optimistic) lessons aren't persisted yet, so quiz authoring — which
+  // writes against a real lesson id — must wait until the row reconciles.
+  const isTemp = typeof lesson.id === 'string' && lesson.id.startsWith('temp-');
 
   async function togglePublish() {
     startTransition(async () => {
       try {
         await updateLesson(lesson.id, { isPublished: !lesson.is_published }, communityId, courseId);
         router.refresh();
-      } catch (err) {
-        console.error(err);
+      } catch {
+        onError('Could not update the lesson. Please try again.');
       }
     });
   }
@@ -531,16 +734,33 @@ function LessonItem({ lesson, communityId, courseId, onEdit }: { lesson: any, co
       </div>
 
       <div style={{ display: 'flex', gap: 6 }}>
+        {!isTemp && (
+          <IconButton onClick={() => setQuizOpen(true)} title="Manage Quiz">
+            <ListChecks size={16} />
+          </IconButton>
+        )}
         <IconButton onClick={togglePublish} title={lesson.is_published ? 'Unpublish' : 'Publish'}>
           {lesson.is_published ? <Eye size={16} /> : <EyeOff size={16} />}
         </IconButton>
         <IconButton onClick={() => onEdit(lesson)} title="Edit Lesson">
           <Edit2 size={16} />
         </IconButton>
-        <IconButton onClick={handleDelete} title="Delete Lesson" danger>
+        <IconButton onClick={onDelete} title="Delete Lesson" danger>
           <Trash2 size={16} />
         </IconButton>
       </div>
+
+      {quizOpen && (
+        <QuizEditorModal
+          communityId={communityId}
+          courseId={courseId}
+          lessonId={lesson.id}
+          lessonTitle={lesson.title}
+          isOpen={quizOpen}
+          onClose={() => setQuizOpen(false)}
+          onSaved={() => router.refresh()}
+        />
+      )}
     </div>
   );
 }
@@ -572,6 +792,38 @@ function IconButton({ children, onClick, title, danger = false }: { children: Re
     >
       {children}
     </button>
+  );
+}
+
+// ─── Inline error banner ──────────────────────────────────────────────────────
+// Replaces alert()/console.error for recoverable failures — dismissible, in-flow.
+
+function ErrorBanner({ message, onDismiss }: { message: string; onDismiss: () => void }) {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12,
+      padding: '12px 16px',
+      borderRadius: 12,
+      background: 'oklch(0.96 0.03 25)',
+      border: '1px solid oklch(0.88 0.06 25)',
+      color: 'oklch(0.40 0.16 25)',
+      fontSize: 13,
+      fontWeight: 600,
+    }}>
+      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <AlertTriangle size={16} /> {message}
+      </span>
+      <button
+        onClick={onDismiss}
+        title="Dismiss"
+        style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'inherit', display: 'flex', flexShrink: 0 }}
+      >
+        <X size={16} />
+      </button>
+    </div>
   );
 }
 

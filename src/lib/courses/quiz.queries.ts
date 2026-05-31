@@ -7,6 +7,8 @@ import type {
   QuizQuestion,
   QuizAnswerBreakdown,
   QuizAttemptResult,
+  EditableQuiz,
+  EditableQuizQuestion,
 } from './quiz.types';
 
 // ─── getQuiz ──────────────────────────────────────────────────────────────────
@@ -101,6 +103,83 @@ export async function getQuiz(
     passScore: quiz.pass_score,
     createdAt: quiz.created_at,
     updatedAt: quiz.updated_at,
+    questions,
+  };
+}
+
+// ─── getQuizForEdit ───────────────────────────────────────────────────────────
+// Admin-only authoring view of a lesson's quiz. Unlike getQuiz, this INCLUDES
+// correct_id so the builder can show and edit the right answer. Returns null
+// when no quiz exists yet, or when the caller is not an admin+ of the community
+// (defense in depth — RLS also gates the writes that follow).
+
+export async function getQuizForEdit(
+  supabase: SupabaseClient<Database>,
+  lessonId: string,
+): Promise<EditableQuiz | null> {
+  // Resolve lesson → module → course → community for the admin gate.
+  const { data: lesson, error: lessonErr } = await supabase
+    .from('lessons')
+    .select('module_id')
+    .eq('id', lessonId)
+    .maybeSingle();
+  if (lessonErr) throw new Error(lessonErr.message);
+  if (!lesson) return null;
+
+  const { data: mod, error: modErr } = await supabase
+    .from('modules')
+    .select('course_id')
+    .eq('id', lesson.module_id)
+    .maybeSingle();
+  if (modErr) throw new Error(modErr.message);
+  if (!mod) return null;
+
+  const { data: courseRow, error: courseErr } = await supabase
+    .from('courses')
+    .select('community_id')
+    .eq('id', mod.course_id)
+    .maybeSingle();
+  if (courseErr) throw new Error(courseErr.message);
+  if (!courseRow) return null;
+
+  const { data: hasRole, error: roleErr } = await supabase.rpc('user_has_min_role', {
+    p_community_id: courseRow.community_id,
+    p_min_role: 'admin',
+  });
+  if (roleErr) throw new Error(roleErr.message);
+  if (!hasRole) return null;
+
+  const { data: quiz, error: quizErr } = await supabase
+    .from('quizzes')
+    .select('*')
+    .eq('lesson_id', lessonId)
+    .maybeSingle();
+  if (quizErr) throw new Error(quizErr.message);
+  if (!quiz) return null;
+
+  const { data: questionRows, error: questionsErr } = await supabase
+    .from('quiz_questions')
+    .select('id, body, options, correct_id, position')
+    .eq('quiz_id', quiz.id)
+    .order('position', { ascending: true });
+  if (questionsErr) throw new Error(questionsErr.message);
+
+  const questions: EditableQuizQuestion[] = (questionRows ?? []).map((row) => {
+    const rawOptions = row.options as { id: string; text: string }[];
+    return {
+      id: row.id,
+      body: row.body,
+      correctId: row.correct_id,
+      position: row.position,
+      options: rawOptions.map(({ id, text }) => ({ id, text })),
+    };
+  });
+
+  return {
+    id: quiz.id,
+    lessonId: quiz.lesson_id,
+    title: quiz.title,
+    passScore: quiz.pass_score,
     questions,
   };
 }

@@ -226,8 +226,8 @@ export default function FeedClient({
   }
 
   async function handleVote(postId: string, optionId: string) {
-    // For now, we'll just call the server action and revalidate
-    // SOTA would have optimistic vote counting, but let's start with reliable first
+    // Call the server action and revalidate. Optimistic vote counting could
+    // come later; reliability first.
     try {
       await voteInPoll(postId, optionId, communitySlug, spaceId);
     } catch (err) {

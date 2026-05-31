@@ -22,6 +22,9 @@ import {
   enrollInCourse as libEnrollInCourse,
   completeLesson as libCompleteLesson,
   submitQuiz as libSubmitQuiz,
+  saveQuiz as libSaveQuiz,
+  deleteQuiz as libDeleteQuiz,
+  getQuizForEdit as libGetQuizForEdit,
   issueCertificate as libIssueCertificate,
 } from '../../lib/courses';
 import type {
@@ -33,6 +36,8 @@ import type {
   UpdateLessonInput,
   SubmitQuizInput,
   QuizAttemptResult,
+  SaveQuizInput,
+  EditableQuiz,
   Certificate,
 } from '../../lib/courses';
 
@@ -229,4 +234,39 @@ export async function submitQuiz(input: SubmitQuizInput): Promise<QuizAttemptRes
     revalidateTag(`course-progress-${enrollment.course_id}`);
   }
   return result;
+}
+
+// ─── Quiz authoring wrappers ──────────────────────────────────────────────────
+
+// Loads the admin-only editable quiz (correct answers included) for a lesson.
+// Returns null when no quiz exists yet or the caller isn't an admin+.
+export async function loadQuizForEdit(lessonId: string): Promise<EditableQuiz | null> {
+  await requireUser();
+  const supabase = await getSupabaseServerClient();
+  return libGetQuizForEdit(supabase, lessonId);
+}
+
+export async function saveQuiz(
+  input: SaveQuizInput,
+  communityId: string,
+  courseId: string,
+): Promise<{ quizId: string }> {
+  await requireUser();
+  const result = await libSaveQuiz(input);
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}/courses/${courseId}`);
+  revalidatePath(`/c/${slug}/courses/${courseId}/${input.lessonId}`);
+  return result;
+}
+
+export async function deleteQuiz(
+  lessonId: string,
+  communityId: string,
+  courseId: string,
+): Promise<void> {
+  await requireUser();
+  await libDeleteQuiz(lessonId);
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}/courses/${courseId}`);
+  revalidatePath(`/c/${slug}/courses/${courseId}/${lessonId}`);
 }

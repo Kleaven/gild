@@ -252,19 +252,19 @@ export function GlobalBilling({ user }: Props) {
       {/* Pricing Grid */}
       <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 20 }}>Change your plan</h3>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-        <PricingCard 
-          name="Hobby" 
-          price="$29" 
-          features={['Create 1 Community', 'Up to 100 Members', '4% Platform Fees', 'Basic Customization']}
+        <PricingCard
+          name="Hobby"
+          price="$29"
+          features={['Up to 100 members', 'Unlimited spaces & courses', 'Custom logo & theme', '0% transaction fees']}
           active={user.plan === 'hobby'}
           onSelect={() => handlePlanAction('hobby')}
           disabled={isPending}
         />
-        <PricingCard 
-          name="Pro" 
-          price="$59" 
+        <PricingCard
+          name="Pro"
+          price="$59"
           recommended
-          features={['Create 5 Communities', 'Unlimited Members', '0% Platform Fees', 'SOTA Branding', 'Admin Roles']}
+          features={['Unlimited members', 'Unlimited spaces & courses', 'Custom logo & theme', '0% transaction fees', 'Priority support']}
           active={user.plan === 'pro'}
           onSelect={() => handlePlanAction('pro')}
           disabled={isPending}

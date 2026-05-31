@@ -66,3 +66,42 @@ export type QuizAttemptResult = {
   correctCount: number;
   breakdown: QuizAnswerBreakdown[];
 };
+
+// ─── Authoring types (admin-only; correct answer IS included) ─────────────────
+// Distinct from the display types above: getQuiz strips correct_id for learners,
+// but the quiz builder must round-trip it so the creator can see and change the
+// right answer.
+
+export type EditableQuizOption = {
+  id: string;
+  text: string;
+};
+
+export type EditableQuizQuestion = {
+  id: string; // existing question id, or a client temp id for unsaved rows
+  body: string;
+  options: EditableQuizOption[];
+  correctId: string; // id of the option marked correct
+  position: number;
+};
+
+export type EditableQuiz = {
+  id: string;
+  lessonId: string;
+  title: string;
+  passScore: number;
+  questions: EditableQuizQuestion[];
+};
+
+// Full-quiz upsert payload. saveQuiz replaces the entire question set in one
+// shot — simpler and race-free for an editor that always submits complete state.
+export type SaveQuizInput = {
+  lessonId: string;
+  title: string;
+  passScore: number;
+  questions: {
+    body: string;
+    options: { id: string; text: string }[];
+    correctId: string;
+  }[];
+};
