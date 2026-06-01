@@ -185,7 +185,6 @@ export function StudioLessonPlayer({
                 animation: justCompleted ? 'gild-pop 0.5s cubic-bezier(0.22, 1, 0.36, 1)' : undefined,
               }}
             >
-              {justCompleted && <Confetti />}
               <span>✓</span> {justCompleted ? 'Lesson complete!' : 'Completed'}
             </div>
           ) : hideManualComplete ? (

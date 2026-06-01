@@ -72,11 +72,15 @@ export default async function LessonPage({ params }: Props) {
   const enrollment = await getEnrollment(supabase, courseId);
   const isEnrolled = enrollment !== null;
   const progressRows = isEnrolled ? await getLessonProgress(supabase, courseId) : [];
-  const isCompleted = progressRows.some((p) => p.lesson_id === lessonId);
+  const isCompleted = progressRows.some(
+    (p) => p.lesson_id === lessonId && p.completed_at !== null,
+  );
 
   // Sequential unlock enforcement — block opening a lesson whose module is
   // still locked behind an incomplete earlier module. Admins bypass.
-  const completedLessonIds = new Set(progressRows.map((p) => p.lesson_id));
+  const completedLessonIds = new Set(
+    progressRows.filter((p) => p.completed_at !== null).map((p) => p.lesson_id),
+  );
   const access = computeCourseAccess(course, completedLessonIds, isAdminOrOwner);
   if (!isAdminOrOwner && !access.unlockedLessonIds.has(lessonId)) {
     redirect(`/c/${slug}/courses/${courseId}`);

@@ -50,7 +50,11 @@ export default async function CourseDetailPage({ params }: Props) {
   const certificate = isEnrolled ? await getCertificate(supabase, courseId) : null;
 
   // Sequential unlock: later modules stay locked until earlier ones are done.
-  const completedLessonIds = new Set(progressRows.map((p) => p.lesson_id));
+  // A progress row only counts when actually completed (completed_at set) —
+  // never assume "row exists" means done.
+  const completedLessonIds = new Set(
+    progressRows.filter((p) => p.completed_at !== null).map((p) => p.lesson_id),
+  );
   const access = computeCourseAccess(course, completedLessonIds, isAdminOrOwner);
 
   async function enrollAction() {
