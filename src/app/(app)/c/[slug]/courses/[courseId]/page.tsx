@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getSupabaseServerClient } from '@/lib/auth/server';
 import { getCommunityContextBySlug } from '@/lib/community/context';
-import { getCourse, getEnrollment, enrollInCourse, getLessonProgress } from '@/lib/courses';
+import { getCourse, getEnrollment, enrollInCourse, getLessonProgress, computeCourseAccess } from '@/lib/courses';
 import { getCertificate } from '@/lib/courses/certificate.queries';
 import { issueCertificate } from '@/lib/courses/certificate.actions';
 import { StudioCourseDetail } from '@/components/StudioCourseDetail';
@@ -49,6 +49,10 @@ export default async function CourseDetailPage({ params }: Props) {
   const completedLessonsCount = progressRows.length;
   const certificate = isEnrolled ? await getCertificate(supabase, courseId) : null;
 
+  // Sequential unlock: later modules stay locked until earlier ones are done.
+  const completedLessonIds = new Set(progressRows.map((p) => p.lesson_id));
+  const access = computeCourseAccess(course, completedLessonIds, isAdminOrOwner);
+
   async function enrollAction() {
     'use server';
     await enrollInCourse(courseId);
@@ -75,6 +79,9 @@ export default async function CourseDetailPage({ params }: Props) {
       isAdminOrOwner={isAdminOrOwner}
       completedLessonsCount={completedLessonsCount}
       hasCertificate={!!certificate}
+      moduleAccess={access.modules}
+      unlockedLessonIds={Array.from(access.unlockedLessonIds)}
+      courseComplete={access.courseComplete}
       enrollAction={enrollAction}
       claimCertificateAction={claimCertificateAction}
     />

@@ -23,6 +23,9 @@ export {
   completeLesson,
 } from './actions';
 
+export { computeCourseAccess } from './progress';
+export type { CourseAccess, ModuleAccess } from './progress';
+
 export { getQuiz, getQuizResult, getQuizForEdit } from './quiz.queries';
 
 export { submitQuiz, saveQuiz, deleteQuiz } from './quiz.actions';

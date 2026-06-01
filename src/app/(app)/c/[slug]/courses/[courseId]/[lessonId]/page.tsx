@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getSupabaseServerClient } from '@/lib/auth/server';
 import { getCommunityContextBySlug } from '@/lib/community/context';
@@ -10,6 +10,7 @@ import {
   completeLesson,
   getQuiz,
   submitQuiz,
+  computeCourseAccess,
 } from '@/lib/courses';
 import { StudioLessonPlayer } from '@/components/StudioLessonPlayer';
 import type { QuizAnswer, QuizAttemptResult } from '@/lib/courses';
@@ -73,6 +74,17 @@ export default async function LessonPage({ params }: Props) {
   const progressRows = isEnrolled ? await getLessonProgress(supabase, courseId) : [];
   const isCompleted = progressRows.some((p) => p.lesson_id === lessonId);
 
+  // Sequential unlock enforcement — block opening a lesson whose module is
+  // still locked behind an incomplete earlier module. Admins bypass.
+  const completedLessonIds = new Set(progressRows.map((p) => p.lesson_id));
+  const access = computeCourseAccess(course, completedLessonIds, isAdminOrOwner);
+  if (!isAdminOrOwner && !access.unlockedLessonIds.has(lessonId)) {
+    redirect(`/c/${slug}/courses/${courseId}`);
+  }
+  const nextLocked = nextLesson
+    ? !isAdminOrOwner && !access.unlockedLessonIds.has(nextLesson.id)
+    : false;
+
   // Quiz: at most one per lesson (FK is one-to-one). Inline lookup avoids
   // touching the lib layer.
   let quiz: Awaited<ReturnType<typeof getQuiz>> | null = null;
@@ -90,6 +102,24 @@ export default async function LessonPage({ params }: Props) {
 
   const enrollmentId = enrollment?.id ?? null;
   const quizId = quiz?.id ?? null;
+
+  // A lesson with a quiz can only be completed by passing it — so we hide the
+  // manual "Mark complete" until the learner has a passing attempt. This is
+  // what makes module unlock mean "completed AND passed".
+  let quizPassed = false;
+  if (quizId && enrollmentId) {
+    const { data: passedAttempt } = await supabase
+      .from('quiz_attempts')
+      .select('id')
+      .eq('quiz_id', quizId)
+      .eq('enrollment_id', enrollmentId)
+      .eq('passed', true)
+      .limit(1)
+      .maybeSingle();
+    quizPassed = !!passedAttempt;
+  }
+  const hideManualComplete = !!quizId && !quizPassed;
+  const courseComplete = isEnrolled && access.courseComplete;
 
   async function completeAction() {
     'use server';
@@ -133,6 +163,9 @@ export default async function LessonPage({ params }: Props) {
       isEnrolled={isEnrolled}
       quiz={quiz}
       enrollmentId={enrollmentId}
+      hideManualComplete={hideManualComplete}
+      nextLocked={nextLocked}
+      courseComplete={courseComplete}
       completeAction={completeAction}
       submitQuizAction={submitQuizAction}
     />

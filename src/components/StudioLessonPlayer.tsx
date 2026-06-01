@@ -21,6 +21,9 @@ interface StudioLessonPlayerProps {
   isEnrolled: boolean;
   quiz: QuizWithQuestions | null;
   enrollmentId: string | null;
+  hideManualComplete?: boolean;
+  nextLocked?: boolean;
+  courseComplete?: boolean;
   completeAction: () => Promise<void>;
   submitQuizAction: (
     answersJson: string,
@@ -37,6 +40,9 @@ export function StudioLessonPlayer({
   isEnrolled,
   quiz,
   enrollmentId,
+  hideManualComplete = false,
+  nextLocked = false,
+  courseComplete = false,
   completeAction,
   submitQuizAction,
 }: StudioLessonPlayerProps) {
@@ -182,6 +188,17 @@ export function StudioLessonPlayer({
               {justCompleted && <Confetti />}
               <span>✓</span> {justCompleted ? 'Lesson complete!' : 'Completed'}
             </div>
+          ) : hideManualComplete ? (
+            <div
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: 'oklch(0.50 0.02 250)',
+                padding: '10px 0',
+              }}
+            >
+              Pass the quiz above to complete this lesson.
+            </div>
           ) : (
             <button
               type="button"
@@ -216,17 +233,81 @@ export function StudioLessonPlayer({
             ) : (
               <span style={navLinkStyle(true)}>← Previous</span>
             )}
-            {nextLesson ? (
+            {nextLesson && !nextLocked ? (
               <Link
                 href={`/c/${community.slug}/courses/${course.id}/${nextLesson.id}`}
                 style={navLinkStyle()}
               >
                 Next →
               </Link>
+            ) : nextLesson && nextLocked ? (
+              <span style={navLinkStyle(true)} title="Complete this module to unlock">
+                🔒 Next
+              </span>
             ) : (
               <span style={navLinkStyle(true)}>Next →</span>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Course-complete celebration — the finish-line moment. */}
+      {isEnrolled && courseComplete && (
+        <div
+          style={{
+            position: 'relative',
+            overflow: 'hidden',
+            marginTop: 24,
+            borderRadius: 16,
+            padding: '28px 24px',
+            textAlign: 'center',
+            background:
+              'linear-gradient(135deg, oklch(0.95 0.06 150), oklch(0.96 0.05 280))',
+            border: '1px solid oklch(0.85 0.08 150)',
+          }}
+        >
+          <Confetti />
+          <div style={{ fontSize: 40, lineHeight: 1, marginBottom: 8 }} aria-hidden>
+            🎉
+          </div>
+          <h2
+            style={{
+              fontFamily: GILD_FONTS.display,
+              fontSize: 26,
+              fontWeight: 800,
+              letterSpacing: '-0.03em',
+              margin: '0 0 6px',
+              color: 'oklch(0.30 0.10 150)',
+            }}
+          >
+            Course complete!
+          </h2>
+          <p
+            style={{
+              margin: '0 0 16px',
+              fontSize: 15,
+              color: 'oklch(0.40 0.06 150)',
+              fontWeight: 600,
+            }}
+          >
+            You finished every module of {course.title}. Congratulations!
+          </p>
+          <Link
+            href={`/c/${community.slug}/courses/${course.id}`}
+            style={{
+              display: 'inline-block',
+              padding: '10px 20px',
+              borderRadius: 14,
+              background: 'oklch(0.32 0.10 150)',
+              color: '#fff',
+              fontSize: 14,
+              fontWeight: 700,
+              textDecoration: 'none',
+              fontFamily: GILD_FONTS.sans,
+            }}
+          >
+            Back to course
+          </Link>
         </div>
       )}
     </div>

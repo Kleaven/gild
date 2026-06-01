@@ -3,7 +3,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { GILD_FONTS, CoverArt } from '@/components/gild';
-import type { CourseWithModules } from '@/lib/courses';
+import { Lock } from 'lucide-react';
+import type { CourseWithModules, ModuleAccess } from '@/lib/courses';
 
 interface StudioCourseDetailProps {
   community: {
@@ -16,6 +17,9 @@ interface StudioCourseDetailProps {
   isAdminOrOwner: boolean;
   completedLessonsCount?: number;
   hasCertificate?: boolean;
+  moduleAccess?: Record<string, ModuleAccess>;
+  unlockedLessonIds?: string[];
+  courseComplete?: boolean;
   enrollAction: () => Promise<void>;
   claimCertificateAction?: () => Promise<void>;
 }
@@ -27,9 +31,13 @@ export function StudioCourseDetail({
   isAdminOrOwner,
   completedLessonsCount = 0,
   hasCertificate = false,
+  moduleAccess = {},
+  unlockedLessonIds = [],
+  courseComplete = false,
   enrollAction,
   claimCertificateAction,
 }: StudioCourseDetailProps) {
+  const unlockedSet = React.useMemo(() => new Set(unlockedLessonIds), [unlockedLessonIds]);
   const publishedLessons = course.modules.reduce(
     (sum, m) => sum + m.lessons.filter((l) => l.is_published).length,
     0,
@@ -170,7 +178,7 @@ export function StudioCourseDetail({
                 }}
               >
                 <span style={{ fontSize: 16 }}>✓</span>
-                Enrolled
+                {courseComplete ? 'Completed' : 'In progress'}
               </div>
               {completedLessonsCount === publishedLessons && publishedLessons > 0 && !hasCertificate && claimCertificateAction && (
                 <form action={claimCertificateAction}>
@@ -230,7 +238,7 @@ export function StudioCourseDetail({
                   fontFamily: GILD_FONTS.sans,
                 }}
               >
-                Enroll in course
+                Start course
               </button>
             </form>
           )}
@@ -259,6 +267,46 @@ export function StudioCourseDetail({
         </div>
       </header>
 
+      {/* Course-complete celebration */}
+      {isEnrolled && courseComplete && (
+        <div
+          style={{
+            position: 'relative',
+            overflow: 'hidden',
+            borderRadius: 16,
+            padding: '24px 28px',
+            marginBottom: 24,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 16,
+            background: 'linear-gradient(135deg, oklch(0.95 0.06 150), oklch(0.96 0.05 280))',
+            border: '1px solid oklch(0.85 0.08 150)',
+          }}
+        >
+          <span style={{ fontSize: 36, lineHeight: 1 }} aria-hidden>
+            🎉
+          </span>
+          <div>
+            <h2
+              style={{
+                fontFamily: GILD_FONTS.display,
+                fontSize: 22,
+                fontWeight: 800,
+                letterSpacing: '-0.03em',
+                margin: '0 0 2px',
+                color: 'oklch(0.30 0.10 150)',
+              }}
+            >
+              Course complete!
+            </h2>
+            <p style={{ margin: 0, fontSize: 14, color: 'oklch(0.40 0.06 150)', fontWeight: 600 }}>
+              You finished every module of {course.title}. Nicely done.
+              {!hasCertificate && claimCertificateAction ? ' Claim your certificate above.' : ''}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Modules + Lessons */}
       {course.modules.length === 0 ? (
         <EmptyState isAdminOrOwner={isAdminOrOwner} />
@@ -273,6 +321,10 @@ export function StudioCourseDetail({
               const visibleLessons = isAdminOrOwner
                 ? module.lessons
                 : module.lessons.filter((l) => l.is_published);
+
+              const access = moduleAccess[module.id];
+              const moduleUnlocked = isAdminOrOwner || (access?.unlocked ?? true);
+              const moduleComplete = !isAdminOrOwner && (access?.complete ?? false);
 
               return (
                 <section
@@ -318,18 +370,72 @@ export function StudioCourseDetail({
                     >
                       {module.title}
                     </h2>
-                    <span
-                      style={{
-                        fontSize: 12,
-                        color: 'oklch(0.55 0.02 250)',
-                        fontFamily: GILD_FONTS.mono,
-                      }}
-                    >
-                      {visibleLessons.length}
-                    </span>
+                    {moduleComplete ? (
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 5,
+                          padding: '3px 9px',
+                          borderRadius: 999,
+                          fontSize: 11,
+                          fontWeight: 700,
+                          background: 'oklch(0.95 0.05 150)',
+                          color: 'oklch(0.40 0.12 150)',
+                        }}
+                      >
+                        ✓ Complete
+                      </span>
+                    ) : !moduleUnlocked ? (
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 5,
+                          padding: '3px 9px',
+                          borderRadius: 999,
+                          fontSize: 11,
+                          fontWeight: 700,
+                          background: 'oklch(0.95 0.005 250)',
+                          color: 'oklch(0.50 0.02 250)',
+                        }}
+                      >
+                        <Lock size={11} /> Locked
+                      </span>
+                    ) : (
+                      <span
+                        style={{
+                          fontSize: 12,
+                          color: 'oklch(0.55 0.02 250)',
+                          fontFamily: GILD_FONTS.mono,
+                        }}
+                      >
+                        {visibleLessons.length}
+                      </span>
+                    )}
                   </header>
 
-                  {visibleLessons.length === 0 ? (
+                  {!moduleUnlocked ? (
+                    <div
+                      style={{
+                        padding: '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        fontSize: 13,
+                        color: 'oklch(0.55 0.02 250)',
+                      }}
+                    >
+                      <Lock size={15} />
+                      <span>
+                        Complete the previous module to unlock{' '}
+                        {visibleLessons.length === 1
+                          ? 'this lesson'
+                          : `these ${visibleLessons.length} lessons`}
+                        .
+                      </span>
+                    </div>
+                  ) : visibleLessons.length === 0 ? (
                     <div
                       style={{
                         padding: '20px',
@@ -343,7 +449,8 @@ export function StudioCourseDetail({
                   ) : (
                     <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
                       {visibleLessons.map((lesson, lIdx) => {
-                        const canOpen = isEnrolled || isAdminOrOwner;
+                        const canOpen =
+                          isAdminOrOwner || (isEnrolled && unlockedSet.has(lesson.id));
                         const inner = (
                           <>
                             <span
