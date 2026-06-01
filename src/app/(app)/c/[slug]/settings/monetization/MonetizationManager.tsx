@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useTransition, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { GILD_FONTS } from '@/components/gild';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
-import { CreditCard, Plus, Pencil, Check, ExternalLink, RefreshCw } from 'lucide-react';
+import { CreditCard, Plus, Pencil, Check, ExternalLink, RefreshCw, GripVertical } from 'lucide-react';
 import type { ConnectStatus } from '@/lib/billing/connect';
 import type { Tier } from '@/lib/community/tiers';
 import {
@@ -13,6 +13,7 @@ import {
   createTierAction,
   updateTierAction,
   deactivateTierAction,
+  reorderTiersAction,
 } from '@/app/actions/monetization';
 
 interface Props {
@@ -37,6 +38,36 @@ export function MonetizationManager({ communityId, initialStatus, initialTiers }
 
   const connected = status.accountId !== null;
   const live = status.chargesEnabled;
+
+  // Drag-to-reorder: local order of active tiers, synced from server props.
+  const [orderedActive, setOrderedActive] = useState<Tier[]>(() => initialTiers.filter((t) => t.isActive));
+  useEffect(() => {
+    setOrderedActive(initialTiers.filter((t) => t.isActive));
+  }, [initialTiers]);
+  const dragId = useRef<string | null>(null);
+  const [reordering, setReordering] = useState(false);
+
+  function handleDrop(targetId: string) {
+    const src = dragId.current;
+    dragId.current = null;
+    if (!src || src === targetId) return;
+    const from = orderedActive.findIndex((t) => t.id === src);
+    const to = orderedActive.findIndex((t) => t.id === targetId);
+    if (from < 0 || to < 0) return;
+    const next = [...orderedActive];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved!);
+    setOrderedActive(next);
+    setError(null);
+    setReordering(true);
+    reorderTiersAction(communityId, next.map((t) => t.id))
+      .then(() => router.refresh())
+      .catch((e: unknown) => {
+        setError(e instanceof Error ? e.message : 'Could not save the new order.');
+        setOrderedActive(initialTiers.filter((t) => t.isActive));
+      })
+      .finally(() => setReordering(false));
+  }
 
   function handleConnect() {
     setError(null);
@@ -77,7 +108,6 @@ export function MonetizationManager({ communityId, initialStatus, initialTiers }
     });
   }
 
-  const activeTiers = initialTiers.filter((t) => t.isActive);
   const archivedTiers = initialTiers.filter((t) => !t.isActive);
 
   return (
@@ -171,33 +201,48 @@ export function MonetizationManager({ communityId, initialStatus, initialTiers }
           </button>
         </div>
 
-        {activeTiers.length === 0 ? (
+        {orderedActive.length === 0 ? (
           <p style={{ fontSize: 14, color: 'oklch(0.55 0.02 250)', margin: 0, padding: '12px 0' }}>
             No tiers yet. {connected ? 'Add your first tier to start monetizing.' : 'Connect a payout account, then add tiers.'}
           </p>
         ) : (
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {activeTiers.map((tier, i) => (
-              <li key={tier.id} style={tierRow}>
-                <span style={tierRank}>{i + 1}</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 700, fontSize: 15 }}>{tier.name}</div>
-                  {tier.description && (
-                    <div style={{ fontSize: 13, color: 'oklch(0.55 0.02 250)', marginTop: 2 }}>{tier.description}</div>
-                  )}
-                </div>
-                <div style={{ fontWeight: 800, fontSize: 15, fontFamily: GILD_FONTS.mono, whiteSpace: 'nowrap' }}>
-                  ${tier.priceMonthUsd}<span style={{ fontSize: 12, color: 'oklch(0.55 0.02 250)', fontWeight: 500 }}>/mo</span>
-                </div>
-                <button onClick={() => { setError(null); setEdit({ mode: 'edit', tier }); }} title="Edit tier" style={iconBtn}>
-                  <Pencil size={15} />
-                </button>
-                <button onClick={() => setConfirmTier(tier)} title="Archive tier" style={{ ...iconBtn, color: 'oklch(0.50 0.16 25)' }}>
-                  Archive
-                </button>
-              </li>
-            ))}
-          </ul>
+          <>
+            {orderedActive.length > 1 && (
+              <p style={{ fontSize: 12, color: 'oklch(0.55 0.02 250)', margin: '0 0 10px' }}>
+                Drag to reorder — top is the lowest tier; higher tiers unlock everything below.
+              </p>
+            )}
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 10, opacity: reordering ? 0.6 : 1 }}>
+              {orderedActive.map((tier, i) => (
+                <li
+                  key={tier.id}
+                  draggable={!reordering}
+                  onDragStart={() => { dragId.current = tier.id; }}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => handleDrop(tier.id)}
+                  style={{ ...tierRow, cursor: reordering ? 'default' : 'grab' }}
+                >
+                  <GripVertical size={16} color="oklch(0.75 0.01 250)" style={{ flexShrink: 0 }} />
+                  <span style={tierRank}>{i + 1}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: 15 }}>{tier.name}</div>
+                    {tier.description && (
+                      <div style={{ fontSize: 13, color: 'oklch(0.55 0.02 250)', marginTop: 2 }}>{tier.description}</div>
+                    )}
+                  </div>
+                  <div style={{ fontWeight: 800, fontSize: 15, fontFamily: GILD_FONTS.mono, whiteSpace: 'nowrap' }}>
+                    ${tier.priceMonthUsd}<span style={{ fontSize: 12, color: 'oklch(0.55 0.02 250)', fontWeight: 500 }}>/mo</span>
+                  </div>
+                  <button onClick={() => { setError(null); setEdit({ mode: 'edit', tier }); }} title="Edit tier" style={iconBtn}>
+                    <Pencil size={15} />
+                  </button>
+                  <button onClick={() => setConfirmTier(tier)} title="Archive tier" style={{ ...iconBtn, color: 'oklch(0.50 0.16 25)' }}>
+                    Archive
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
 
         {archivedTiers.length > 0 && (

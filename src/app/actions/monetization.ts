@@ -12,6 +12,7 @@ import {
   createTier,
   updateTier,
   deactivateTier,
+  reorderTiers,
   type Tier,
   type TierInput,
 } from '../../lib/community/tiers';
@@ -73,6 +74,15 @@ export async function updateTierAction(
 export async function deactivateTierAction(tierId: string, communityId: string): Promise<void> {
   const userId = await requireUser();
   await deactivateTier(tierId, communityId, userId);
+  await revalidateMonetization(communityId);
+}
+
+export async function reorderTiersAction(
+  communityId: string,
+  orderedActiveIds: string[],
+): Promise<void> {
+  const userId = await requireUser();
+  await reorderTiers(communityId, userId, orderedActiveIds);
   await revalidateMonetization(communityId);
 }
 

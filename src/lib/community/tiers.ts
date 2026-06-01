@@ -244,3 +244,48 @@ export async function deactivateTier(
     WHERE id = ${tierId} AND community_id = ${communityId}
   `;
 }
+
+// Renumbers tier positions to the given order of ACTIVE tiers (lowest first).
+// Archived tiers keep their relative order and are appended after. Done in a
+// transaction with a temp-offset pass so the UNIQUE (community_id, position)
+// constraint never trips mid-update.
+export async function reorderTiers(
+  communityId: string,
+  userId: string,
+  orderedActiveIds: string[],
+): Promise<void> {
+  await assertOwner(communityId, userId);
+
+  const all = await db<{ id: string; is_active: boolean }[]>`
+    SELECT id, is_active FROM public.membership_tiers
+    WHERE community_id = ${communityId}
+    ORDER BY position ASC
+  `;
+  const activeIds = all.filter((t) => t.is_active).map((t) => t.id);
+  const activeSet = new Set(activeIds);
+
+  if (
+    orderedActiveIds.length !== activeSet.size ||
+    !orderedActiveIds.every((id) => activeSet.has(id))
+  ) {
+    throw new Error('[gild] invalid tier order');
+  }
+
+  const archivedIds = all.filter((t) => !t.is_active).map((t) => t.id);
+  const finalOrder = [...orderedActiveIds, ...archivedIds];
+
+  await db.begin(async (sql) => {
+    for (let i = 0; i < finalOrder.length; i++) {
+      await sql`
+        UPDATE public.membership_tiers SET position = ${1000 + i}
+        WHERE id = ${finalOrder[i]!} AND community_id = ${communityId}
+      `;
+    }
+    for (let i = 0; i < finalOrder.length; i++) {
+      await sql`
+        UPDATE public.membership_tiers SET position = ${i}
+        WHERE id = ${finalOrder[i]!} AND community_id = ${communityId}
+      `;
+    }
+  });
+}
