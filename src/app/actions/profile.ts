@@ -55,19 +55,29 @@ export async function updateProfile(
   return { ok: true };
 }
 
+// Raster images only. SVG is intentionally excluded — it can carry inline
+// script and the avatars bucket is served publicly (stored-XSS vector).
+const AVATAR_MIME = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif']);
+const AVATAR_EXT = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif']);
+
 export async function uploadAvatar(formData: FormData): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
   const file = formData.get('file') as File;
   if (!file) return { ok: false, error: 'No file provided' };
 
-  // Basic validation
-  if (!file.type.startsWith('image/')) return { ok: false, error: 'File must be an image' };
   if (file.size > 2 * 1024 * 1024) return { ok: false, error: 'File too large (max 2MB)' };
+  if (!AVATAR_MIME.has(file.type)) {
+    return { ok: false, error: 'Use a JPG, PNG, GIF, WebP, or AVIF image.' };
+  }
+  const rawExt = file.name.split('.').pop()?.toLowerCase() ?? '';
+  const safeExt = rawExt.replace(/[^a-z0-9]/g, '');
+  if (!AVATAR_EXT.has(safeExt)) {
+    return { ok: false, error: 'Unsupported file extension.' };
+  }
 
   const { user } = await requireAuth();
   const supabase = await getSupabaseServerClient();
 
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+  const fileName = `${user.id}/${Date.now()}.${safeExt}`;
 
   const { error: uploadError } = await supabase.storage
     .from('avatars')
