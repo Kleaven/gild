@@ -240,6 +240,8 @@ export type Database = {
           role_permissions: Json
           search_vector: unknown
           slug: string
+          stripe_connect_account_id: string | null
+          stripe_connect_charges_enabled: boolean
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           subscription_status: string
@@ -270,6 +272,8 @@ export type Database = {
           role_permissions?: Json
           search_vector?: unknown
           slug: string
+          stripe_connect_account_id?: string | null
+          stripe_connect_charges_enabled?: boolean
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_status?: string
@@ -300,6 +304,8 @@ export type Database = {
           role_permissions?: Json
           search_vector?: unknown
           slug?: string
+          stripe_connect_account_id?: string | null
+          stripe_connect_charges_enabled?: boolean
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_status?: string
@@ -929,6 +935,7 @@ export type Database = {
           position: number
           price_month_usd: number
           stripe_price_id: string | null
+          stripe_product_id: string | null
           updated_at: string
         }
         Insert: {
@@ -941,6 +948,7 @@ export type Database = {
           position?: number
           price_month_usd: number
           stripe_price_id?: string | null
+          stripe_product_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -953,6 +961,7 @@ export type Database = {
           position?: number
           price_month_usd?: number
           stripe_price_id?: string | null
+          stripe_product_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1700,10 +1709,6 @@ export type Database = {
       delete_community: { Args: { p_community_id: string }; Returns: undefined }
       delete_post: { Args: { p_post_id: string }; Returns: undefined }
       enroll_in_course: { Args: { p_course_id: string }; Returns: string }
-      get_dm_thread: {
-        Args: { p_other_user_id: string; p_limit?: number }
-        Returns: Database["public"]["Tables"]["direct_messages"]["Row"][]
-      }
       get_certificate_by_token: {
         Args: { p_token: string }
         Returns: {
@@ -1712,6 +1717,35 @@ export type Database = {
           course_title: string
           issued_at: string
           recipient_name: string
+        }[]
+      }
+      get_dm_thread: {
+        Args: { p_limit?: number; p_other_user_id: string }
+        Returns: {
+          content: string
+          created_at: string
+          id: string
+          read_at: string | null
+          receiver_id: string
+          sender_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "direct_messages"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_reactions_for_targets: {
+        Args: {
+          p_target_ids: string[]
+          p_target_type: Database["public"]["Enums"]["vote_target_type"]
+        }
+        Returns: {
+          count: number
+          emoji: string
+          target_id: string
+          viewer_reacted: boolean
         }[]
       }
       has_platform_subscription: {
@@ -1742,18 +1776,6 @@ export type Database = {
           p_target_type: Database["public"]["Enums"]["vote_target_type"]
         }
         Returns: boolean
-      }
-      get_reactions_for_targets: {
-        Args: {
-          p_target_ids: string[]
-          p_target_type: Database["public"]["Enums"]["vote_target_type"]
-        }
-        Returns: {
-          target_id: string
-          emoji: string
-          count: number
-          viewer_reacted: boolean
-        }[]
       }
       transfer_community_ownership: {
         Args: { p_community_id: string; p_new_owner_id: string }

@@ -275,6 +275,21 @@ export function StudioSidebar({
           }}>
             Moderation
           </Link>
+          {currentUser.role === 'owner' && (
+            <Link href={`/c/${community.slug}/settings/monetization`} style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '5px 10px',
+              borderRadius: 6,
+              textDecoration: 'none',
+              fontSize: 14,
+              color: pathname.includes('/monetization') ? '#202020' : 'oklch(0.30 0.02 250)',
+              background: pathname.includes('/monetization') ? 'oklch(0.94 0.005 250)' : 'transparent',
+              fontWeight: pathname.includes('/monetization') ? 600 : 400,
+            }}>
+              Monetization
+            </Link>
+          )}
           <Link href={`/c/${community.slug}/settings`} style={{
             display: 'flex',
             alignItems: 'center',
@@ -282,11 +297,11 @@ export function StudioSidebar({
             borderRadius: 6,
             textDecoration: 'none',
             fontSize: 14,
-            color: pathname.includes('/settings') ? '#202020' : 'oklch(0.30 0.02 250)',
-            background: pathname.includes('/settings')
+            color: pathname.endsWith('/settings') ? '#202020' : 'oklch(0.30 0.02 250)',
+            background: pathname.endsWith('/settings')
               ? 'oklch(0.94 0.005 250)'
               : 'transparent',
-            fontWeight: pathname.includes('/settings') ? 600 : 400,
+            fontWeight: pathname.endsWith('/settings') ? 600 : 400,
           }}>
             Settings
           </Link>
