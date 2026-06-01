@@ -71,7 +71,7 @@ export async function createTierCheckout(
       mode: 'subscription',
       line_items: [{ price: tier.stripe_price_id, quantity: 1 }],
       customer_email: email,
-      success_url: `${appUrl}${safePath}?tier=success`,
+      success_url: `${appUrl}${safePath}?tier=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}${safePath}?tier=cancelled`,
       // 0% application fee — omitted entirely, creator keeps 100%.
       subscription_data: { metadata },
@@ -82,6 +82,53 @@ export async function createTierCheckout(
 
   if (!session.url) throw new Error('[gild] could not create checkout session');
   return { url: session.url };
+}
+
+// Confirms a completed Checkout on return from Stripe and grants the tier
+// immediately — so unlock never depends on connect-webhook timing/config.
+// Retrieves the session on the connected account, validates its metadata
+// belongs to this caller, and (if paid/active) assigns the tier. Idempotent.
+export async function confirmTierCheckout(
+  communityId: string,
+  sessionId: string,
+  userId: string,
+): Promise<boolean> {
+  const rows = await db<{ stripe_connect_account_id: string | null }[]>`
+    SELECT stripe_connect_account_id FROM public.communities WHERE id = ${communityId} LIMIT 1
+  `;
+  const account = rows[0]?.stripe_connect_account_id;
+  if (!account) return false;
+
+  let session: Stripe.Checkout.Session;
+  try {
+    session = await stripe.checkout.sessions.retrieve(
+      sessionId,
+      { expand: ['subscription'] },
+      { stripeAccount: account },
+    );
+  } catch {
+    return false; // unknown / wrong-account session id
+  }
+
+  const m = session.metadata ?? {};
+  if (m.kind !== SUB_KIND || m.communityId !== communityId || m.userId !== userId || !m.tierId) {
+    return false;
+  }
+
+  const sub = session.subscription;
+  const status = sub && typeof sub !== 'string' ? sub.status : null;
+  const subId = sub && typeof sub !== 'string' ? sub.id : null;
+  const active = session.payment_status === 'paid' || status === 'active' || status === 'trialing';
+  if (!active) return false;
+
+  await db`
+    UPDATE public.community_members
+    SET tier_id = ${m.tierId},
+        tier_status = ${status ?? 'active'},
+        stripe_subscription_id = ${subId}
+    WHERE community_id = ${communityId} AND user_id = ${userId}
+  `;
+  return true;
 }
 
 // ─── Connect webhook handlers ───────────────────────────────────────────────

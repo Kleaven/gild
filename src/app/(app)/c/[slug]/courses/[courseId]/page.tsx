@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache';
 import { getSupabaseServerClient } from '@/lib/auth/server';
 import { getCommunityContextBySlug } from '@/lib/community/context';
 import { getCourse, getEnrollment, enrollInCourse, getLessonProgress, computeCourseAccess, getCourseTierGating } from '@/lib/courses';
+import { confirmTierCheckout } from '@/lib/billing/member-subscription';
 import { getCertificate } from '@/lib/courses/certificate.queries';
 import { issueCertificate } from '@/lib/courses/certificate.actions';
 import { StudioCourseDetail } from '@/components/StudioCourseDetail';
@@ -11,10 +12,12 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 type Props = {
   params: Promise<{ slug: string; courseId: string }>;
+  searchParams: Promise<{ session_id?: string }>;
 };
 
-export default async function CourseDetailPage({ params }: Props) {
+export default async function CourseDetailPage({ params, searchParams }: Props) {
   const { slug, courseId } = await params;
+  const { session_id: checkoutSessionId } = await searchParams;
 
   if (!UUID_RE.test(courseId)) {
     notFound();
@@ -58,6 +61,17 @@ export default async function CourseDetailPage({ params }: Props) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Just returned from Stripe Checkout — confirm the subscription and grant the
+  // tier immediately, so the module unlocks without waiting on the webhook.
+  if (checkoutSessionId && user) {
+    try {
+      await confirmTierCheckout(communityId, checkoutSessionId, user.id);
+    } catch {
+      // Non-fatal — the connect webhook is the backstop.
+    }
+  }
+
   const tierGating = await getCourseTierGating(
     communityId,
     user?.id ?? null,
