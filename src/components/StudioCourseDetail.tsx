@@ -71,16 +71,24 @@ export function StudioCourseDetail({
           marginBottom: 24,
         }}
       >
-        <CoverArt
-          space={{
-            id: course.id,
-            name: course.title,
-            desc: course.description ?? '',
-            hue,
-          }}
-          height={220}
-          variant="rays"
-        />
+        {course.image_url ? (
+          <img
+            src={course.image_url}
+            alt={course.title}
+            style={{ width: '100%', height: 220, objectFit: 'cover', display: 'block' }}
+          />
+        ) : (
+          <CoverArt
+            space={{
+              id: course.id,
+              name: course.title,
+              desc: course.description ?? '',
+              hue,
+            }}
+            height={220}
+            variant="rays"
+          />
+        )}
       </div>
 
       {/* Header */}

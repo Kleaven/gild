@@ -155,16 +155,24 @@ function CourseCard({
       }}
     >
       <div style={{ position: 'relative' }}>
-        <CoverArt
-          space={{
-            id: course.id,
-            name: course.title,
-            desc: course.description ?? '',
-            hue,
-          }}
-          height={160}
-          variant={course.position % 3 === 0 ? 'rays' : course.position % 3 === 1 ? 'grid' : 'wash'}
-        />
+        {course.image_url ? (
+          <img
+            src={course.image_url}
+            alt={course.title}
+            style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }}
+          />
+        ) : (
+          <CoverArt
+            space={{
+              id: course.id,
+              name: course.title,
+              desc: course.description ?? '',
+              hue,
+            }}
+            height={160}
+            variant={course.position % 3 === 0 ? 'rays' : course.position % 3 === 1 ? 'grid' : 'wash'}
+          />
+        )}
         {!course.is_published && (
           <span
             style={{
