@@ -289,7 +289,11 @@ function TierEditor({
           {tier ? 'Edit tier' : 'New tier'}
         </h2>
         <label style={label}>Name</label>
-        <input value={name} onChange={(e) => setName(e.target.value)} maxLength={50} placeholder="e.g. Pro" style={input} />
+        <input value={name} onChange={(e) => setName(e.target.value)} maxLength={50} placeholder="Anything you like — e.g. Wise Elf, Inner Circle, Pro" style={input} />
+        <p style={{ fontSize: 12, color: 'oklch(0.55 0.02 250)', margin: '6px 0 0' }}>
+          Name it to fit your community. Tiers rank in the order you create them
+          (lowest first) — higher tiers unlock everything below.
+        </p>
         <label style={label}>Description <span style={{ fontWeight: 400, color: 'oklch(0.6 0.02 250)' }}>(optional)</span></label>
         <textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} rows={2} placeholder="What members get at this tier" style={{ ...input, resize: 'vertical' }} />
         <label style={label}>Price (USD / month)</label>
