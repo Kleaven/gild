@@ -254,6 +254,34 @@ export async function updateModule(moduleId: string, input: UpdateModuleInput): 
   if (error) throw new Error(error.message);
 }
 
+// Sets (or clears with null) the membership tier required to unlock a module.
+// Admin-gated; the tier must belong to the same community.
+export async function setModuleRequiredTier(
+  moduleId: string,
+  tierId: string | null,
+): Promise<void> {
+  const { communityId } = await resolveCommunityFromModule(moduleId);
+  await requireAdmin(communityId);
+
+  const supabase = await getSupabaseServerClient();
+  if (tierId) {
+    const { data: tier, error: tierErr } = await supabase
+      .from('membership_tiers')
+      .select('id')
+      .eq('id', tierId)
+      .eq('community_id', communityId)
+      .maybeSingle();
+    if (tierErr) throw new Error(tierErr.message);
+    if (!tier) throw new Error('[gild] tier not found for this community');
+  }
+
+  const { error } = await supabase
+    .from('modules')
+    .update({ min_tier_id: tierId })
+    .eq('id', moduleId);
+  if (error) throw new Error(error.message);
+}
+
 // Hard delete — modules table has no deleted_at column
 export async function deleteModule(moduleId: string): Promise<void> {
   const { communityId } = await resolveCommunityFromModule(moduleId);

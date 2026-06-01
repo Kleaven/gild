@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { getSupabaseServerClient } from '@/lib/auth/server';
 import { getCommunityContextBySlug } from '@/lib/community/context';
 import { getCourse } from '@/lib/courses';
+import { listTiers } from '@/lib/community/tiers';
 import { StudioCourseEditor } from '@/components/StudioCourseEditor';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -39,11 +40,14 @@ export default async function CourseManagePage({ params }: Props) {
     notFound(); // Only admins can manage courses
   }
 
+  const tiers = await listTiers(communityId); // active tiers for the paywall picker
+
   return (
     <StudioCourseEditor
       communityId={communityId}
       communitySlug={slug}
       course={course}
+      tiers={tiers.map((t) => ({ id: t.id, name: t.name, priceMonthUsd: t.priceMonthUsd }))}
     />
   );
 }

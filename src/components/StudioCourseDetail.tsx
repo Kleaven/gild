@@ -2,9 +2,11 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { GILD_FONTS, CoverArt } from '@/components/gild';
-import { Lock } from 'lucide-react';
+import { Lock, Sparkles } from 'lucide-react';
 import type { CourseWithModules, ModuleAccess } from '@/lib/courses';
+import { startTierCheckout } from '@/app/actions/monetization';
 
 interface StudioCourseDetailProps {
   community: {
@@ -38,6 +40,22 @@ export function StudioCourseDetail({
   claimCertificateAction,
 }: StudioCourseDetailProps) {
   const unlockedSet = React.useMemo(() => new Set(unlockedLessonIds), [unlockedLessonIds]);
+  const pathname = usePathname();
+  const [upgradingTier, setUpgradingTier] = React.useState<string | null>(null);
+  const [upgradeError, setUpgradeError] = React.useState<string | null>(null);
+
+  function handleUpgrade(tierId: string) {
+    setUpgradeError(null);
+    setUpgradingTier(tierId);
+    startTierCheckout(community.id, tierId, pathname)
+      .then(({ url }) => {
+        window.location.href = url;
+      })
+      .catch((e: unknown) => {
+        setUpgradeError(e instanceof Error ? e.message : 'Could not start checkout.');
+        setUpgradingTier(null);
+      });
+  }
   const publishedLessons = course.modules.reduce(
     (sum, m) => sum + m.lessons.filter((l) => l.is_published).length,
     0,
@@ -307,6 +325,23 @@ export function StudioCourseDetail({
         </div>
       )}
 
+      {upgradeError && (
+        <div
+          style={{
+            padding: '12px 16px',
+            borderRadius: 12,
+            marginBottom: 16,
+            background: 'oklch(0.96 0.03 25)',
+            border: '1px solid oklch(0.88 0.06 25)',
+            color: 'oklch(0.40 0.16 25)',
+            fontSize: 13,
+            fontWeight: 600,
+          }}
+        >
+          {upgradeError}
+        </div>
+      )}
+
       {/* Modules + Lessons */}
       {course.modules.length === 0 ? (
         <EmptyState isAdminOrOwner={isAdminOrOwner} />
@@ -415,7 +450,31 @@ export function StudioCourseDetail({
                     )}
                   </header>
 
-                  {!moduleUnlocked ? (
+                  {!moduleUnlocked && access?.reachable && access?.tierLocked && access.requiredTier ? (
+                    <div style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: 200, display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <Lock size={15} color="oklch(0.50 0.16 300)" />
+                        <span style={{ fontSize: 13, color: 'oklch(0.45 0.04 300)' }}>
+                          Included with the <strong>{access.requiredTier.name}</strong> tier
+                          {visibleLessons.length > 0 ? ` · ${visibleLessons.length} ${visibleLessons.length === 1 ? 'lesson' : 'lessons'}` : ''}.
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleUpgrade(access.requiredTier!.id)}
+                        disabled={upgradingTier !== null}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 7,
+                          padding: '9px 16px', borderRadius: 12, border: 'none',
+                          background: upgradingTier !== null ? 'oklch(0.80 0.03 300)' : 'oklch(0.52 0.16 300)',
+                          color: '#fff', fontSize: 13, fontWeight: 700,
+                          cursor: upgradingTier !== null ? 'default' : 'pointer', fontFamily: GILD_FONTS.sans,
+                        }}
+                      >
+                        <Sparkles size={15} />
+                        {upgradingTier === access.requiredTier.id ? 'Starting…' : `Upgrade to ${access.requiredTier.name}`}
+                      </button>
+                    </div>
+                  ) : !moduleUnlocked ? (
                     <div
                       style={{
                         padding: '20px',

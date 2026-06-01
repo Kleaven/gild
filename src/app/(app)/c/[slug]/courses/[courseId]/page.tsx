@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getSupabaseServerClient } from '@/lib/auth/server';
 import { getCommunityContextBySlug } from '@/lib/community/context';
-import { getCourse, getEnrollment, enrollInCourse, getLessonProgress, computeCourseAccess } from '@/lib/courses';
+import { getCourse, getEnrollment, enrollInCourse, getLessonProgress, computeCourseAccess, getCourseTierGating } from '@/lib/courses';
 import { getCertificate } from '@/lib/courses/certificate.queries';
 import { issueCertificate } from '@/lib/courses/certificate.actions';
 import { StudioCourseDetail } from '@/components/StudioCourseDetail';
@@ -55,7 +55,15 @@ export default async function CourseDetailPage({ params }: Props) {
   const completedLessonIds = new Set(
     progressRows.filter((p) => p.completed_at !== null).map((p) => p.lesson_id),
   );
-  const access = computeCourseAccess(course, completedLessonIds, isAdminOrOwner);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const tierGating = await getCourseTierGating(
+    communityId,
+    user?.id ?? null,
+    course.modules.map((m) => m.id),
+  );
+  const access = computeCourseAccess(course, completedLessonIds, isAdminOrOwner, tierGating);
 
   async function enrollAction() {
     'use server';

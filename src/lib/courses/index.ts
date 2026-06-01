@@ -14,6 +14,7 @@ export {
   createModule,
   updateModule,
   deleteModule,
+  setModuleRequiredTier,
   createLesson,
   updateLesson,
   deleteLesson,
@@ -24,7 +25,8 @@ export {
 } from './actions';
 
 export { computeCourseAccess } from './progress';
-export type { CourseAccess, ModuleAccess } from './progress';
+export type { CourseAccess, ModuleAccess, TierGating, ModuleTierRequirement } from './progress';
+export { getCourseTierGating } from './tier-gating';
 
 export { getQuiz, getQuizResult, getQuizForEdit } from './quiz.queries';
 

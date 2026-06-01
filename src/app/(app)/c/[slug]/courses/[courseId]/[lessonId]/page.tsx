@@ -11,6 +11,7 @@ import {
   getQuiz,
   submitQuiz,
   computeCourseAccess,
+  getCourseTierGating,
 } from '@/lib/courses';
 import { StudioLessonPlayer } from '@/components/StudioLessonPlayer';
 import type { QuizAnswer, QuizAttemptResult } from '@/lib/courses';
@@ -81,7 +82,15 @@ export default async function LessonPage({ params }: Props) {
   const completedLessonIds = new Set(
     progressRows.filter((p) => p.completed_at !== null).map((p) => p.lesson_id),
   );
-  const access = computeCourseAccess(course, completedLessonIds, isAdminOrOwner);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const tierGating = await getCourseTierGating(
+    communityId,
+    user?.id ?? null,
+    course.modules.map((m) => m.id),
+  );
+  const access = computeCourseAccess(course, completedLessonIds, isAdminOrOwner, tierGating);
   if (!isAdminOrOwner && !access.unlockedLessonIds.has(lessonId)) {
     redirect(`/c/${slug}/courses/${courseId}`);
   }

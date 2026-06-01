@@ -4,7 +4,7 @@ import React, { useState, useTransition, useOptimistic } from 'react';
 import { useRouter } from 'next/navigation';
 import { GILD_FONTS } from '@/components/gild';
 import type { CourseWithModules } from '@/lib/courses';
-import { updateCourse, deleteCourse, createModule, updateModule, deleteModule, createLesson, updateLesson, deleteLesson } from '@/app/actions/courses';
+import { updateCourse, deleteCourse, createModule, updateModule, deleteModule, createLesson, updateLesson, deleteLesson, setModuleTier } from '@/app/actions/courses';
 import { uploadMedia } from '@/app/actions/media';
 import { 
   Plus, 
@@ -27,14 +27,21 @@ import { LessonEditorModal } from './LessonEditorModal';
 import { QuizEditorModal } from './QuizEditorModal';
 import { ConfirmDialog } from './ConfirmDialog';
 
+interface EditorTier {
+  id: string;
+  name: string;
+  priceMonthUsd: number;
+}
+
 interface StudioCourseEditorProps {
   // UUID drives DB-scoped server actions; slug drives navigation.
   communityId: string;
   communitySlug: string;
   course: CourseWithModules;
+  tiers?: EditorTier[];
 }
 
-export function StudioCourseEditor({ communityId, communitySlug, course }: StudioCourseEditorProps) {
+export function StudioCourseEditor({ communityId, communitySlug, course, tiers = [] }: StudioCourseEditorProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'settings' | 'curriculum'>('curriculum');
   const [editingLesson, setEditingLesson] = useState<any>(null);
@@ -87,7 +94,7 @@ export function StudioCourseEditor({ communityId, communitySlug, course }: Studi
       {activeTab === 'settings' ? (
         <CourseSettingsPanel communityId={communityId} communitySlug={communitySlug} course={course} />
       ) : (
-        <CurriculumPanel communityId={communityId} communitySlug={communitySlug} course={course} onEditLesson={setEditingLesson} />
+        <CurriculumPanel communityId={communityId} communitySlug={communitySlug} course={course} tiers={tiers} onEditLesson={setEditingLesson} />
       )}
 
       {editingLesson && (
@@ -411,7 +418,7 @@ function curriculumReducer(state: ModuleT[], action: OptimisticAction): ModuleT[
   }
 }
 
-function CurriculumPanel({ communityId, course, onEditLesson }: StudioCourseEditorProps & { onEditLesson: (lesson: any) => void }) {
+function CurriculumPanel({ communityId, course, tiers = [], onEditLesson }: StudioCourseEditorProps & { onEditLesson: (lesson: any) => void }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -556,6 +563,7 @@ function CurriculumPanel({ communityId, course, onEditLesson }: StudioCourseEdit
                 onDeleteLesson={requestDeleteLesson}
                 onTogglePublish={handleTogglePublish}
                 onError={setError}
+                tiers={tiers}
               />
             ))}
           </div>
@@ -584,7 +592,7 @@ function CurriculumPanel({ communityId, course, onEditLesson }: StudioCourseEdit
   );
 }
 
-function ModuleItem({ module, communityId, courseId, onEditLesson, onDeleteModule, onAddLesson, onDeleteLesson, onTogglePublish, onError }: {
+function ModuleItem({ module, communityId, courseId, onEditLesson, onDeleteModule, onAddLesson, onDeleteLesson, onTogglePublish, onError, tiers }: {
   module: ModuleT,
   communityId: string,
   courseId: string,
@@ -594,6 +602,7 @@ function ModuleItem({ module, communityId, courseId, onEditLesson, onDeleteModul
   onDeleteLesson: (moduleId: string, lessonId: string) => void,
   onTogglePublish: (moduleId: string, lessonId: string, next: boolean) => void,
   onError: (message: string) => void,
+  tiers: EditorTier[],
 }) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
@@ -629,6 +638,18 @@ function ModuleItem({ module, communityId, courseId, onEditLesson, onDeleteModul
     onAddLesson(module.id, module.lessons.length);
   }
 
+  function handleTierChange(value: string) {
+    const tierId = value === '' ? null : value;
+    startTransition(async () => {
+      try {
+        await setModuleTier(module.id, communityId, courseId, tierId);
+        router.refresh();
+      } catch {
+        onError('Could not update the module tier. Please try again.');
+      }
+    });
+  }
+
   return (
     <div style={{ border: '1px solid oklch(0.92 0.01 250)', borderRadius: 16, background: '#fff', overflow: 'hidden' }}>
       <header style={{ 
@@ -658,6 +679,31 @@ function ModuleItem({ module, communityId, courseId, onEditLesson, onDeleteModul
           </h3>
         )}
         
+        {tiers.length > 0 && (
+          <select
+            value={module.min_tier_id ?? ''}
+            onChange={(e) => handleTierChange(e.target.value)}
+            title="Require a membership tier to unlock this module"
+            style={{
+              padding: '5px 8px',
+              borderRadius: 8,
+              border: '1px solid oklch(0.90 0.01 250)',
+              fontSize: 12,
+              fontWeight: 600,
+              fontFamily: 'inherit',
+              color: module.min_tier_id ? 'oklch(0.45 0.14 300)' : 'oklch(0.50 0.02 250)',
+              background: '#fff',
+              cursor: 'pointer',
+            }}
+          >
+            <option value="">Free</option>
+            {tiers.map((t) => (
+              <option key={t.id} value={t.id}>
+                🔒 {t.name} (${t.priceMonthUsd}/mo)
+              </option>
+            ))}
+          </select>
+        )}
         <div style={{ display: 'flex', gap: 4 }}>
           <IconButton onClick={() => setIsExpanded(!isExpanded)} title={isExpanded ? 'Collapse' : 'Expand'}>
             {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}

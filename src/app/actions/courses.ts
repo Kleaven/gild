@@ -14,6 +14,7 @@ import {
   createModule as libCreateModule,
   updateModule as libUpdateModule,
   deleteModule as libDeleteModule,
+  setModuleRequiredTier as libSetModuleRequiredTier,
   createLesson as libCreateLesson,
   updateLesson as libUpdateLesson,
   deleteLesson as libDeleteLesson,
@@ -118,6 +119,18 @@ export async function deleteModule(
 ): Promise<void> {
   await requireUser();
   await libDeleteModule(moduleId);
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}/courses/${courseId}`);
+}
+
+export async function setModuleTier(
+  moduleId: string,
+  communityId: string,
+  courseId: string,
+  tierId: string | null,
+): Promise<void> {
+  await requireUser();
+  await libSetModuleRequiredTier(moduleId, tierId);
   const slug = await resolveCommunitySlug(communityId);
   revalidatePath(`/c/${slug}/courses/${courseId}`);
 }

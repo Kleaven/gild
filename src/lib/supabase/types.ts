@@ -381,7 +381,10 @@ export type Database = {
           joined_at: string
           permissions: Json
           role: Database["public"]["Enums"]["member_role"]
+          stripe_subscription_id: string | null
+          tier_current_period_end: string | null
           tier_id: string | null
+          tier_status: string | null
           unsubscribe_token: string
           updated_at: string
           user_id: string
@@ -394,7 +397,10 @@ export type Database = {
           joined_at?: string
           permissions?: Json
           role?: Database["public"]["Enums"]["member_role"]
+          stripe_subscription_id?: string | null
+          tier_current_period_end?: string | null
           tier_id?: string | null
+          tier_status?: string | null
           unsubscribe_token?: string
           updated_at?: string
           user_id: string
@@ -407,7 +413,10 @@ export type Database = {
           joined_at?: string
           permissions?: Json
           role?: Database["public"]["Enums"]["member_role"]
+          stripe_subscription_id?: string | null
+          tier_current_period_end?: string | null
           tier_id?: string | null
+          tier_status?: string | null
           unsubscribe_token?: string
           updated_at?: string
           user_id?: string
@@ -979,6 +988,7 @@ export type Database = {
           course_id: string
           created_at: string
           id: string
+          min_tier_id: string | null
           position: number
           title: string
           updated_at: string
@@ -987,6 +997,7 @@ export type Database = {
           course_id: string
           created_at?: string
           id?: string
+          min_tier_id?: string | null
           position?: number
           title: string
           updated_at?: string
@@ -995,6 +1006,7 @@ export type Database = {
           course_id?: string
           created_at?: string
           id?: string
+          min_tier_id?: string | null
           position?: number
           title?: string
           updated_at?: string
@@ -1005,6 +1017,13 @@ export type Database = {
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "modules_min_tier_id_fkey"
+            columns: ["min_tier_id"]
+            isOneToOne: false
+            referencedRelation: "membership_tiers"
             referencedColumns: ["id"]
           },
         ]

@@ -13,12 +13,31 @@ import type { CourseWithModules } from './types';
 // Empty modules (no published lessons) are vacuously complete and never block
 // the next module. Admins/owners bypass all locks (preview the whole course).
 
+export interface ModuleTierRequirement {
+  id: string;
+  name: string;
+  position: number;
+}
+
+// Tier gating context. memberTierPosition is the rank of the member's active
+// tier (null = no active paid tier); moduleTier maps module id → its required
+// tier (null = free). Unlock is "that tier or higher": memberPos ≥ requiredPos.
+export interface TierGating {
+  memberTierPosition: number | null;
+  moduleTier: Record<string, ModuleTierRequirement | null>;
+}
+
 export interface ModuleAccess {
   moduleId: string;
   unlocked: boolean;
+  // Sequentially reachable (all earlier modules complete). A module can be
+  // reachable yet still locked if it's tier-gated.
+  reachable: boolean;
   complete: boolean;
   publishedLessonCount: number;
   completedLessonCount: number;
+  tierLocked: boolean;
+  requiredTier: ModuleTierRequirement | null;
 }
 
 export interface CourseAccess {
@@ -34,6 +53,7 @@ export function computeCourseAccess(
   course: CourseWithModules,
   completedLessonIds: Set<string>,
   bypass: boolean,
+  tier?: TierGating,
 ): CourseAccess {
   const modules: Record<string, ModuleAccess> = {};
   const unlockedLessonIds = new Set<string>();
@@ -42,6 +62,8 @@ export function computeCourseAccess(
   let anyPublished = false;
   let everyModuleComplete = true;
 
+  const memberPos = tier?.memberTierPosition ?? null;
+
   for (const m of course.modules) {
     const published = m.lessons.filter((l) => l.is_published);
     if (published.length > 0) anyPublished = true;
@@ -49,14 +71,26 @@ export function computeCourseAccess(
     const completedCount = published.filter((l) => completedLessonIds.has(l.id)).length;
     const moduleComplete = published.length === 0 || completedCount === published.length;
 
-    const unlocked = bypass || allPriorComplete;
+    const requiredTier = tier?.moduleTier[m.id] ?? null;
+    // "That tier or higher" — locked if the module requires a tier the member
+    // doesn't hold (or holds a lower one). Admins/owners bypass.
+    const tierLocked =
+      !bypass &&
+      requiredTier !== null &&
+      (memberPos === null || memberPos < requiredTier.position);
+
+    const sequentiallyUnlocked = bypass || allPriorComplete;
+    const unlocked = sequentiallyUnlocked && !tierLocked;
 
     modules[m.id] = {
       moduleId: m.id,
       unlocked,
+      reachable: sequentiallyUnlocked,
       complete: moduleComplete,
       publishedLessonCount: published.length,
       completedLessonCount: completedCount,
+      tierLocked,
+      requiredTier,
     };
 
     if (unlocked) {
@@ -65,7 +99,9 @@ export function computeCourseAccess(
     }
 
     if (published.length > 0 && !moduleComplete) everyModuleComplete = false;
-    // Gate every subsequent module on this one's completion.
+    // Gate every subsequent module on this one's completion. A tier-locked
+    // module can't be completed, so it also blocks the modules after it —
+    // members must purchase to continue.
     if (!moduleComplete) allPriorComplete = false;
   }
 
