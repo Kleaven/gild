@@ -8,6 +8,10 @@ import { resolvePlan, extractCustomerId } from '@/lib/billing/plans';
 import type { WebhookHandlerMap } from '@/lib/billing';
 import db from '@/lib/db';
 import { processWebhookEvent } from '@/lib/billing';
+import {
+  handleConnectSubscriptionUpsert,
+  handleConnectSubscriptionDeleted,
+} from '@/lib/billing/member-subscription';
 import { trackSubscriptionStartedServer } from '@/lib/analytics/server';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -31,6 +35,13 @@ async function resolveEntityId(customerId: string): Promise<{ id: string, type: 
 // ─── Event handlers ──────────────────────────────────────────────────────────
 
 async function handleSubscriptionUpsert(event: Stripe.Event): Promise<void> {
+  // Connected-account events (member tier subscriptions) take a separate path —
+  // their customer lives on the creator's account, not in communities/profiles.
+  if (event.account) {
+    await handleConnectSubscriptionUpsert(event);
+    return;
+  }
+
   const sub = event.data.object as Stripe.Subscription;
   const customerId = extractCustomerId(sub.customer);
   
@@ -84,6 +95,11 @@ async function handleSubscriptionUpsert(event: Stripe.Event): Promise<void> {
 }
 
 async function handleSubscriptionDeleted(event: Stripe.Event): Promise<void> {
+  if (event.account) {
+    await handleConnectSubscriptionDeleted(event);
+    return;
+  }
+
   const sub = event.data.object as Stripe.Subscription;
   const customerId = extractCustomerId(sub.customer);
   const entity = await resolveEntityId(customerId);
@@ -101,6 +117,10 @@ async function handleSubscriptionDeleted(event: Stripe.Event): Promise<void> {
 }
 
 async function handleCheckoutSessionCompleted(event: Stripe.Event): Promise<void> {
+  // Tier checkouts complete on the connected account; tier assignment is driven
+  // off customer.subscription.* (which carry our metadata), so this is a no-op.
+  if (event.account) return;
+
   const session = event.data.object as Stripe.Checkout.Session;
   const { type, communityId, userId, targetType, targetId, plan } = session.metadata || {};
 
@@ -133,6 +153,7 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event): Promise<void
 }
 
 async function handleInvoicePaymentSucceeded(event: Stripe.Event): Promise<void> {
+  if (event.account) return; // member-tier status is tracked via subscription.* events
   const inv = event.data.object as Stripe.Invoice;
   if (inv.billing_reason === 'subscription_create') return;
 
@@ -150,6 +171,7 @@ async function handleInvoicePaymentSucceeded(event: Stripe.Event): Promise<void>
 }
 
 async function handleInvoicePaymentFailed(event: Stripe.Event): Promise<void> {
+  if (event.account) return; // member-tier status is tracked via subscription.* events
   const inv = event.data.object as Stripe.Invoice;
   const customerId = extractCustomerId(inv.customer!);
   const entity = await resolveEntityId(customerId);

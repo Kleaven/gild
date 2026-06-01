@@ -15,6 +15,7 @@ import {
   type Tier,
   type TierInput,
 } from '../../lib/community/tiers';
+import { createTierCheckout } from '../../lib/billing/member-subscription';
 
 async function requireUser(): Promise<string> {
   const supabase = await getSupabaseServerClient();
@@ -69,4 +70,23 @@ export async function deactivateTierAction(tierId: string, communityId: string):
   const userId = await requireUser();
   await deactivateTier(tierId, communityId, userId);
   await revalidateMonetization(communityId);
+}
+
+// ─── Member checkout ──────────────────────────────────────────────────────────
+
+// Starts a Stripe Checkout subscription for the calling member on the
+// community's connected account. Returns the redirect URL.
+export async function startTierCheckout(
+  communityId: string,
+  tierId: string,
+  returnPath: string,
+): Promise<{ url: string }> {
+  const supabase = await getSupabaseServerClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+  if (error || !user) throw new Error('[gild] not authenticated');
+  if (!user.email) throw new Error('[gild] your account has no email address');
+  return createTierCheckout(communityId, tierId, user.id, user.email, returnPath);
 }
