@@ -376,7 +376,8 @@ type OptimisticAction =
   | { type: 'addModule'; module: ModuleT }
   | { type: 'deleteModule'; moduleId: string }
   | { type: 'addLesson'; moduleId: string; lesson: LessonT }
-  | { type: 'deleteLesson'; moduleId: string; lessonId: string };
+  | { type: 'deleteLesson'; moduleId: string; lessonId: string }
+  | { type: 'setLessonPublished'; moduleId: string; lessonId: string; isPublished: boolean };
 
 function curriculumReducer(state: ModuleT[], action: OptimisticAction): ModuleT[] {
   switch (action.type) {
@@ -392,6 +393,17 @@ function curriculumReducer(state: ModuleT[], action: OptimisticAction): ModuleT[
       return state.map((m) =>
         m.id === action.moduleId
           ? { ...m, lessons: m.lessons.filter((l) => l.id !== action.lessonId) }
+          : m,
+      );
+    case 'setLessonPublished':
+      return state.map((m) =>
+        m.id === action.moduleId
+          ? {
+              ...m,
+              lessons: m.lessons.map((l) =>
+                l.id === action.lessonId ? { ...l, is_published: action.isPublished } : l,
+              ),
+            }
           : m,
       );
     default:
@@ -476,6 +488,18 @@ function CurriculumPanel({ communityId, course, onEditLesson }: StudioCourseEdit
     });
   }
 
+  function handleTogglePublish(moduleId: string, lessonId: string, next: boolean) {
+    startTransition(async () => {
+      applyOptimistic({ type: 'setLessonPublished', moduleId, lessonId, isPublished: next });
+      try {
+        await updateLesson(lessonId, { isPublished: next }, communityId, course.id);
+      } catch {
+        setError('Could not update lesson visibility. Please try again.');
+      }
+      router.refresh();
+    });
+  }
+
   // Trash buttons request confirmation; the dialog performs the delete.
   function requestDeleteModule(moduleId: string) {
     setError(null);
@@ -530,6 +554,7 @@ function CurriculumPanel({ communityId, course, onEditLesson }: StudioCourseEdit
                 onDeleteModule={requestDeleteModule}
                 onAddLesson={handleAddLesson}
                 onDeleteLesson={requestDeleteLesson}
+                onTogglePublish={handleTogglePublish}
                 onError={setError}
               />
             ))}
@@ -559,7 +584,7 @@ function CurriculumPanel({ communityId, course, onEditLesson }: StudioCourseEdit
   );
 }
 
-function ModuleItem({ module, communityId, courseId, onEditLesson, onDeleteModule, onAddLesson, onDeleteLesson, onError }: {
+function ModuleItem({ module, communityId, courseId, onEditLesson, onDeleteModule, onAddLesson, onDeleteLesson, onTogglePublish, onError }: {
   module: ModuleT,
   communityId: string,
   courseId: string,
@@ -567,6 +592,7 @@ function ModuleItem({ module, communityId, courseId, onEditLesson, onDeleteModul
   onDeleteModule: (moduleId: string) => void,
   onAddLesson: (moduleId: string, position: number) => void,
   onDeleteLesson: (moduleId: string, lessonId: string) => void,
+  onTogglePublish: (moduleId: string, lessonId: string, next: boolean) => void,
   onError: (message: string) => void,
 }) {
   const router = useRouter();
@@ -574,12 +600,16 @@ function ModuleItem({ module, communityId, courseId, onEditLesson, onDeleteModul
   const [title, setTitle] = useState(module.title);
   const [isExpanded, setIsExpanded] = useState(true);
   const [, startTransition] = useTransition();
+  // Guards against the rename firing twice when Enter both submits and blurs.
+  const savingRef = React.useRef(false);
 
   async function handleUpdateTitle() {
+    if (savingRef.current) return;
     if (title === module.title) {
       setIsEditing(false);
       return;
     }
+    savingRef.current = true;
     startTransition(async () => {
       try {
         await updateModule(module.id, { title }, communityId, courseId);
@@ -589,6 +619,8 @@ function ModuleItem({ module, communityId, courseId, onEditLesson, onDeleteModul
         setTitle(module.title);
         setIsEditing(false);
         onError('Could not rename the module. Please try again.');
+      } finally {
+        savingRef.current = false;
       }
     });
   }
@@ -614,7 +646,7 @@ function ModuleItem({ module, communityId, courseId, onEditLesson, onDeleteModul
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onBlur={handleUpdateTitle}
-            onKeyDown={(e) => e.key === 'Enter' && handleUpdateTitle()}
+            onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
             style={{ ...inputStyle, padding: '4px 8px', fontSize: 16, fontWeight: 700 }}
           />
         ) : (
@@ -646,7 +678,7 @@ function ModuleItem({ module, communityId, courseId, onEditLesson, onDeleteModul
               courseId={courseId}
               onEdit={onEditLesson}
               onDelete={() => onDeleteLesson(module.id, lesson.id)}
-              onError={onError}
+              onTogglePublish={(next) => onTogglePublish(module.id, lesson.id, next)}
             />
           ))}
           <button
@@ -676,24 +708,12 @@ function ModuleItem({ module, communityId, courseId, onEditLesson, onDeleteModul
   );
 }
 
-function LessonItem({ lesson, communityId, courseId, onEdit, onDelete, onError }: { lesson: any, communityId: string, courseId: string, onEdit: (lesson: any) => void, onDelete: () => void, onError: (message: string) => void }) {
+function LessonItem({ lesson, communityId, courseId, onEdit, onDelete, onTogglePublish }: { lesson: any, communityId: string, courseId: string, onEdit: (lesson: any) => void, onDelete: () => void, onTogglePublish: (next: boolean) => void }) {
   const router = useRouter();
-  const [, startTransition] = useTransition();
   const [quizOpen, setQuizOpen] = useState(false);
   // Temp (optimistic) lessons aren't persisted yet, so quiz authoring — which
   // writes against a real lesson id — must wait until the row reconciles.
   const isTemp = typeof lesson.id === 'string' && lesson.id.startsWith('temp-');
-
-  async function togglePublish() {
-    startTransition(async () => {
-      try {
-        await updateLesson(lesson.id, { isPublished: !lesson.is_published }, communityId, courseId);
-        router.refresh();
-      } catch {
-        onError('Could not update the lesson. Please try again.');
-      }
-    });
-  }
 
   return (
     <div style={{ 
@@ -739,7 +759,7 @@ function LessonItem({ lesson, communityId, courseId, onEdit, onDelete, onError }
             <ListChecks size={16} />
           </IconButton>
         )}
-        <IconButton onClick={togglePublish} title={lesson.is_published ? 'Unpublish' : 'Publish'}>
+        <IconButton onClick={() => onTogglePublish(!lesson.is_published)} title={lesson.is_published ? 'Unpublish' : 'Publish'}>
           {lesson.is_published ? <Eye size={16} /> : <EyeOff size={16} />}
         </IconButton>
         <IconButton onClick={() => onEdit(lesson)} title="Edit Lesson">

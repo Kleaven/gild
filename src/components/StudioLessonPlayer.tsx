@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { GILD_FONTS } from '@/components/gild';
 import type { Lesson } from '@/lib/courses';
@@ -41,6 +41,22 @@ export function StudioLessonPlayer({
   submitQuizAction,
 }: StudioLessonPlayerProps) {
   const videoEmbed = toEmbedUrl(lesson.video_url);
+  const [completing, setCompleting] = useState(false);
+  const [justCompleted, setJustCompleted] = useState(false);
+  const [, startTransition] = useTransition();
+
+  function handleComplete() {
+    if (completing) return;
+    setCompleting(true);
+    startTransition(async () => {
+      try {
+        await completeAction();
+        setJustCompleted(true);
+      } finally {
+        setCompleting(false);
+      }
+    });
+  }
 
   return (
     <div
@@ -146,9 +162,10 @@ export function StudioLessonPlayer({
             flexWrap: 'wrap',
           }}
         >
-          {isCompleted ? (
+          {isCompleted || justCompleted ? (
             <div
               style={{
+                position: 'relative',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 8,
@@ -159,30 +176,32 @@ export function StudioLessonPlayer({
                 color: 'oklch(0.35 0.10 145)',
                 fontSize: 14,
                 fontWeight: 600,
+                animation: justCompleted ? 'gild-pop 0.5s cubic-bezier(0.22, 1, 0.36, 1)' : undefined,
               }}
             >
-              <span>✓</span> Completed
+              {justCompleted && <Confetti />}
+              <span>✓</span> {justCompleted ? 'Lesson complete!' : 'Completed'}
             </div>
           ) : (
-            <form action={completeAction}>
-              <button
-                type="submit"
-                style={{
-                  appearance: 'none',
-                  border: 'none',
-                  background: '#111',
-                  color: '#fff',
-                  padding: '10px 20px',
-                  borderRadius: 14,
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  fontFamily: GILD_FONTS.sans,
-                }}
-              >
-                Mark complete
-              </button>
-            </form>
+            <button
+              type="button"
+              onClick={handleComplete}
+              disabled={completing}
+              style={{
+                appearance: 'none',
+                border: 'none',
+                background: completing ? 'oklch(0.75 0.01 250)' : '#111',
+                color: '#fff',
+                padding: '10px 20px',
+                borderRadius: 14,
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: completing ? 'default' : 'pointer',
+                fontFamily: GILD_FONTS.sans,
+              }}
+            >
+              {completing ? 'Saving…' : 'Mark complete'}
+            </button>
           )}
 
           {/* Prev / Next */}
@@ -266,6 +285,69 @@ function toEmbedUrl(url: string | null): string | null {
   return null;
 }
 
+// ─── Celebration confetti ──────────────────────────────────────────────────────
+// Pure CSS/SVG burst — no dependency, no layout shift (absolutely positioned).
+
+const CONFETTI_COLORS = [
+  'oklch(0.72 0.18 150)',
+  'oklch(0.75 0.16 90)',
+  'oklch(0.70 0.17 250)',
+  'oklch(0.72 0.19 30)',
+  'oklch(0.74 0.16 320)',
+];
+
+function Confetti() {
+  const pieces = React.useMemo(
+    () =>
+      Array.from({ length: 28 }, (_, i) => ({
+        left: Math.random() * 100,
+        delay: Math.random() * 0.3,
+        duration: 1.6 + Math.random() * 1.1,
+        color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+        size: 6 + Math.random() * 6,
+        rotate: Math.random() * 360,
+      })),
+    [],
+  );
+  return (
+    <div
+      aria-hidden
+      style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}
+    >
+      {pieces.map((p, i) => (
+        <span
+          key={i}
+          style={{
+            position: 'absolute',
+            top: -12,
+            left: `${p.left}%`,
+            width: p.size,
+            height: p.size * 0.6,
+            background: p.color,
+            borderRadius: 1,
+            transform: `rotate(${p.rotate}deg)`,
+            animation: `gild-confetti ${p.duration}s linear ${p.delay}s forwards`,
+          }}
+        />
+      ))}
+      <style>{`
+        @keyframes gild-confetti {
+          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(220px) rotate(540deg); opacity: 0; }
+        }
+        @keyframes gild-pop {
+          0% { transform: scale(0); }
+          70% { transform: scale(1.12); }
+          100% { transform: scale(1); }
+        }
+        @keyframes gild-check {
+          to { stroke-dashoffset: 0; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 // ─── Quiz panel ────────────────────────────────────────────────────────────────
 
 function QuizPanel({
@@ -322,34 +404,100 @@ function QuizPanel({
         }}
       >
         <header style={{ marginBottom: 20 }}>
-          <div
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              color: 'oklch(0.55 0.02 250)',
-              fontFamily: GILD_FONTS.mono,
-              letterSpacing: '0.08em',
-              marginBottom: 6,
-            }}
-          >
-            QUIZ RESULT
-          </div>
-          <h2
-            style={{
-              fontFamily: GILD_FONTS.display,
-              fontSize: 22,
-              fontWeight: 800,
-              letterSpacing: '-0.03em',
-              margin: '0 0 12px',
-              color: '#111',
-            }}
-          >
-            {result.passed ? 'Passed' : 'Not yet'}
-          </h2>
-          <div style={{ fontSize: 15, color: 'oklch(0.40 0.02 250)' }}>
-            Score: <strong>{result.score}%</strong> ·{' '}
-            {result.correctCount} of {result.totalQuestions} correct
-          </div>
+          {result.passed ? (
+            <div
+              style={{
+                position: 'relative',
+                overflow: 'hidden',
+                borderRadius: 16,
+                padding: '28px 24px',
+                marginBottom: 8,
+                textAlign: 'center',
+                background:
+                  'linear-gradient(135deg, oklch(0.95 0.06 150), oklch(0.97 0.03 200))',
+                border: '1px solid oklch(0.85 0.08 150)',
+              }}
+            >
+              <Confetti />
+              <div
+                style={{
+                  width: 64,
+                  height: 64,
+                  margin: '0 auto 14px',
+                  borderRadius: '50%',
+                  background: 'oklch(0.62 0.16 150)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 8px 24px oklch(0.62 0.16 150 / 0.4)',
+                  animation: 'gild-pop 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
+                }}
+              >
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path
+                    d="M5 13l4 4L19 7"
+                    stroke="#fff"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{
+                      strokeDasharray: 28,
+                      strokeDashoffset: 28,
+                      animation: 'gild-check 0.4s ease-out 0.25s forwards',
+                    }}
+                  />
+                </svg>
+              </div>
+              <h2
+                style={{
+                  fontFamily: GILD_FONTS.display,
+                  fontSize: 28,
+                  fontWeight: 800,
+                  letterSpacing: '-0.03em',
+                  margin: '0 0 6px',
+                  color: 'oklch(0.32 0.10 150)',
+                }}
+              >
+                Passed! 🎉
+              </h2>
+              <div style={{ fontSize: 15, color: 'oklch(0.40 0.06 150)', fontWeight: 600 }}>
+                Scored <strong>{result.score}%</strong> · {result.correctCount} of{' '}
+                {result.totalQuestions} correct
+              </div>
+            </div>
+          ) : (
+            <>
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: 'oklch(0.55 0.02 250)',
+                  fontFamily: GILD_FONTS.mono,
+                  letterSpacing: '0.08em',
+                  marginBottom: 6,
+                }}
+              >
+                QUIZ RESULT
+              </div>
+              <h2
+                style={{
+                  fontFamily: GILD_FONTS.display,
+                  fontSize: 22,
+                  fontWeight: 800,
+                  letterSpacing: '-0.03em',
+                  margin: '0 0 12px',
+                  color: '#111',
+                }}
+              >
+                Not quite yet
+              </h2>
+              <div style={{ fontSize: 15, color: 'oklch(0.40 0.02 250)' }}>
+                Scored <strong>{result.score}%</strong> · {result.correctCount} of{' '}
+                {result.totalQuestions} correct · need{' '}
+                <strong>{quiz.passScore}%</strong> to pass. Review below and try again.
+              </div>
+            </>
+          )}
         </header>
 
         <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 20px' }}>
