@@ -203,10 +203,22 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   if (!sig) return NextResponse.json({ error: 'Missing sig' }, { status: 400 });
 
-  let event: Stripe.Event;
-  try {
-    event = stripe.webhooks.constructEvent(rawBody, sig, env.STRIPE_WEBHOOK_SECRET);
-  } catch {
+  // Verify against both signing secrets: the platform endpoint and (if set) the
+  // Connect endpoint. Connected-account events (member tier subscriptions) are
+  // signed with the Connect endpoint's secret, so a single secret isn't enough.
+  const secrets = [env.STRIPE_WEBHOOK_SECRET, env.STRIPE_CONNECT_WEBHOOK_SECRET].filter(
+    (s): s is string => Boolean(s),
+  );
+  let event: Stripe.Event | null = null;
+  for (const secret of secrets) {
+    try {
+      event = stripe.webhooks.constructEvent(rawBody, sig, secret);
+      break;
+    } catch {
+      // try the next secret
+    }
+  }
+  if (!event) {
     return NextResponse.json({ error: 'Verification failed' }, { status: 400 });
   }
 

@@ -13,6 +13,10 @@ const serverSchema = z.object({
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
   STRIPE_SECRET_KEY: z.string().startsWith('sk_'),
   STRIPE_WEBHOOK_SECRET: z.string().startsWith('whsec_'),
+  // Optional second signing secret for the Stripe Connect webhook endpoint
+  // (connected-account events: member tier subscriptions). Set once the Connect
+  // endpoint exists in Stripe; the route verifies against both secrets.
+  STRIPE_CONNECT_WEBHOOK_SECRET: z.string().startsWith('whsec_').optional(),
   STRIPE_HOBBY_PRICE_ID: z.string().min(1),
   STRIPE_PRO_PRICE_ID: z.string().min(1),
   CRON_SECRET: z.string().min(1),
@@ -127,6 +131,7 @@ function validateEnv(): Env {
     UPSTASH_REDIS_REST_TOKEN: '',
     STRIPE_SECRET_KEY: '',
     STRIPE_WEBHOOK_SECRET: '',
+    STRIPE_CONNECT_WEBHOOK_SECRET: undefined,
     STRIPE_HOBBY_PRICE_ID: '',
     STRIPE_PRO_PRICE_ID: '',
     CRON_SECRET: '',
