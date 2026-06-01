@@ -13,15 +13,22 @@ export async function getCourseTierGating(
 ): Promise<TierGating> {
   let memberTierPosition: number | null = null;
   if (userId) {
-    const rows = await db<{ tier_status: string | null; position: number | null }[]>`
-      SELECT cm.tier_status, mt.position
+    const rows = await db<
+      { tier_status: string | null; position: number | null; tier_current_period_end: string | null }[]
+    >`
+      SELECT cm.tier_status, mt.position, cm.tier_current_period_end
       FROM public.community_members cm
       LEFT JOIN public.membership_tiers mt ON mt.id = cm.tier_id
       WHERE cm.community_id = ${communityId} AND cm.user_id = ${userId}
       LIMIT 1
     `;
     const r = rows[0];
-    if (r && (r.tier_status === 'active' || r.tier_status === 'trialing') && r.position !== null) {
+    const statusActive = r?.tier_status === 'active' || r?.tier_status === 'trialing';
+    // A scheduled cancellation (period end set) revokes access once it passes —
+    // a hard expiry that holds even if no webhook ever arrives.
+    const notExpired =
+      !r?.tier_current_period_end || new Date(r.tier_current_period_end).getTime() > Date.now();
+    if (r && statusActive && notExpired && r.position !== null) {
       memberTierPosition = r.position;
     }
   }

@@ -381,6 +381,7 @@ export type Database = {
           joined_at: string
           permissions: Json
           role: Database["public"]["Enums"]["member_role"]
+          stripe_customer_id: string | null
           stripe_subscription_id: string | null
           tier_current_period_end: string | null
           tier_id: string | null
@@ -397,6 +398,7 @@ export type Database = {
           joined_at?: string
           permissions?: Json
           role?: Database["public"]["Enums"]["member_role"]
+          stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           tier_current_period_end?: string | null
           tier_id?: string | null
@@ -413,6 +415,7 @@ export type Database = {
           joined_at?: string
           permissions?: Json
           role?: Database["public"]["Enums"]["member_role"]
+          stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           tier_current_period_end?: string | null
           tier_id?: string | null

@@ -15,7 +15,11 @@ import {
   type Tier,
   type TierInput,
 } from '../../lib/community/tiers';
-import { createTierCheckout } from '../../lib/billing/member-subscription';
+import {
+  startOrSwitchTier,
+  cancelMembership,
+  type StartTierResult,
+} from '../../lib/billing/member-subscription';
 
 async function requireUser(): Promise<string> {
   const supabase = await getSupabaseServerClient();
@@ -74,13 +78,14 @@ export async function deactivateTierAction(tierId: string, communityId: string):
 
 // ─── Member checkout ──────────────────────────────────────────────────────────
 
-// Starts a Stripe Checkout subscription for the calling member on the
-// community's connected account. Returns the redirect URL.
+// Subscribes the member to a tier, or switches their existing subscription.
+// Returns either a Checkout URL (new subscription) or a "switched" result
+// (existing subscription's price was swapped in place — no redirect needed).
 export async function startTierCheckout(
   communityId: string,
   tierId: string,
   returnPath: string,
-): Promise<{ url: string }> {
+): Promise<StartTierResult> {
   const supabase = await getSupabaseServerClient();
   const {
     data: { user },
@@ -88,5 +93,21 @@ export async function startTierCheckout(
   } = await supabase.auth.getUser();
   if (error || !user) throw new Error('[gild] not authenticated');
   if (!user.email) throw new Error('[gild] your account has no email address');
-  return createTierCheckout(communityId, tierId, user.id, user.email, returnPath);
+  const result = await startOrSwitchTier(communityId, tierId, user.id, user.email, returnPath);
+  if (result.kind === 'switched') {
+    const slug = await resolveCommunitySlug(communityId);
+    revalidatePath(`/c/${slug}/membership`);
+  }
+  return result;
+}
+
+// Cancels the member's subscription at period end. Returns when access ends.
+export async function cancelMembershipAction(
+  communityId: string,
+): Promise<{ endsAt: string | null }> {
+  const userId = await requireUser();
+  const result = await cancelMembership(communityId, userId);
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}/membership`);
+  return result;
 }

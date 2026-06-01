@@ -233,6 +233,23 @@ export function StudioSidebar({
         })}
       </div>
 
+      {/* Membership (all members) */}
+      <div style={{ marginBottom: 4 }}>
+        <Link href={`/c/${community.slug}/membership`} style={{
+          display: 'flex',
+          alignItems: 'center',
+          padding: '5px 10px',
+          borderRadius: 6,
+          textDecoration: 'none',
+          fontSize: 14,
+          color: pathname.includes('/membership') ? '#202020' : 'oklch(0.30 0.02 250)',
+          background: pathname.includes('/membership') ? 'oklch(0.94 0.005 250)' : 'transparent',
+          fontWeight: pathname.includes('/membership') ? 600 : 400,
+        }}>
+          <span style={{ flex: 1 }}>Membership</span>
+        </Link>
+      </div>
+
       {/* Admin */}
       {(currentUser.role === 'owner' || currentUser.role === 'admin') && (
         <div>

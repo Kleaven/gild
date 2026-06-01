@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { GILD_FONTS, CoverArt } from '@/components/gild';
 import { Lock, Sparkles } from 'lucide-react';
 import type { CourseWithModules, ModuleAccess } from '@/lib/courses';
@@ -41,6 +41,7 @@ export function StudioCourseDetail({
 }: StudioCourseDetailProps) {
   const unlockedSet = React.useMemo(() => new Set(unlockedLessonIds), [unlockedLessonIds]);
   const pathname = usePathname();
+  const router = useRouter();
   const [upgradingTier, setUpgradingTier] = React.useState<string | null>(null);
   const [upgradeError, setUpgradeError] = React.useState<string | null>(null);
 
@@ -48,8 +49,14 @@ export function StudioCourseDetail({
     setUpgradeError(null);
     setUpgradingTier(tierId);
     startTierCheckout(community.id, tierId, pathname)
-      .then(({ url }) => {
-        window.location.href = url;
+      .then((res) => {
+        if (res.kind === 'checkout') {
+          window.location.href = res.url;
+        } else {
+          // Switched an existing subscription in place — refresh to reflect unlock.
+          router.refresh();
+          setUpgradingTier(null);
+        }
       })
       .catch((e: unknown) => {
         setUpgradeError(e instanceof Error ? e.message : 'Could not start checkout.');
