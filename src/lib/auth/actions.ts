@@ -70,17 +70,29 @@ export async function signUp(formData: FormData): Promise<AuthResult<Authenticat
   // the visitor into /onboarding (which would bounce them back to /sign-in).
   const needsEmailConfirmation = session === null;
 
-  // Use service client for profile insert — bypasses RLS (profiles_insert
-  // requires authenticated session but sign-up hasn't set cookies yet).
+  // Use service client for the profile row — bypasses RLS (profiles_insert
+  // requires an authenticated session but sign-up hasn't set cookies yet).
+  // UPSERT (not insert): if a DB trigger already created a stub profile row for
+  // the new auth user, we update it with the chosen name instead of colliding
+  // on the primary key. onConflict 'id' = the profiles PK.
   const serviceClient = getSupabaseServiceClient();
-  const { error: profileInsertError } = await serviceClient.from('profiles').insert({
-    id: user.id,
-    display_name: displayName.trim(),
-    username: username.trim(),
-  });
+  const { error: profileInsertError } = await serviceClient
+    .from('profiles')
+    .upsert(
+      {
+        id: user.id,
+        display_name: displayName.trim(),
+        username: username.trim(),
+      },
+      { onConflict: 'id' },
+    );
 
   if (profileInsertError) {
-    return { data: null, error: { code: 'UNKNOWN', message: 'Profile creation failed' } };
+    // Surface the real reason — a generic message hid the actual failure.
+    return {
+      data: null,
+      error: { code: 'UNKNOWN', message: `Profile creation failed: ${profileInsertError.message}` },
+    };
   }
 
   const { data: profile, error: profileFetchError } = await serviceClient
