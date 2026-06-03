@@ -6,7 +6,7 @@ import { getSupabaseServerClient } from '@/lib/auth/server';
 import { requireAuth } from '@/lib/auth';
 
 const UpdateProfileSchema = z.object({
-  display_name: z.string().min(1).max(80).trim(),
+  display_name: z.string().min(1).max(80).trim().optional(),
   username: z
     .string()
     .min(3)
@@ -31,17 +31,22 @@ export async function updateProfile(
   const { user } = await requireAuth();
   const supabase = await getSupabaseServerClient();
 
+  // PARTIAL update — only write fields the caller actually provided. Onboarding
+  // steps (persona, interests) must never blank out display_name/username/bio.
+  const d = parsed.data;
+  const updates = {
+    updated_at: new Date().toISOString(),
+    ...(d.display_name !== undefined ? { display_name: d.display_name } : {}),
+    ...(d.username !== undefined ? { username: d.username } : {}),
+    ...(d.bio !== undefined ? { bio: d.bio } : {}),
+    ...(d.persona !== undefined ? { persona: d.persona } : {}),
+    ...(d.interests !== undefined ? { interests: d.interests } : {}),
+    ...(d.occupation !== undefined ? { occupation: d.occupation } : {}),
+  };
+
   const { error } = await supabase
     .from('profiles')
-    .update({
-      display_name: parsed.data.display_name,
-      username: parsed.data.username ?? null,
-      bio: parsed.data.bio ?? null,
-      persona: parsed.data.persona,
-      interests: parsed.data.interests,
-      occupation: parsed.data.occupation,
-      updated_at: new Date().toISOString(),
-    })
+    .update(updates)
     .eq('id', user.id);
 
   if (error) {

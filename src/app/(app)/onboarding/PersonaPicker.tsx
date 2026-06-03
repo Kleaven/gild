@@ -11,14 +11,18 @@ interface PersonaPickerProps {
 
 export function PersonaPicker({ onSelect }: PersonaPickerProps) {
   const [isPending, setIsPending] = React.useState<'member' | 'owner' | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
 
   async function handleSelect(persona: 'member' | 'owner') {
+    setError(null);
     setIsPending(persona);
-    // Optimistically update the profile
-    await updateProfile({ 
-      display_name: 'User', // Required by schema, should already be set but just in case
-      persona 
-    } as any);
+    // Persist ONLY the persona — never touch display_name/username here.
+    const res = await updateProfile({ persona });
+    if (!res.ok) {
+      setIsPending(null);
+      setError(res.error);
+      return;
+    }
     onSelect(persona);
   }
 
@@ -43,6 +47,16 @@ export function PersonaPicker({ onSelect }: PersonaPickerProps) {
         textAlign: 'center',
         margin: '0 0 48px',
       }}>How do you want to use Gild today?</p>
+
+      {error && (
+        <p style={{
+          textAlign: 'center',
+          color: '#c00',
+          fontSize: 14,
+          fontWeight: 600,
+          margin: '0 0 24px',
+        }}>{error}</p>
+      )}
 
       <div style={{
         display: 'grid',

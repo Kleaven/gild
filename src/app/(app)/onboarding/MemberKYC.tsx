@@ -33,13 +33,21 @@ export function MemberKYC() {
     );
   }
 
+  const [error, setError] = useState<string | null>(null);
+
   function handleFinish() {
+    setError(null);
     startTransition(async () => {
-      await updateProfile({
-        display_name: 'User', // Placeholder, real name should be set during sign up
+      // Set only the KYC fields — display_name/username stay as set at sign-up.
+      const res = await updateProfile({
+        persona: 'member',
         interests: selectedNiches,
         occupation,
-      } as any);
+      });
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
       router.push('/communities');
     });
   }
@@ -126,6 +134,11 @@ export function MemberKYC() {
         </select>
       </section>
 
+      {error && (
+        <p style={{ color: '#c00', fontSize: 14, fontWeight: 600, textAlign: 'center', margin: '0 0 12px' }}>
+          {error}
+        </p>
+      )}
       <button
         onClick={handleFinish}
         disabled={!isValid || isPending}
