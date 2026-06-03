@@ -51,11 +51,23 @@ export async function signUp(formData: FormData): Promise<AuthResult<Authenticat
     };
   }
 
+  // Where Supabase should send the email-confirmation link (when "Confirm
+  // email" is enabled). Must land on /auth/callback so the code is exchanged
+  // for a session and the profile is ensured — not the bare site root.
+  const hdrs = await headers();
+  const host = hdrs.get('x-forwarded-host') ?? hdrs.get('host');
+  const proto = hdrs.get('x-forwarded-proto') ?? 'https';
+  const emailRedirectTo = host ? `${proto}://${host}/auth/callback` : undefined;
+
   const supabase = await getSupabaseServerClient();
   const {
     data: { user, session },
     error: signUpError,
-  } = await supabase.auth.signUp({ email: email.trim(), password });
+  } = await supabase.auth.signUp({
+    email: email.trim(),
+    password,
+    options: emailRedirectTo ? { emailRedirectTo } : undefined,
+  });
 
   if (signUpError) {
     return { data: null, error: parseAuthError(signUpError) };
