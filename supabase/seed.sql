@@ -191,7 +191,9 @@ INSERT INTO public.membership_tiers (
     '00000000-0000-0000-0000-000000000010',
     'Pro Member',
     'Paid membership tier.',
-    2900, 1, true,
+    -- price_month_usd is WHOLE DOLLARS (matches lib/community/tiers.ts, which
+    -- multiplies by 100 for Stripe). 29 = $29/mo. Never store cents here.
+    29, 1, true,
     now(), now()
   )
 ON CONFLICT (id) DO NOTHING;

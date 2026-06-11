@@ -26,6 +26,7 @@ export default function CommentList({ initialComments, postId, currentUserId, is
   const [isPending, startTransition] = useTransition();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [optimisticComments, addOptimisticAction] = useOptimistic(
@@ -65,13 +66,14 @@ export default function CommentList({ initialComments, postId, currentUserId, is
     setShowDeleteConfirm(false);
     setCommentToDelete(null);
     
+    setActionError(null);
     startTransition(async () => {
       addOptimisticAction({ type: 'delete', id: commentId });
       try {
         await deleteComment(commentId);
         router.refresh();
       } catch (err) {
-        alert(err instanceof Error ? err.message : 'Failed to delete');
+        setActionError(err instanceof Error ? err.message.replace('[gild] ', '') : 'Could not delete the comment.');
         router.refresh();
       }
     });
@@ -82,13 +84,14 @@ export default function CommentList({ initialComments, postId, currentUserId, is
     // Set to null immediately for instant UI response
     setEditingId(null);
     
+    setActionError(null);
     startTransition(async () => {
       addOptimisticAction({ type: 'edit', id: commentId, body: newBody });
       try {
         await updateComment(commentId, newBody);
         router.refresh();
       } catch (err) {
-        alert(err instanceof Error ? err.message : 'Failed to update');
+        setActionError(err instanceof Error ? err.message.replace('[gild] ', '') : 'Could not update the comment.');
         router.refresh();
       }
     });
@@ -109,6 +112,33 @@ export default function CommentList({ initialComments, postId, currentUserId, is
         confirmLabel="Delete"
         isDestructive
       />
+
+      {actionError && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+          marginBottom: 14,
+          padding: '10px 14px',
+          borderRadius: 10,
+          background: 'oklch(0.96 0.03 25)',
+          border: '1px solid oklch(0.88 0.06 25)',
+          color: 'oklch(0.40 0.16 25)',
+          fontSize: 13,
+          fontWeight: 600,
+          fontFamily: GILD_FONTS.sans,
+        }}>
+          <span>{actionError}</span>
+          <button
+            onClick={() => setActionError(null)}
+            aria-label="Dismiss"
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'inherit', display: 'flex', padding: 0 }}
+          >
+            <X size={15} />
+          </button>
+        </div>
+      )}
 
       <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 16, fontFamily: GILD_FONTS.sans }}>
         {optimisticComments.map((comment) => {

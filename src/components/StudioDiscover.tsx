@@ -1,9 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { GILD_FONTS } from '@/components/gild';
-import { Search, Compass, Users, ArrowRight } from 'lucide-react';
+import { Search, Compass, Users, ArrowRight, X, Sparkles } from 'lucide-react';
+
+interface DiscoverTier {
+  price_month_usd: number;
+  is_active: boolean;
+}
 
 interface CommunityCard {
   id: string;
@@ -13,6 +18,7 @@ interface CommunityCard {
   member_count: number;
   category: string | null;
   logo_url: string | null;
+  membership_tiers?: DiscoverTier[];
 }
 
 interface StudioDiscoverProps {
@@ -29,19 +35,39 @@ const CATEGORIES = [
   'Education',
 ];
 
+// Deterministic hue per community so each card gets a stable identity color.
+function hueFor(seed: string): number {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) % 360;
+  return h;
+}
+
+// price_month_usd is stored in WHOLE DOLLARS (validated 1–100000 at creation),
+// so the minimum is displayed as-is — never divided by 100.
+function startingPrice(tiers: DiscoverTier[] | undefined): number | null {
+  const active = (tiers ?? []).filter((t) => t.is_active && t.price_month_usd > 0);
+  if (active.length === 0) return null;
+  return Math.min(...active.map((t) => t.price_month_usd));
+}
+
 export function StudioDiscover({ initialCommunities }: StudioDiscoverProps) {
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [communities] = useState(initialCommunities);
 
-  // Note: For a real app, we'd debounced search here, but for v1, 
-  // we'll do client-side filtering of the initial batch or use the search param.
-  const filtered = communities.filter(c => {
-    const matchesQuery = c.name.toLowerCase().includes(query.toLowerCase()) ||
-      (c.description?.toLowerCase().includes(query.toLowerCase()) ?? false);
-    const matchesCategory = selectedCategory === 'All' || c.category === selectedCategory;
-    return matchesQuery && matchesCategory;
-  });
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return initialCommunities.filter((c) => {
+      const matchesQuery =
+        !q ||
+        c.name.toLowerCase().includes(q) ||
+        (c.description?.toLowerCase().includes(q) ?? false);
+      const matchesCategory = selectedCategory === 'All' || c.category === selectedCategory;
+      return matchesQuery && matchesCategory;
+    });
+  }, [initialCommunities, query, selectedCategory]);
+
+  const platformEmpty = initialCommunities.length === 0;
+  const isFiltering = query.trim() !== '' || selectedCategory !== 'All';
 
   return (
     <div style={{
@@ -50,21 +76,34 @@ export function StudioDiscover({ initialCommunities }: StudioDiscoverProps) {
       minHeight: '100vh',
       color: '#202020',
     }}>
-      {/* Hero Section */}
+      {/* ── Hero ──────────────────────────────────────────────────────── */}
       <section style={{
-        background: 'oklch(0.985 0.003 250)',
+        background: 'linear-gradient(180deg, oklch(0.98 0.006 250), oklch(0.995 0.002 250))',
         padding: 'clamp(48px, 8vw, 80px) clamp(20px, 4vw, 32px)',
         borderBottom: '1px solid oklch(0.94 0.005 250)',
         textAlign: 'center',
+        position: 'relative',
+        overflow: 'hidden',
       }}>
-        <div style={{ maxWidth: 760, margin: '0 auto' }}>
-          <div style={{
+        {/* soft identity glows */}
+        <span aria-hidden style={{
+          position: 'absolute', top: -120, left: '12%', width: 280, height: 280, borderRadius: '50%',
+          background: 'oklch(0.90 0.06 75 / 0.5)', filter: 'blur(80px)', pointerEvents: 'none',
+        }} />
+        <span aria-hidden style={{
+          position: 'absolute', bottom: -140, right: '10%', width: 320, height: 320, borderRadius: '50%',
+          background: 'oklch(0.90 0.06 300 / 0.4)', filter: 'blur(90px)', pointerEvents: 'none',
+        }} />
+
+        <div style={{ maxWidth: 760, margin: '0 auto', position: 'relative' }}>
+          <div className="gd-rise" style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: 8,
             padding: '6px 14px',
             borderRadius: 100,
-            background: 'oklch(0.92 0.01 250)',
+            background: '#fff',
+            border: '1px solid oklch(0.92 0.01 250)',
             color: 'oklch(0.30 0.02 250)',
             fontSize: 12,
             fontWeight: 600,
@@ -72,268 +111,326 @@ export function StudioDiscover({ initialCommunities }: StudioDiscoverProps) {
             letterSpacing: '0.01em',
           }}>
             <Compass size={14} />
-            Explore the Galaxy
+            Discover communities
           </div>
-          <h1 style={{
+          <h1 className="gd-rise gd-d1" style={{
             fontFamily: GILD_FONTS.display,
-            fontSize: 'clamp(32px, 5.5vw, 52px)',
+            fontSize: 'clamp(34px, 5.5vw, 54px)',
             fontWeight: 800,
-            margin: '0 0 20px',
+            margin: '0 0 18px',
             letterSpacing: '-0.035em',
-            lineHeight: 1.05,
+            lineHeight: 1.04,
           }}>Find your people.</h1>
-          <p style={{
+          <p className="gd-rise gd-d2" style={{
             fontSize: 'clamp(15px, 1.6vw, 18px)',
             color: 'oklch(0.40 0.02 250)',
-            margin: '0 0 36px',
+            margin: '0 auto 34px',
             lineHeight: 1.55,
             maxWidth: 540,
-            marginLeft: 'auto',
-            marginRight: 'auto',
-          }}>Discover premium communities where experts share knowledge and build together.</p>
+          }}>Premium communities where experts teach, members build, and creators keep 100%.</p>
 
-          <div style={{
-            position: 'relative',
-            maxWidth: 520,
-            margin: '0 auto',
-          }}>
+          <div className="gd-rise gd-d3" style={{ position: 'relative', maxWidth: 540, margin: '0 auto' }}>
             <Search
               style={{ position: 'absolute', left: 18, top: '50%', transform: 'translateY(-50%)', color: 'oklch(0.50 0.02 250)' }}
               size={18}
+              aria-hidden
             />
             <input
-              type="text"
+              type="search"
+              aria-label="Search communities"
               placeholder="Search by name, niche, or keyword…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               style={{
                 width: '100%',
-                padding: '15px 18px 15px 50px',
+                padding: '15px 48px 15px 50px',
                 borderRadius: 14,
                 border: '1px solid oklch(0.88 0.01 250)',
                 fontSize: 15,
                 outline: 'none',
                 background: '#fff',
-                boxShadow: '0 6px 24px oklch(0 0 0 / 0.04)',
+                boxShadow: '0 8px 28px oklch(0 0 0 / 0.05)',
                 fontFamily: 'inherit',
                 boxSizing: 'border-box',
               }}
             />
+            {query && (
+              <button
+                onClick={() => setQuery('')}
+                aria-label="Clear search"
+                style={{
+                  position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                  width: 28, height: 28, borderRadius: 8, border: 'none',
+                  background: 'oklch(0.96 0.005 250)', color: 'oklch(0.45 0.02 250)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                }}
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Main Content — wider container, more breathing room, mobile-safe padding */}
+      {/* ── Body ──────────────────────────────────────────────────────── */}
       <main style={{
         maxWidth: 1280,
         margin: '0 auto',
-        padding: 'clamp(32px, 5vw, 64px) clamp(20px, 4vw, 40px) 96px',
+        padding: 'clamp(32px, 5vw, 56px) clamp(20px, 4vw, 40px) 96px',
       }}>
-        {/* Category Filter — tighter, scroll-snaps cleanly on mobile */}
+        {/* category chips + result count */}
         <div style={{
           display: 'flex',
-          gap: 8,
-          overflowX: 'auto',
-          marginBottom: 'clamp(28px, 4vw, 44px)',
-          paddingBottom: 12,
-          scrollbarWidth: 'thin',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 16,
+          flexWrap: 'wrap',
+          marginBottom: 'clamp(24px, 4vw, 40px)',
         }}>
-          {CATEGORIES.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              style={{
-                padding: '9px 16px',
-                borderRadius: 100,
-                border: '1px solid',
-                borderColor: selectedCategory === cat ? 'oklch(0.20 0.02 250)' : 'oklch(0.90 0.01 250)',
-                background: selectedCategory === cat ? 'oklch(0.20 0.02 250)' : '#fff',
-                color: selectedCategory === cat ? '#fff' : 'oklch(0.30 0.02 250)',
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                transition: 'all 0.15s ease',
-                fontFamily: 'inherit',
-                flexShrink: 0,
-              }}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
-        {/* Community Grid
-            min(340px, 100%) — collapses to 1 column on viewports < 340px
-            instead of overflowing.
-            alignItems: 'start' — CRITICAL: defeats CSS Grid's default
-            `align-items: stretch`, which was making every card balloon to
-            match the tallest cell in the row (combined with the
-            description's flex:1 + min-height, cards were ending up ~585px
-            tall for ~280px of content). With start alignment, each card
-            takes only as much vertical space as its own content needs. */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(min(340px, 100%), 1fr))',
-          gap: 'clamp(24px, 3vw, 36px)',
-          alignItems: 'start',
-        }}>
-          {filtered.map(community => (
-            <Link
-              key={community.id}
-              href={`/c/${community.slug}/join`}
-              style={{ textDecoration: 'none', color: 'inherit' }}
-            >
-              <div style={{
-                border: '1px solid oklch(0.93 0.005 250)',
-                borderRadius: 16,
-                padding: 24,
-                background: '#fff',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 16,
-                transition: 'transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.18s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.18s ease',
-                cursor: 'pointer',
-                boxShadow: '0 1px 2px oklch(0 0 0 / 0.02)',
-                position: 'relative',
-              }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 12px 28px oklch(0 0 0 / 0.06), 0 2px 4px oklch(0 0 0 / 0.03)';
-                  e.currentTarget.style.borderColor = 'oklch(0.85 0.01 250)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 1px 2px oklch(0 0 0 / 0.02)';
-                  e.currentTarget.style.borderColor = 'oklch(0.93 0.005 250)';
+          <div style={{
+            display: 'flex',
+            gap: 8,
+            overflowX: 'auto',
+            paddingBottom: 4,
+            scrollbarWidth: 'thin',
+          }}>
+            {CATEGORIES.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                aria-pressed={selectedCategory === cat}
+                style={{
+                  padding: '9px 16px',
+                  borderRadius: 100,
+                  border: '1px solid',
+                  borderColor: selectedCategory === cat ? 'oklch(0.20 0.02 250)' : 'oklch(0.90 0.01 250)',
+                  background: selectedCategory === cat ? 'oklch(0.20 0.02 250)' : '#fff',
+                  color: selectedCategory === cat ? '#fff' : 'oklch(0.30 0.02 250)',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.15s ease',
+                  fontFamily: 'inherit',
+                  flexShrink: 0,
                 }}
               >
-                {/* Header: logo + name + price + member count, tighter vertical rhythm */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, minWidth: 0 }}>
-                  <div style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: 12,
-                    background: 'linear-gradient(135deg, oklch(0.78 0.14 75), oklch(0.55 0.14 75))',
-                    color: '#fff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontFamily: GILD_FONTS.display,
-                    fontWeight: 800,
-                    fontSize: 22,
-                    flexShrink: 0,
-                    overflow: 'hidden',
-                  }}>
-                    {community.logo_url
-                      ? <img src={community.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : community.name[0]}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
-                      <h3 style={{
-                        fontSize: 17,
-                        fontWeight: 700,
-                        margin: 0,
-                        letterSpacing: '-0.02em',
-                        lineHeight: 1.3,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        minWidth: 0,
-                        flex: 1,
-                      }}>{community.name}</h3>
-                      {/* Price Badge — pinned right, never wraps */}
-                      {(() => {
-                        const tiers = (community as any).membership_tiers || [];
-                        const minPrice = tiers.length > 0 ? Math.min(...tiers.map((t: any) => t.price_month_usd)) : 0;
-                        const displayPrice = minPrice > 0 ? minPrice / 100 : 0;
-                        return (
-                          <span style={{
-                            fontSize: 12,
-                            fontWeight: 700,
-                            color: displayPrice > 0 ? 'oklch(0.45 0.14 150)' : 'oklch(0.50 0.02 250)',
-                            fontFamily: GILD_FONTS.mono,
-                            whiteSpace: 'nowrap',
-                            flexShrink: 0,
-                          }}>
-                            {displayPrice > 0 ? `$${displayPrice}/mo` : 'Free'}
-                          </span>
-                        );
-                      })()}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <Users size={12} color="oklch(0.50 0.02 250)" />
-                      <span style={{ fontSize: 12, color: 'oklch(0.50 0.02 250)', fontWeight: 500, fontFamily: GILD_FONTS.mono }}>
-                        {community.member_count.toLocaleString()} {community.member_count === 1 ? 'member' : 'members'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Description — naturally sized, clamps at 3 lines. No flex:1
-                    or min-height: with alignItems:start on the grid, cards take
-                    their content height, so there's no "remaining space" to fill. */}
-                <p style={{
-                  fontSize: 14,
-                  lineHeight: 1.55,
-                  color: 'oklch(0.42 0.02 250)',
-                  margin: 0,
-                  display: '-webkit-box',
-                  WebkitLineClamp: 3,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                }}>
-                  {community.description || 'A premium space for collective growth and expert-led discussion.'}
-                </p>
-
-                {/* Footer — separated from body by a hairline rule for clear visual hierarchy */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingTop: 14,
-                  borderTop: '1px solid oklch(0.96 0.005 250)',
-                }}>
-                  <span style={{
-                    padding: '4px 10px',
-                    borderRadius: 6,
-                    fontSize: 10,
-                    fontWeight: 700,
-                    background: 'oklch(0.96 0.005 250)',
-                    color: 'oklch(0.40 0.02 250)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
-                    fontFamily: GILD_FONTS.mono,
-                  }}>
-                    {community.category || 'Niche'}
-                  </span>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    color: 'oklch(0.20 0.02 250)',
-                    fontSize: 13,
-                    fontWeight: 700,
-                    letterSpacing: '-0.005em',
-                  }}>
-                    Join
-                    <ArrowRight size={14} />
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))}
+                {cat}
+              </button>
+            ))}
+          </div>
+          {!platformEmpty && (
+            <p aria-live="polite" style={{ margin: 0, fontSize: 13, color: 'oklch(0.52 0.02 250)', fontFamily: GILD_FONTS.mono, whiteSpace: 'nowrap' }}>
+              {filtered.length} {filtered.length === 1 ? 'community' : 'communities'}
+            </p>
+          )}
         </div>
 
-        {filtered.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '64px 0' }}>
-            <Compass size={48} color="oklch(0.90 0.01 250)" style={{ marginBottom: 16 }} />
-            <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 8px' }}>No communities found</h3>
-            <p style={{ color: 'oklch(0.50 0.02 250)', margin: 0 }}>Try adjusting your search or category filters.</p>
+        {/* grid */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(min(330px, 100%), 1fr))',
+          gap: 'clamp(20px, 2.6vw, 28px)',
+          alignItems: 'start',
+        }}>
+          {filtered.map((community, i) => {
+            const hue = hueFor(community.slug || community.name);
+            const fromPrice = startingPrice(community.membership_tiers);
+            return (
+              <Link
+                key={community.id}
+                href={`/c/${community.slug}/join`}
+                className="gd-card gd-pop"
+                style={{
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  display: 'block',
+                  border: '1px solid oklch(0.93 0.005 250)',
+                  borderRadius: 18,
+                  background: '#fff',
+                  overflow: 'hidden',
+                  boxShadow: '0 1px 2px oklch(0 0 0 / 0.02)',
+                  animationDelay: `${Math.min(i, 11) * 0.05}s`,
+                }}
+              >
+                {/* identity cover band */}
+                <div aria-hidden style={{
+                  height: 64,
+                  background: `linear-gradient(120deg, oklch(0.88 0.07 ${hue}), oklch(0.80 0.10 ${(hue + 40) % 360}))`,
+                  position: 'relative',
+                }}>
+                  <span style={{
+                    position: 'absolute', inset: 0,
+                    background: 'radial-gradient(ellipse at 80% 0%, oklch(1 0 0 / 0.45), transparent 55%)',
+                  }} />
+                </div>
+
+                <div style={{ padding: '0 22px 22px' }}>
+                  {/* logo overlapping band */}
+                  <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: -26, marginBottom: 12 }}>
+                    <div style={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: 14,
+                      background: `linear-gradient(135deg, oklch(0.70 0.13 ${hue}), oklch(0.50 0.13 ${hue}))`,
+                      color: '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontFamily: GILD_FONTS.display,
+                      fontWeight: 800,
+                      fontSize: 23,
+                      flexShrink: 0,
+                      overflow: 'hidden',
+                      border: '3px solid #fff',
+                      boxShadow: '0 4px 12px oklch(0 0 0 / 0.10)',
+                    }}>
+                      {community.logo_url
+                        ? <img src={community.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : community.name[0]}
+                    </div>
+                    <span style={{
+                      fontSize: 12.5,
+                      fontWeight: 700,
+                      fontFamily: GILD_FONTS.mono,
+                      whiteSpace: 'nowrap',
+                      padding: '5px 11px',
+                      borderRadius: 999,
+                      marginBottom: 2,
+                      background: fromPrice !== null ? 'oklch(0.95 0.05 150)' : 'oklch(0.96 0.005 250)',
+                      color: fromPrice !== null ? 'oklch(0.38 0.12 150)' : 'oklch(0.45 0.02 250)',
+                    }}>
+                      {fromPrice !== null ? `from $${fromPrice}/mo` : 'Free to join'}
+                    </span>
+                  </div>
+
+                  <h3 style={{
+                    fontSize: 17.5,
+                    fontWeight: 700,
+                    margin: '0 0 5px',
+                    letterSpacing: '-0.02em',
+                    lineHeight: 1.3,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}>{community.name}</h3>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+                    <Users size={12} color="oklch(0.50 0.02 250)" aria-hidden />
+                    <span style={{ fontSize: 12, color: 'oklch(0.50 0.02 250)', fontWeight: 500, fontFamily: GILD_FONTS.mono }}>
+                      {community.member_count.toLocaleString()} {community.member_count === 1 ? 'member' : 'members'}
+                    </span>
+                  </div>
+
+                  <p style={{
+                    fontSize: 14,
+                    lineHeight: 1.55,
+                    color: 'oklch(0.42 0.02 250)',
+                    margin: '0 0 16px',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                  }}>
+                    {community.description || 'A premium space for collective growth and expert-led discussion.'}
+                  </p>
+
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingTop: 14,
+                    borderTop: '1px solid oklch(0.96 0.005 250)',
+                  }}>
+                    <span style={{
+                      padding: '4px 10px',
+                      borderRadius: 6,
+                      fontSize: 10,
+                      fontWeight: 700,
+                      background: 'oklch(0.96 0.005 250)',
+                      color: 'oklch(0.40 0.02 250)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                      fontFamily: GILD_FONTS.mono,
+                    }}>
+                      {community.category || 'Niche'}
+                    </span>
+                    <span className="gd-join" style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      color: 'oklch(0.20 0.02 250)',
+                      fontSize: 13,
+                      fontWeight: 700,
+                      letterSpacing: '-0.005em',
+                    }}>
+                      Join
+                      <ArrowRight size={14} aria-hidden />
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* empty states */}
+        {platformEmpty ? (
+          <div style={{ textAlign: 'center', padding: '72px 0' }}>
+            <Sparkles size={44} color="oklch(0.85 0.06 75)" style={{ marginBottom: 16 }} aria-hidden />
+            <h3 style={{ fontFamily: GILD_FONTS.display, fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Be the first.</h3>
+            <p style={{ color: 'oklch(0.50 0.02 250)', margin: '0 0 22px', fontSize: 15 }}>
+              No public communities yet — yours could be the one everyone discovers.
+            </p>
+            <Link href="/onboarding" style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              padding: '13px 26px', borderRadius: 12, textDecoration: 'none',
+              background: 'oklch(0.20 0.02 250)', color: '#fff', fontWeight: 700, fontSize: 15,
+            }}>
+              Start a community <ArrowRight size={16} />
+            </Link>
+          </div>
+        ) : filtered.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '72px 0' }}>
+            <Compass size={44} color="oklch(0.90 0.01 250)" style={{ marginBottom: 16 }} aria-hidden />
+            <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 8px' }}>
+              {query.trim() ? `No matches for “${query.trim()}”` : 'Nothing in this category yet'}
+            </h3>
+            <p style={{ color: 'oklch(0.50 0.02 250)', margin: '0 0 20px' }}>Try a different keyword or category.</p>
+            {isFiltering && (
+              <button
+                onClick={() => { setQuery(''); setSelectedCategory('All'); }}
+                style={{
+                  padding: '10px 20px', borderRadius: 10, border: '1px solid oklch(0.88 0.01 250)',
+                  background: '#fff', color: 'oklch(0.25 0.02 250)', fontSize: 14, fontWeight: 600,
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                Clear filters
+              </button>
+            )}
           </div>
         )}
       </main>
+
+      <style>{`
+        .gd-card { transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s ease, border-color 0.2s ease; }
+        .gd-card:hover { transform: translateY(-4px); box-shadow: 0 16px 36px oklch(0 0 0 / 0.08), 0 2px 4px oklch(0 0 0 / 0.03); border-color: oklch(0.86 0.01 250); }
+        .gd-card .gd-join { transition: gap 0.18s ease; }
+        .gd-card:hover .gd-join { gap: 10px; }
+
+        @media (prefers-reduced-motion: no-preference) {
+          .gd-rise { opacity: 0; transform: translateY(18px); animation: gdRise 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+          .gd-d1 { animation-delay: 0.07s; }
+          .gd-d2 { animation-delay: 0.14s; }
+          .gd-d3 { animation-delay: 0.21s; }
+          .gd-pop { opacity: 0; transform: translateY(18px); animation: gdRise 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+          @keyframes gdRise { to { opacity: 1; transform: translateY(0); } }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .gd-rise, .gd-pop { opacity: 1 !important; transform: none !important; animation: none !important; }
+        }
+      `}</style>
     </div>
   );
 }

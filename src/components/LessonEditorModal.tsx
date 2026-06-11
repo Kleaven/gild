@@ -23,6 +23,7 @@ export function LessonEditorModal({ communityId, courseId, lesson, isOpen, onClo
   const [attachmentUrls, setAttachmentUrls] = useState<string[]>(lesson.attachment_urls || []);
   const [, setIsUploading] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -30,6 +31,7 @@ export function LessonEditorModal({ communityId, courseId, lesson, isOpen, onClo
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setError(null);
     setIsUploading(type);
     const formData = new FormData();
     formData.append('file', file);
@@ -39,29 +41,43 @@ export function LessonEditorModal({ communityId, courseId, lesson, isOpen, onClo
       if (res.ok && res.url) {
         if (type === 'image') setImageUrl(res.url);
         else setAttachmentUrls([...attachmentUrls, res.url]);
+      } else if (!res.ok) {
+        setError(res.error);
       }
-    } catch (err) {
-      console.error('Upload failed', err);
+    } catch {
+      setError('Upload failed. Please try again.');
     } finally {
       setIsUploading(null);
     }
   }
 
+  // Accept a paste like "youtube.com/watch?v=…" — prefix the scheme so the
+  // server's z.string().url() doesn't reject the save.
+  function normalizeUrl(value: string): string {
+    const v = value.trim();
+    if (!v) return '';
+    return /^https?:\/\//i.test(v) ? v : `https://${v}`;
+  }
+
   async function handleSave() {
+    if (!title.trim()) {
+      setError('Give the lesson a title.');
+      return;
+    }
+    setError(null);
     setIsSaving(true);
     try {
       await updateLesson(lesson.id, {
         title,
         body,
-        videoUrl,
+        videoUrl: normalizeUrl(videoUrl),
         imageUrl,
         attachmentUrls,
       }, communityId, courseId);
       onSaved();
       onClose();
     } catch (err) {
-      console.error('Save failed', err);
-      alert('Failed to save lesson');
+      setError(err instanceof Error ? err.message.replace('[gild] ', '') : 'Could not save the lesson. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -227,10 +243,16 @@ export function LessonEditorModal({ communityId, courseId, lesson, isOpen, onClo
           padding: '20px 24px',
           borderTop: '1px solid oklch(0.95 0.005 250)',
           display: 'flex',
+          alignItems: 'center',
           justifyContent: 'flex-end',
           gap: 12
         }}>
-          <button 
+          {error && (
+            <p style={{ flex: 1, margin: 0, fontSize: 13, fontWeight: 600, color: 'oklch(0.45 0.16 25)' }}>
+              {error}
+            </p>
+          )}
+          <button
             onClick={onClose}
             style={{ 
               padding: '10px 20px', 

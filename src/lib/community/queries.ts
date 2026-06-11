@@ -149,7 +149,10 @@ export async function getDiscoverCommunities(
 
   let dbQuery = supabase
     .from('communities')
-    .select('*, membership_tiers(price_month_usd)')
+    // Embedded filter: only ACTIVE tiers count toward the "from $X/mo" badge —
+    // archived tiers would otherwise distort the displayed minimum price.
+    .select('*, membership_tiers(price_month_usd, is_active)')
+    .eq('membership_tiers.is_active', true)
     .eq('is_private', false)
     .is('deleted_at', null)
     .order('member_count', { ascending: false })
