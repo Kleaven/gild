@@ -611,6 +611,9 @@ function ModuleItem({ module, communityId, courseId, onEditLesson, onDeleteModul
   const [, startTransition] = useTransition();
   // Guards against the rename firing twice when Enter both submits and blurs.
   const savingRef = React.useRef(false);
+  // A just-added module isn't in the DB yet — block edits/lesson-adds against
+  // its placeholder id until the server round-trip reconciles a real id.
+  const isTemp = typeof module.id === 'string' && module.id.startsWith('temp-');
 
   async function handleUpdateTitle() {
     if (savingRef.current) return;
@@ -661,8 +664,8 @@ function ModuleItem({ module, communityId, courseId, onEditLesson, onDeleteModul
         gap: 12 
       }}>
         <GripVertical size={16} color="oklch(0.80 0.01 250)" style={{ cursor: 'grab' }} />
-        {isEditing ? (
-          <input 
+        {isEditing && !isTemp ? (
+          <input
             autoFocus
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -671,15 +674,21 @@ function ModuleItem({ module, communityId, courseId, onEditLesson, onDeleteModul
             style={{ ...inputStyle, padding: '4px 8px', fontSize: 16, fontWeight: 700 }}
           />
         ) : (
-          <h3 
-            onClick={() => setIsEditing(true)}
-            style={{ fontSize: 16, fontWeight: 700, margin: 0, flex: 1, cursor: 'text' }}
+          <h3
+            onClick={() => { if (!isTemp) setIsEditing(true); }}
+            style={{ fontSize: 16, fontWeight: 700, margin: 0, flex: 1, cursor: isTemp ? 'default' : 'text' }}
           >
             {module.title}
           </h3>
         )}
-        
-        {tiers.length > 0 && (
+
+        {isTemp && (
+          <span style={{ fontSize: 11, fontWeight: 600, color: 'oklch(0.55 0.02 250)', fontFamily: GILD_FONTS.mono }}>
+            Saving…
+          </span>
+        )}
+
+        {!isTemp && tiers.length > 0 && (
           <select
             value={module.min_tier_id ?? ''}
             onChange={(e) => handleTierChange(e.target.value)}
@@ -708,9 +717,11 @@ function ModuleItem({ module, communityId, courseId, onEditLesson, onDeleteModul
           <IconButton onClick={() => setIsExpanded(!isExpanded)} title={isExpanded ? 'Collapse' : 'Expand'}>
             {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </IconButton>
-          <IconButton onClick={() => onDeleteModule(module.id)} title="Delete Module" danger>
-            <Trash2 size={16} />
-          </IconButton>
+          {!isTemp && (
+            <IconButton onClick={() => onDeleteModule(module.id)} title="Delete Module" danger>
+              <Trash2 size={16} />
+            </IconButton>
+          )}
         </div>
       </header>
 
@@ -729,24 +740,26 @@ function ModuleItem({ module, communityId, courseId, onEditLesson, onDeleteModul
           ))}
           <button
             onClick={handleAddLesson}
+            disabled={isTemp}
+            title={isTemp ? 'Saving the module first…' : 'Add a lesson'}
             style={{
               width: '100%',
               padding: '14px 20px',
               background: 'transparent',
               border: 'none',
               borderTop: module.lessons.length > 0 ? '1px solid oklch(0.97 0.002 250)' : 'none',
-              color: 'oklch(0.55 0.02 250)',
+              color: isTemp ? 'oklch(0.75 0.01 250)' : 'oklch(0.55 0.02 250)',
               fontSize: 13,
               fontWeight: 600,
               display: 'flex',
               alignItems: 'center',
               gap: 8,
-              cursor: 'pointer',
+              cursor: isTemp ? 'default' : 'pointer',
               justifyContent: 'center',
               transition: 'all 0.2s ease'
             }}
           >
-            <Plus size={16} /> Add Lesson
+            <Plus size={16} /> {isTemp ? 'Saving module…' : 'Add Lesson'}
           </button>
         </div>
       )}
@@ -799,22 +812,29 @@ function LessonItem({ lesson, communityId, courseId, onEdit, onDelete, onToggleP
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 6 }}>
-        {!isTemp && (
+      {/* A just-added lesson isn't persisted yet — its id is a placeholder, so
+          editing/publishing/deleting/quizzing it would 500. Show a saving state
+          until the server round-trip swaps in the real row. */}
+      {isTemp ? (
+        <span style={{ fontSize: 11, fontWeight: 600, color: 'oklch(0.55 0.02 250)', fontFamily: GILD_FONTS.mono }}>
+          Saving…
+        </span>
+      ) : (
+        <div style={{ display: 'flex', gap: 6 }}>
           <IconButton onClick={() => setQuizOpen(true)} title="Manage Quiz">
             <ListChecks size={16} />
           </IconButton>
-        )}
-        <IconButton onClick={() => onTogglePublish(!lesson.is_published)} title={lesson.is_published ? 'Unpublish' : 'Publish'}>
-          {lesson.is_published ? <Eye size={16} /> : <EyeOff size={16} />}
-        </IconButton>
-        <IconButton onClick={() => onEdit(lesson)} title="Edit Lesson">
-          <Edit2 size={16} />
-        </IconButton>
-        <IconButton onClick={onDelete} title="Delete Lesson" danger>
-          <Trash2 size={16} />
-        </IconButton>
-      </div>
+          <IconButton onClick={() => onTogglePublish(!lesson.is_published)} title={lesson.is_published ? 'Unpublish' : 'Publish'}>
+            {lesson.is_published ? <Eye size={16} /> : <EyeOff size={16} />}
+          </IconButton>
+          <IconButton onClick={() => onEdit(lesson)} title="Edit Lesson">
+            <Edit2 size={16} />
+          </IconButton>
+          <IconButton onClick={onDelete} title="Delete Lesson" danger>
+            <Trash2 size={16} />
+          </IconButton>
+        </div>
+      )}
 
       {quizOpen && (
         <QuizEditorModal
