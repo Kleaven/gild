@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Wordmark, GILD_FONTS } from '@/components/gild';
+import { AuthShowcase } from '@/components/AuthShowcase';
 import { signUp } from '@/lib/auth/actions';
 import { trackSignup } from '@/lib/analytics/events';
 
@@ -53,6 +53,7 @@ export default function SignUpPage() {
 
   return (
     <div
+      className="gild-auth-grid"
       style={{
         position: 'fixed',
         inset: 0,
@@ -253,23 +254,13 @@ export default function SignUpPage() {
         </div>
       </div>
 
-      <div
-        style={{
-          background: '#fff',
-          borderLeft: '1px solid oklch(0.94 0.01 250)',
-          overflow: 'hidden',
-          position: 'relative',
-        }}
-      >
-        <Image
-          src="/images/SignUpPage.png"
-          alt="Gild Community"
-          fill
-          priority
-          sizes="(max-width: 768px) 0px, 50vw"
-          style={{ objectFit: 'cover', objectPosition: 'left center' }}
-        />
-      </div>
+      <AuthShowcase variant="sign-up" />
+
+      <style>{`
+        @media (max-width: 860px) {
+          .gild-auth-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   );
 }

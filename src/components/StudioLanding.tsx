@@ -377,7 +377,7 @@ export function StudioLanding() {
               {/* right rail peek */}
               <div className="gild-hero-rail" style={{ background: '#fff', borderRadius: 10, padding: '14px 12px', border: HAIRLINE }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'oklch(0.62 0.18 150)' }} />
+                  <span className="gild-pulse" style={{ width: 6, height: 6, borderRadius: '50%', background: 'oklch(0.62 0.18 150)' }} />
                   <p style={{ fontSize: 10, fontWeight: 700, margin: 0, color: 'oklch(0.42 0.14 150)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Live now</p>
                 </div>
                 {mockOnline.map(p => (
@@ -781,7 +781,7 @@ export function StudioLanding() {
                 hot: true,
               },
             ].map((plan, i) => (
-              <article key={plan.name} data-reveal className={`gild-reveal gild-rd${i}`} style={{
+              <article key={plan.name} data-reveal className={`gild-reveal gild-card gild-rd${i}`} style={{
                 border: plan.hot ? `1.5px solid ${INK}` : HAIRLINE,
                 borderRadius: 20,
                 padding: 'clamp(24px, 3vw, 32px)',
@@ -939,6 +939,12 @@ export function StudioLanding() {
 
           .gild-marquee { animation: gildMarquee 36s linear infinite; }
           @keyframes gildMarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+          .gild-pulse { animation: gildPulse 2.2s ease-in-out infinite; }
+          @keyframes gildPulse {
+            0%, 100% { box-shadow: 0 0 0 0 oklch(0.62 0.18 150 / 0.45); }
+            50% { box-shadow: 0 0 0 5px oklch(0.62 0.18 150 / 0); }
+          }
         }
         @media (prefers-reduced-motion: reduce) {
           html { scroll-behavior: auto; }
