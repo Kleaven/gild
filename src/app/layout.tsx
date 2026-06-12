@@ -35,9 +35,29 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: 'Gild',
-  description: 'Premium community platform',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://gild-flax.vercel.app'),
+  title: {
+    default: 'Gild — The home for paid communities',
+    template: '%s · Gild',
+  },
+  description:
+    'Run spaces, teach courses, and sell memberships with 0% transaction fees. Payments go straight to your Stripe account — Gild never takes a cut.',
   manifest: '/manifest.json',
+  openGraph: {
+    type: 'website',
+    siteName: 'Gild',
+    title: 'Gild — The home for paid communities',
+    description:
+      'Spaces, courses, quizzes, and membership tiers for premium creators. 0% transaction fees, forever.',
+    images: [{ url: '/icons/icon-512.png', width: 512, height: 512, alt: 'Gild' }],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Gild — The home for paid communities',
+    description:
+      'Spaces, courses, quizzes, and membership tiers for premium creators. 0% transaction fees, forever.',
+    images: ['/icons/icon-512.png'],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',

@@ -174,6 +174,64 @@ export async function signIn(formData: FormData): Promise<AuthResult<Authenticat
   return { data: { user, profile }, error: null };
 }
 
+// Sends a password-recovery email. ALWAYS reports success to the caller —
+// revealing whether an email is registered would be an account-enumeration
+// leak. Recovery links land on /auth/callback (code exchange) and continue
+// to /reset-password.
+export async function requestPasswordReset(
+  formData: FormData,
+): Promise<{ ok: boolean; error: string | null }> {
+  const email = formData.get('email');
+  if (typeof email !== 'string' || !email.trim() || !email.includes('@')) {
+    return { ok: false, error: 'Enter the email you signed up with.' };
+  }
+
+  const ip = await getCallerIp();
+  const rl = await rateLimit.passwordReset(ip);
+  if (!rl.allowed) {
+    return { ok: false, error: 'Too many reset requests. Try again in an hour.' };
+  }
+
+  const hdrs = await headers();
+  const host = hdrs.get('x-forwarded-host') ?? hdrs.get('host');
+  const proto = hdrs.get('x-forwarded-proto') ?? 'https';
+  const redirectTo = host
+    ? `${proto}://${host}/auth/callback?next=/reset-password`
+    : undefined;
+
+  const supabase = await getSupabaseServerClient();
+  // Errors are intentionally not surfaced (enumeration). Rate limiting above
+  // and Supabase's own limits keep abuse bounded.
+  await supabase.auth.resetPasswordForEmail(email.trim(), redirectTo ? { redirectTo } : undefined);
+
+  return { ok: true, error: null };
+}
+
+// Sets a new password for the CURRENT session — used by /reset-password after
+// the recovery link signed the user in via the auth callback.
+export async function updatePassword(
+  formData: FormData,
+): Promise<{ ok: boolean; error: string | null }> {
+  const password = formData.get('password');
+  if (typeof password !== 'string' || password.length < 8) {
+    return { ok: false, error: 'Password must be at least 8 characters.' };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { ok: false, error: 'Your reset link has expired. Request a new one.' };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) {
+    return { ok: false, error: parseAuthError(error).message };
+  }
+  return { ok: true, error: null };
+}
+
 export async function signOut(): Promise<{ error: AuthError | null }> {
   const supabase = await getSupabaseServerClient();
   const { error } = await supabase.auth.signOut();

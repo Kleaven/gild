@@ -165,6 +165,11 @@ export default function SignInPage() {
                 autoComplete="current-password"
                 style={inputStyle}
               />
+              <div style={{ textAlign: 'right', marginTop: -6 }}>
+                <Link href="/forgot-password" style={{ fontSize: 13, color: 'oklch(0.45 0.02 250)', textDecoration: 'none', fontWeight: 500 }}>
+                  Forgot password?
+                </Link>
+              </div>
               {error && (
                 <p style={{ color: '#c00', fontSize: 14, margin: 0 }}>{error}</p>
               )}
