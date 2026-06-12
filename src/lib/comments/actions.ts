@@ -3,7 +3,7 @@
 import { z } from 'zod';
 import { getSupabaseServerClient } from '../auth/server';
 import { rateLimit } from '../rate-limit/index';
-import { normalizeRole } from '../permissions/roles';
+import { normalizeRole, canRolePerform } from '../permissions/roles';
 import { assertFlag } from '../feature-flags';
 import { isReactionEmoji, type ReactionEmoji } from '../reactions';
 import type { CreateCommentInput } from './types';
@@ -48,16 +48,26 @@ export async function createComment(input: CreateCommentInput): Promise<{ commen
   if (!hasRole) throw new Error('[gild] not a member of this community');
 
   // ─── Permission Check ──────────────────────────────────────────────────────
+  // Space-level AND community-level permissions, resolved against the caller's
+  // actual role. Either layer can deny commenting.
   const space = (post as any).spaces;
-  const perms = space?.permissions || {};
-  const requiredRoleForComment = normalizeRole(perms.comment);
-
-  const { data: hasPermission } = await supabase.rpc('user_has_min_role', {
+  const { data: callerRole, error: callerRoleErr } = await supabase.rpc('current_user_role', {
     p_community_id: post.community_id,
-    p_min_role: requiredRoleForComment,
   });
-  if (!hasPermission) {
-    throw new Error(`Insufficient permissions to comment in this space. Required: ${requiredRoleForComment}`);
+  if (callerRoleErr) throw new Error(callerRoleErr.message);
+  const role = normalizeRole(callerRole);
+
+  const { data: communityRow } = await supabase
+    .from('communities')
+    .select('role_permissions')
+    .eq('id', post.community_id)
+    .maybeSingle();
+
+  if (
+    !canRolePerform(space?.permissions, role, 'comment') ||
+    !canRolePerform(communityRow?.role_permissions, role, 'comment')
+  ) {
+    throw new Error('[gild] commenting is limited in this space — ask a moderator if you think this is a mistake');
   }
 
   if (parentId !== null) {

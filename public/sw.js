@@ -1,15 +1,11 @@
-// Bumped 2026-05-18: slug-routing hotfix shipped — old SW caches must be
-// purged or returning users see stale UUID-keyed redirects from the prior
-// build. The activate handler deletes any cache key that doesn't match
-// this exact name.
-const CACHE_NAME = 'gild-shell-v2';
+// Bumped 2026-06-12 (v3): HTML pages were precached cache-first — users were
+// haunted by stale landing/sign-in/sign-up UI across deploys until a hard
+// refresh. Pages are NEVER cached now; only truly static assets are.
+const CACHE_NAME = 'gild-shell-v3';
 
-// App shell assets to precache on install
-// Only cache static shell — never cache API routes or auth routes
+// Static assets only. HTML documents must never appear here — they change
+// every deploy and a cache-first document resurrects dead UI.
 const SHELL_ASSETS = [
-  '/',
-  '/sign-in',
-  '/sign-up',
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
@@ -71,8 +67,11 @@ self.addEventListener('fetch', (event) => {
         })
       )
     );
+  } else if (request.mode === 'navigate' || request.destination === 'document') {
+    // Documents: network only, never cached. A cached page is a stale page.
+    return;
   } else {
-    // Network-first: try network, fall back to cache
+    // Other subresources: network-first with cache fallback (offline help).
     event.respondWith(
       fetch(request)
         .then((response) => {

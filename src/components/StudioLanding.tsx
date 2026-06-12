@@ -9,11 +9,7 @@ import {
   GILD_FONTS,
   DoodleStar,
   DoodleSpark,
-  DoodleCircle,
-  DoodleScribbleLine,
   DoodleHeart,
-  DoodleUnderline,
-  DoodleSquiggleArrow,
   DOODLE_COLORS,
 } from '@/components/gild';
 import type { Person } from '@/components/gild';
@@ -195,14 +191,9 @@ export function StudioLanding() {
         </div>
       </header>
 
-      {/* ambient doodles */}
-      <DoodleStar style={{ top: 120, left: '7%' }} size={30} color={DOODLE_COLORS.warm} />
-      <DoodleSpark style={{ top: 196, left: '13%' }} size={18} color={DOODLE_COLORS.green} />
-      <DoodleCircle style={{ top: 280, left: '3%' }} size={90} color={DOODLE_COLORS.lilac} />
-      <DoodleScribbleLine style={{ top: 360, left: '5%' }} w={70} color={DOODLE_COLORS.warm} />
-      <DoodleHeart style={{ top: 140, right: '9%' }} size={24} color={DOODLE_COLORS.warm} />
-      <DoodleStar style={{ top: 236, right: '5%' }} size={22} color={DOODLE_COLORS.green} />
-      <DoodleSpark style={{ top: 300, right: '13%' }} size={20} color={DOODLE_COLORS.lilac} />
+      {/* two quiet ambient accents — the type carries the hero now */}
+      <DoodleStar style={{ top: 150, left: '6%' }} size={24} color={DOODLE_COLORS.warm} />
+      <DoodleSpark style={{ top: 210, right: '8%' }} size={18} color={DOODLE_COLORS.green} />
 
       <main>
         {/* ── Hero ─────────────────────────────────────────────────────── */}
@@ -219,7 +210,7 @@ export function StudioLanding() {
             gap: 8,
             padding: '5px 13px',
             borderRadius: 999,
-            marginBottom: 26,
+            marginBottom: 28,
             background: 'oklch(0.97 0.005 250)',
             border: HAIRLINE,
             fontSize: 12.5,
@@ -227,37 +218,33 @@ export function StudioLanding() {
             color: 'oklch(0.32 0.02 250)',
           }}>
             <Sparkles size={13} color="oklch(0.55 0.15 75)" />
-            Now with courses, quizzes & member tiers
+            Where the internet’s best niches live
           </span>
 
           <h1 className="gild-rise gild-d1" style={{
             fontFamily: GILD_FONTS.display,
-            fontSize: 'clamp(44px, 8.2vw, 84px)',
-            lineHeight: 0.97,
-            fontWeight: 800,
+            fontSize: 'clamp(46px, 8vw, 86px)',
+            lineHeight: 1.02,
+            fontWeight: 600,
             margin: '0 auto 22px',
-            letterSpacing: '-0.045em',
+            letterSpacing: '-0.025em',
             ...({ textWrap: 'balance' } as React.CSSProperties),
-            maxWidth: 940,
-            position: 'relative',
+            maxWidth: 880,
           }}>
-            The <span style={{ position: 'relative', display: 'inline-block' }}>
-              home
-              <DoodleUnderline w={170} color={DOODLE_COLORS.warm}
-                style={{ left: '50%', bottom: -12, transform: 'translateX(-50%)' }} />
-            </span> for paid<br />communities.
-            <DoodleStar style={{ top: -18, right: '13%' }} size={26} color={DOODLE_COLORS.warm} />
+            Find your people.
+            <br />
+            <em style={{ fontStyle: 'italic', fontWeight: 500 }}>Fund their work.</em>
           </h1>
 
           <p className="gild-rise gild-d2" style={{
             fontSize: 'clamp(16px, 2vw, 19px)',
-            lineHeight: 1.55,
+            lineHeight: 1.6,
             color: 'oklch(0.42 0.02 250)',
             margin: '0 auto 34px',
-            maxWidth: 600,
+            maxWidth: 560,
           }}>
-            Run spaces, teach courses, and sell memberships your way — payments go
-            straight to your Stripe account and Gild takes <strong style={{ color: INK }}>0%, forever</strong>.
+            Gild is home to small, expert-led communities — spaces, courses, and
+            real conversation. Creators keep <strong style={{ color: INK }}>100% of what members pay</strong>.
           </p>
 
           <div className="gild-rise gild-d3" style={{
@@ -265,31 +252,39 @@ export function StudioLanding() {
             gap: 14,
             justifyContent: 'center',
             flexWrap: 'wrap',
-            marginBottom: 16,
-            position: 'relative',
+            marginBottom: 18,
           }}>
-            <CTAButton href="/sign-up" big>Start your community</CTAButton>
-            <GhostButton href="#how">See how it works</GhostButton>
-
-            <DoodleSquiggleArrow color={DOODLE_COLORS.ink} rotate={-15}
-              style={{ left: 'calc(50% - 285px)', top: -35 }} />
-            <span className="gild-handnote" style={{
-              position: 'absolute',
-              left: 'calc(50% - 390px)',
-              top: -20,
-              fontFamily: 'var(--font-gochi), cursive',
-              fontSize: 22,
-              color: DOODLE_COLORS.ink,
-              transform: 'rotate(-8deg)',
-              whiteSpace: 'nowrap',
-              pointerEvents: 'none',
-              letterSpacing: '0.02em',
-            }}>start here</span>
+            <CTAButton href="/sign-up" big>Find your community</CTAButton>
+            <GhostButton href="#how">I’m a creator</GhostButton>
           </div>
 
-          <p className="gild-rise gild-d3" style={{ fontSize: 13, color: FAINT, margin: '0 0 56px' }}>
-            14-day free trial · cancel anytime · 0% transaction fees
+          <p className="gild-rise gild-d3" style={{ fontSize: 13, color: FAINT, margin: '0 0 34px' }}>
+            Free to join as a member · creators keep 100% · 14-day creator trial
           </p>
+
+          {/* Niche strip — the people, not the plumbing */}
+          <div className="gild-rise gild-d3" style={{
+            display: 'flex',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+            gap: 8,
+            margin: '0 auto 56px',
+            maxWidth: 720,
+          }}>
+            {['🏺 Ceramics', '💻 Indie hackers', '🎸 Guitar', '📈 Trading', '🧶 Fiber arts', '🏋️ Strength', '🎬 Filmmaking', '🌱 Permaculture'].map((n) => (
+              <span key={n} style={{
+                padding: '6px 13px',
+                borderRadius: 999,
+                border: HAIRLINE,
+                background: '#fff',
+                fontSize: 13,
+                fontWeight: 600,
+                color: 'oklch(0.35 0.02 250)',
+              }}>
+                {n}
+              </span>
+            ))}
+          </div>
 
           {/* ── Product canvas ─────────────────────────────────────────── */}
           <div className="gild-rise gild-d4" style={{

@@ -70,10 +70,26 @@ export async function signUp(formData: FormData): Promise<AuthResult<Authenticat
   });
 
   if (signUpError) {
+    // Human copy only — never surface raw provider/database errors.
+    const raw = signUpError.message ?? '';
+    if (/already registered|already exists/i.test(raw)) {
+      return { data: null, error: { code: 'UNKNOWN', message: 'That email already has an account. Try signing in instead.' } };
+    }
+    if (/confirmation email|sending email|smtp/i.test(raw)) {
+      return { data: null, error: { code: 'UNKNOWN', message: 'We couldn’t send the confirmation email just now. Please try again in a few minutes.' } };
+    }
     return { data: null, error: parseAuthError(signUpError) };
   }
   if (!user) {
-    return { data: null, error: { code: 'UNKNOWN', message: 'Sign-up failed — no user returned' } };
+    return { data: null, error: { code: 'UNKNOWN', message: 'Sign-up failed — please try again.' } };
+  }
+
+  // With email confirmation ON, Supabase obfuscates existing emails by
+  // returning a FAKE user whose identities array is empty (anti-enumeration).
+  // Writing a profile for that fake id would collide with the real account —
+  // detect it and speak plainly instead.
+  if (Array.isArray(user.identities) && user.identities.length === 0) {
+    return { data: null, error: { code: 'UNKNOWN', message: 'That email already has an account. Try signing in instead.' } };
   }
 
   // When email confirmation is enabled, Supabase returns a user but NO
@@ -88,7 +104,7 @@ export async function signUp(formData: FormData): Promise<AuthResult<Authenticat
   // the new auth user, we update it with the chosen name instead of colliding
   // on the primary key. onConflict 'id' = the profiles PK.
   const serviceClient = getSupabaseServiceClient();
-  const { error: profileInsertError } = await serviceClient
+  let { error: profileInsertError } = await serviceClient
     .from('profiles')
     .upsert(
       {
@@ -99,11 +115,25 @@ export async function signUp(formData: FormData): Promise<AuthResult<Authenticat
       { onConflict: 'id' },
     );
 
+  // Default usernames derive from the email prefix, so two different people
+  // with name.lastname@gmail.com vs name.lastname@yahoo.com collide. Retry
+  // once with a random suffix — the user can rename in settings any time.
+  if (profileInsertError?.code === '23505') {
+    const suffixed = `${username.trim().slice(0, 24)}_${Math.random().toString(36).slice(2, 6)}`;
+    ({ error: profileInsertError } = await serviceClient
+      .from('profiles')
+      .upsert(
+        { id: user.id, display_name: displayName.trim(), username: suffixed },
+        { onConflict: 'id' },
+      ));
+  }
+
   if (profileInsertError) {
-    // Surface the real reason — a generic message hid the actual failure.
+    // Log the real cause server-side; the human gets one calm sentence.
+    console.error('[signUp] profile creation failed:', profileInsertError.message);
     return {
       data: null,
-      error: { code: 'UNKNOWN', message: `Profile creation failed: ${profileInsertError.message}` },
+      error: { code: 'UNKNOWN', message: 'We couldn’t finish setting up your account. Please try again.' },
     };
   }
 

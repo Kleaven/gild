@@ -4,7 +4,7 @@ import { after } from 'next/server';
 import { z } from 'zod';
 import { getSupabaseServerClient } from '../auth/server';
 import { rateLimit } from '../rate-limit/index';
-import { normalizeRole } from '../permissions/roles';
+import { normalizeRole, hasMinRole, canRolePerform } from '../permissions/roles';
 import db from '../db';
 import type { CreatePostInput } from './types';
 
@@ -56,15 +56,31 @@ export async function createPost(input: CreatePostInput): Promise<{ postId: stri
   if (!space) throw new Error('[gild] space not found in community');
 
   // ─── Permission Check ──────────────────────────────────────────────────────
-  const perms = (space.permissions as any) || {};
-  const requiredRoleForPost = normalizeRole(perms.post || (space.allow_member_posts ? 'free_member' : 'moderator'));
-
-  const { data: hasPermission } = await supabase.rpc('user_has_min_role', {
+  // Resolve the caller's actual role once, then apply BOTH permission layers:
+  // the space's own permissions and the community-wide role permissions.
+  // Either layer can deny. (Previously the group shape saved by the settings
+  // editors was silently ignored — "members can't post" never enforced.)
+  const { data: callerRole, error: callerRoleErr } = await supabase.rpc('current_user_role', {
     p_community_id: communityId,
-    p_min_role: requiredRoleForPost,
   });
-  if (!hasPermission) {
-    throw new Error(`Insufficient permissions to post in this space. Required: ${requiredRoleForPost}`);
+  if (callerRoleErr) throw new Error(callerRoleErr.message);
+  const role = normalizeRole(callerRole);
+
+  const { data: communityRow } = await supabase
+    .from('communities')
+    .select('role_permissions')
+    .eq('id', communityId)
+    .maybeSingle();
+
+  let allowedToPost =
+    canRolePerform(space.permissions, role, 'post') &&
+    canRolePerform(communityRow?.role_permissions, role, 'post');
+  // Legacy space toggle: when member posting is off, moderators+ may still post.
+  if (allowedToPost && space.allow_member_posts === false) {
+    allowedToPost = hasMinRole(role, 'moderator');
+  }
+  if (!allowedToPost) {
+    throw new Error('[gild] posting is limited in this space — ask a moderator if you think this is a mistake');
   }
 
   // ─── Broadcast pre-flight ──────────────────────────────────────────────────

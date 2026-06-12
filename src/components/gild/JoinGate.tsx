@@ -134,6 +134,20 @@ export function JoinGate({ community }: Props) {
               {error}
             </p>
           )}
+
+          <a
+            href="/communities"
+            style={{
+              display: 'inline-block',
+              marginTop: 18,
+              fontSize: 13.5,
+              fontWeight: 600,
+              color: 'oklch(0.50 0.02 250)',
+              textDecoration: 'none',
+            }}
+          >
+            ← Back to discovery
+          </a>
         </div>
       </div>
     </div>

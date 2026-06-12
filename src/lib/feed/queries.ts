@@ -117,6 +117,8 @@ export async function getFeedPosts(
     )
     .eq('community_id', communityId)
     .is('deleted_at', null)
+    // Pinned posts always lead the feed — that's the whole point of pinning.
+    .order('is_pinned', { ascending: false })
     .order('hot_score', { ascending: false })
     .order('id', { ascending: false })
     .limit(limit);

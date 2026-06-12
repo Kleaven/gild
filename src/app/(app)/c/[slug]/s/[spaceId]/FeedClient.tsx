@@ -60,6 +60,7 @@ type Props = {
   /** auth user id — used to decide whether to show delete on each card */
   currentUserId: string;
   canPin?: boolean;
+  canPost?: boolean;
   allowMemberPosts?: boolean;
   rolePermissions?: any;
   isPrivate?: boolean;
@@ -97,7 +98,7 @@ export default function FeedClient({
   author,
   currentUserId,
   canPin = false,
-  allowMemberPosts = true,
+  canPost = true,
   rolePermissions,
   isPrivate = false,
   currentUserRole,
@@ -260,7 +261,7 @@ export default function FeedClient({
               </div>
             </div>
             <div style={{ display: 'flex', gap: 12, position: 'relative' }}>
-              {(allowMemberPosts || canPin) && (
+              {canPost && (
                 <button
                   onClick={() => {
                     setIsFormVisible(!isFormVisible);
@@ -326,16 +327,21 @@ export default function FeedClient({
                         Space Settings
                       </button>
                     )}
-                    <button style={menuItemStyle}>Notification Prefs</button>
-                    <div style={{ height: 1, background: 'oklch(0.96 0.005 250)', margin: '4px 0' }} />
-                    <button style={{ ...menuItemStyle, color: 'oklch(0.45 0.15 25)' }}>Archive Space</button>
+                    {/* Archive Space removed — it was a dead stub. Re-add only
+                        when an archive feature actually exists. */}
+                    <button
+                      onClick={() => { window.location.href = '/settings/notifications'; }}
+                      style={menuItemStyle}
+                    >
+                      Notification Prefs
+                    </button>
                   </div>
                 )}
               </div>
             </div>
           </div>
 
-          {isFormVisible && (
+          {isFormVisible && canPost && (
             <PostForm
               ref={formRef}
               hue={spaceHue}

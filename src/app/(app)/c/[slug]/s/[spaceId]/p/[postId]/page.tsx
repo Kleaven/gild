@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getSupabaseServerClient } from '@/lib/auth/server';
 import { getCommunityContextBySlug } from '@/lib/community/context';
+import { canRolePerform, normalizeRole } from '@/lib/permissions/roles';
 import { getPost, getBroadcastStatus } from '@/lib/feed';
 import BroadcastStatusBadge from './BroadcastStatusBadge';
 import { getComments } from '@/lib/comments';
@@ -54,6 +55,20 @@ export default async function PostPage({ params }: Props) {
   const broadcastStatus = canSeeBroadcastStatus
     ? await getBroadcastStatus(postId)
     : null;
+
+  // Comment capability: when denied, the composer is not rendered at all —
+  // members can read but not write. Server-enforced in createComment too.
+  const { data: spaceRow } = await supabase
+    .from('spaces')
+    .select('permissions')
+    .eq('id', spaceId)
+    .maybeSingle();
+  const viewerRole = normalizeRole(membership?.role);
+  const canComment =
+    !!membership &&
+    membership.role !== 'banned' &&
+    canRolePerform(spaceRow?.permissions, viewerRole, 'comment') &&
+    canRolePerform((community as { role_permissions?: unknown }).role_permissions, viewerRole, 'comment');
 
   return (
     <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 24px', fontFamily: GILD_FONTS.sans }}>
@@ -127,7 +142,7 @@ export default async function PostPage({ params }: Props) {
         <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>
           {commentsResult.data.length} comment{commentsResult.data.length !== 1 ? 's' : ''}
         </h2>
-        <CommentForm postId={postId} />
+        {canComment && <CommentForm postId={postId} />}
         <CommentList 
           initialComments={commentsResult.data} 
           postId={postId} 

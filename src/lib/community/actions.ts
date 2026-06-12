@@ -280,6 +280,11 @@ const updateCommunitySchema = z.object({
   role_permissions: z.record(z.string(), z.unknown()).optional(),
   welcome_message: z.string().max(2000).nullable().optional(),
   goodbye_message: z.string().max(2000).nullable().optional(),
+  // Join pricing — what JoinGate charges new members. Editable post-creation
+  // (previously only settable during onboarding, leaving owners stuck).
+  pricing_type: z.enum(['free', 'paid']).optional(),
+  price_amount: z.number().min(0).max(100000).optional(),
+  pricing_period: z.enum(['one_time', 'monthly', 'yearly']).optional(),
 }).strict();
 
 export type UpdateCommunityInput = z.infer<typeof updateCommunitySchema>;
@@ -336,6 +341,9 @@ export async function updateCommunity(
       ...(parsed.data.banner_url !== undefined && { banner_url: parsed.data.banner_url }),
       ...(parsed.data.is_private !== undefined && { is_private: parsed.data.is_private }),
       ...(parsed.data.category !== undefined && { category: parsed.data.category }),
+      ...(parsed.data.pricing_type !== undefined && { pricing_type: parsed.data.pricing_type }),
+      ...(parsed.data.price_amount !== undefined && { price_amount: parsed.data.price_amount }),
+      ...(parsed.data.pricing_period !== undefined && { pricing_period: parsed.data.pricing_period }),
       // role_permissions is a JSONB blob — Zod validates the outer object
       // shape, then we cast to the Supabase Json type at the boundary.
       ...(parsed.data.role_permissions !== undefined && { role_permissions: parsed.data.role_permissions as Json }),

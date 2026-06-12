@@ -39,9 +39,30 @@ async function revalidateMonetization(communityId: string): Promise<void> {
 
 // ─── Connect onboarding ───────────────────────────────────────────────────────
 
-export async function startPayoutOnboarding(communityId: string): Promise<{ url: string }> {
-  const userId = await requireUser();
-  return startConnectOnboarding(communityId, userId);
+// Returns a union instead of throwing — thrown Server Action errors are
+// masked into opaque digests in production, which is exactly the raw-error
+// experience we never want a creator to see.
+export async function startPayoutOnboarding(
+  communityId: string,
+): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  try {
+    const userId = await requireUser();
+    const { url } = await startConnectOnboarding(communityId, userId);
+    return { ok: true, url };
+  } catch (err) {
+    console.error('[startPayoutOnboarding]', err);
+    const raw = err instanceof Error ? err.message : '';
+    if (/platform.profile|responsibilit|review the responsibilities/i.test(raw)) {
+      return {
+        ok: false,
+        error: 'Stripe needs a one-time platform setup first — open your Stripe dashboard → Settings → Connect and complete the platform profile, then try again.',
+      };
+    }
+    if (raw.startsWith('[gild]')) {
+      return { ok: false, error: raw.replace('[gild] ', '') };
+    }
+    return { ok: false, error: 'We couldn’t reach Stripe just now. Please try again in a minute.' };
+  }
 }
 
 export async function refreshPayoutStatus(communityId: string): Promise<ConnectStatus> {

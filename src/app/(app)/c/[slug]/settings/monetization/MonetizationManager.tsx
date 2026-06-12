@@ -73,10 +73,14 @@ export function MonetizationManager({ communityId, initialStatus, initialTiers }
     setError(null);
     startTransition(async () => {
       try {
-        const { url } = await startPayoutOnboarding(communityId);
-        window.location.href = url;
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Could not start onboarding.');
+        const res = await startPayoutOnboarding(communityId);
+        if (!res.ok) {
+          setError(res.error);
+          return;
+        }
+        window.location.href = res.url;
+      } catch {
+        setError('We couldn’t reach Stripe just now. Please try again in a minute.');
       }
     });
   }

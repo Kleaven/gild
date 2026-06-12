@@ -33,8 +33,8 @@ export const gildKeyframes = `
 `;
 
 export const GILD_FONTS = {
-  display: 'var(--font-bricolage), "Inter", sans-serif',
-  sans: 'var(--font-inter), system-ui, sans-serif',
+  display: 'var(--font-fraunces), "Georgia", serif',
+  sans: 'var(--font-hanken), system-ui, sans-serif',
   mono: 'var(--font-jetbrains), ui-monospace, monospace',
 };
 

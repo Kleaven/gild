@@ -2,13 +2,14 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Avatar, Reactions, PollRenderer } from './index';
+import { Avatar, PollRenderer } from './index';
 import ReactionPicker from './ReactionPicker';
 import type { ReactionTally } from '@/lib/reactions';
 import { GILD_FONTS } from './styles';
 import { ConfirmModal } from './ConfirmModal';
 import type { Person } from './types';
-import { Pin, Trash2 } from 'lucide-react';
+import { Pin, Trash2, ArrowBigUp } from 'lucide-react';
+import { toggleVote } from '@/app/actions/comments';
 
 interface StudioPostCardProps {
   post: {
@@ -30,6 +31,7 @@ interface StudioPostCardProps {
     poll_options?: { id: string; text: string }[] | null;
     poll_results?: Record<string, number> | null;
     viewer_voted_option?: string | null;
+    viewer_has_voted?: boolean;
     reactions?: ReactionTally[];
   };
   communitySlug: string;
@@ -68,6 +70,21 @@ export function StudioPostCard({
   onVote,
 }: StudioPostCardProps) {
   const [showConfirm, setShowConfirm] = React.useState(false);
+  // Upvote with optimistic local state — the same control here and on the
+  // post page, so liking never requires opening the comments first.
+  const [voted, setVoted] = React.useState(post.viewer_has_voted ?? false);
+  const [likes, setLikes] = React.useState(post.like_count);
+
+  function handleUpvote() {
+    if (isOptimistic) return;
+    const next = !voted;
+    setVoted(next);
+    setLikes((c) => (next ? c + 1 : Math.max(0, c - 1)));
+    toggleVote(post.id, 'post').catch(() => {
+      setVoted(!next);
+      setLikes((c) => (next ? Math.max(0, c - 1) : c + 1));
+    });
+  }
   const authorPerson: Person = {
     id: 'author',
     name: post.author?.display_name || 'Member',
@@ -83,6 +100,11 @@ export function StudioPostCard({
   const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
   const ytMatch = post.body.match(youtubeRegex);
   const ytId = ytMatch ? ytMatch[1] : null;
+  // When a link embeds, strip the raw URL from the text — readers get the
+  // video, not the messy string above it.
+  const displayBody = ytMatch
+    ? post.body.replace(ytMatch[0], '').replace(/\n{3,}/g, '\n\n').trim()
+    : post.body;
 
   return (
     <div
@@ -106,6 +128,28 @@ export function StudioPostCard({
         confirmLabel="Delete"
         isDestructive
       />
+      {/* Pinned badge — pinning must be visible, not just sort order */}
+      {post.is_pinned && !isOptimistic && (
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+            marginBottom: 10,
+            padding: '3px 9px',
+            borderRadius: 999,
+            fontSize: 10.5,
+            fontWeight: 700,
+            background: `oklch(0.96 0.04 ${hue})`,
+            color: `oklch(0.42 0.14 ${hue})`,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+          }}
+        >
+          <Pin size={10} /> Pinned
+        </span>
+      )}
+
       {/* Optimistic sending badge */}
       {isOptimistic && (
         <span
@@ -196,7 +240,7 @@ export function StudioPostCard({
               whiteSpace: 'pre-wrap',
             }}
           >
-            {post.body.length > 500 ? post.body.slice(0, 500) + '…' : post.body}
+            {displayBody.length > 500 ? displayBody.slice(0, 500) + '…' : displayBody}
           </p>
           {ytId && (
             <div style={{ marginBottom: 14, borderRadius: 12, overflow: 'hidden', position: 'relative', width: '100%', paddingBottom: '56.25%', height: 0 }}>
@@ -251,7 +295,7 @@ export function StudioPostCard({
               whiteSpace: 'pre-wrap',
             }}
           >
-            {post.body.length > 500 ? post.body.slice(0, 500) + '…' : post.body}
+            {displayBody.length > 500 ? displayBody.slice(0, 500) + '…' : displayBody}
           </p>
           {ytId && (
             <div style={{ marginBottom: 14, borderRadius: 12, overflow: 'hidden', position: 'relative', width: '100%', paddingBottom: '56.25%', height: 0 }}>
@@ -296,14 +340,30 @@ export function StudioPostCard({
               hue={hue}
             />
           ) : (
-            <Reactions
-              items={
-                (post.reactions ?? []).length > 0
-                  ? (post.reactions ?? []).map((r) => [r.emoji, r.count] as [string, number])
-                  : [['❤️', post.like_count]]
-              }
-              hue={hue}
-            />
+            <button
+              onClick={handleUpvote}
+              disabled={isOptimistic}
+              aria-pressed={voted}
+              title={voted ? 'Remove upvote' : 'Upvote'}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '5px 12px',
+                borderRadius: 999,
+                border: voted ? `1px solid oklch(0.70 0.12 ${hue})` : '1px solid oklch(0.92 0.01 250)',
+                background: voted ? `oklch(0.96 0.04 ${hue})` : '#fff',
+                color: voted ? `oklch(0.40 0.14 ${hue})` : 'oklch(0.42 0.02 250)',
+                fontSize: 12.5,
+                fontWeight: 700,
+                cursor: isOptimistic ? 'default' : 'pointer',
+                fontFamily: 'inherit',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <ArrowBigUp size={15} strokeWidth={2.5} fill={voted ? 'currentColor' : 'none'} />
+              {likes}
+            </button>
           )}
           {isOptimistic ? (
             <span

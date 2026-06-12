@@ -18,6 +18,10 @@ interface CommunityCard {
   member_count: number;
   category: string | null;
   logo_url: string | null;
+  banner_url?: string | null;
+  pricing_type?: string | null;
+  price_amount?: number | null;
+  pricing_period?: string | null;
   membership_tiers?: DiscoverTier[];
 }
 
@@ -42,12 +46,20 @@ function hueFor(seed: string): number {
   return h;
 }
 
-// price_month_usd is stored in WHOLE DOLLARS (validated 1–100000 at creation),
-// so the minimum is displayed as-is — never divided by 100.
-function startingPrice(tiers: DiscoverTier[] | undefined): number | null {
-  const active = (tiers ?? []).filter((t) => t.is_active && t.price_month_usd > 0);
-  if (active.length === 0) return null;
-  return Math.min(...active.map((t) => t.price_month_usd));
+// The badge must match what the join gate actually charges. Two sources:
+// 1. The community's JOIN fee (pricing_type/price_amount — what JoinGate bills)
+// 2. Optional membership tiers (whole dollars; never divided by 100)
+function priceBadge(c: CommunityCard): { label: string; paid: boolean } {
+  if (c.pricing_type === 'paid' && (c.price_amount ?? 0) > 0) {
+    const amount = c.price_amount as number;
+    const suffix = c.pricing_period === 'monthly' ? '/mo' : c.pricing_period === 'yearly' ? '/yr' : ' to join';
+    return { label: `$${amount}${suffix}`, paid: true };
+  }
+  const active = (c.membership_tiers ?? []).filter((t) => t.is_active && t.price_month_usd > 0);
+  if (active.length > 0) {
+    return { label: `from $${Math.min(...active.map((t) => t.price_month_usd))}/mo`, paid: true };
+  }
+  return { label: 'Free to join', paid: false };
 }
 
 export function StudioDiscover({ initialCommunities }: StudioDiscoverProps) {
@@ -235,7 +247,7 @@ export function StudioDiscover({ initialCommunities }: StudioDiscoverProps) {
         }}>
           {filtered.map((community, i) => {
             const hue = hueFor(community.slug || community.name);
-            const fromPrice = startingPrice(community.membership_tiers);
+            const badge = priceBadge(community);
             return (
               <Link
                 key={community.id}
@@ -253,24 +265,31 @@ export function StudioDiscover({ initialCommunities }: StudioDiscoverProps) {
                   animationDelay: `${Math.min(i, 11) * 0.05}s`,
                 }}
               >
-                {/* identity cover band */}
+                {/* cover band — real banner when the owner uploaded one */}
                 <div aria-hidden style={{
-                  height: 64,
-                  background: `linear-gradient(120deg, oklch(0.88 0.07 ${hue}), oklch(0.80 0.10 ${(hue + 40) % 360}))`,
+                  height: 72,
+                  background: community.banner_url
+                    ? undefined
+                    : `linear-gradient(120deg, oklch(0.88 0.07 ${hue}), oklch(0.80 0.10 ${(hue + 40) % 360}))`,
                   position: 'relative',
+                  overflow: 'hidden',
                 }}>
-                  <span style={{
-                    position: 'absolute', inset: 0,
-                    background: 'radial-gradient(ellipse at 80% 0%, oklch(1 0 0 / 0.45), transparent 55%)',
-                  }} />
+                  {community.banner_url ? (
+                    <img src={community.banner_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  ) : (
+                    <span style={{
+                      position: 'absolute', inset: 0,
+                      background: 'radial-gradient(ellipse at 80% 0%, oklch(1 0 0 / 0.45), transparent 55%)',
+                    }} />
+                  )}
                 </div>
 
                 <div style={{ padding: '0 22px 22px' }}>
-                  {/* logo overlapping band */}
-                  <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: -26, marginBottom: 12 }}>
+                  {/* logo sits mostly below the band so neither covers the other */}
+                  <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: -18, marginBottom: 12, position: 'relative', zIndex: 1 }}>
                     <div style={{
-                      width: 56,
-                      height: 56,
+                      width: 54,
+                      height: 54,
                       borderRadius: 14,
                       background: `linear-gradient(135deg, oklch(0.70 0.13 ${hue}), oklch(0.50 0.13 ${hue}))`,
                       color: '#fff',
@@ -279,7 +298,7 @@ export function StudioDiscover({ initialCommunities }: StudioDiscoverProps) {
                       justifyContent: 'center',
                       fontFamily: GILD_FONTS.display,
                       fontWeight: 800,
-                      fontSize: 23,
+                      fontSize: 22,
                       flexShrink: 0,
                       overflow: 'hidden',
                       border: '3px solid #fff',
@@ -297,10 +316,10 @@ export function StudioDiscover({ initialCommunities }: StudioDiscoverProps) {
                       padding: '5px 11px',
                       borderRadius: 999,
                       marginBottom: 2,
-                      background: fromPrice !== null ? 'oklch(0.95 0.05 150)' : 'oklch(0.96 0.005 250)',
-                      color: fromPrice !== null ? 'oklch(0.38 0.12 150)' : 'oklch(0.45 0.02 250)',
+                      background: badge.paid ? 'oklch(0.95 0.05 150)' : 'oklch(0.96 0.005 250)',
+                      color: badge.paid ? 'oklch(0.38 0.12 150)' : 'oklch(0.45 0.02 250)',
                     }}>
-                      {fromPrice !== null ? `from $${fromPrice}/mo` : 'Free to join'}
+                      {badge.label}
                     </span>
                   </div>
 

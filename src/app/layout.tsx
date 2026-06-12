@@ -1,17 +1,21 @@
 import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
-import { Bricolage_Grotesque, Inter, JetBrains_Mono, Gochi_Hand, Outfit } from 'next/font/google';
+import { Fraunces, Hanken_Grotesk, JetBrains_Mono, Gochi_Hand } from 'next/font/google';
 import { gildKeyframes } from '@/components/gild';
 
-const bricolage = Bricolage_Grotesque({
+// Display: Fraunces — a warm, characterful serif with optical sizing; reads
+// editorial and hand-set, never template-default. Body: Hanken Grotesk — a
+// humanist grotesque that stays friendly at UI sizes.
+const fraunces = Fraunces({
   subsets: ['latin'],
-  variable: '--font-bricolage',
+  variable: '--font-fraunces',
   display: 'swap',
+  axes: ['opsz'],
 });
 
-const inter = Inter({
+const hanken = Hanken_Grotesk({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-hanken',
   display: 'swap',
 });
 
@@ -25,12 +29,6 @@ const gochi = Gochi_Hand({
   subsets: ['latin'],
   weight: '400',
   variable: '--font-gochi',
-  display: 'swap',
-});
-
-const outfit = Outfit({
-  subsets: ['latin'],
-  variable: '--font-outfit',
   display: 'swap',
 });
 
@@ -77,7 +75,7 @@ import PostHogProvider from '@/components/PostHogProvider';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${bricolage.variable} ${inter.variable} ${jetbrains.variable} ${gochi.variable} ${outfit.variable}`}>
+    <html lang="en" className={`${fraunces.variable} ${hanken.variable} ${jetbrains.variable} ${gochi.variable}`}>
       <body style={{ margin: 0, fontFamily: 'system-ui, sans-serif' }}>
         <style dangerouslySetInnerHTML={{ __html: gildKeyframes }} />
         <Toaster richColors position="bottom-right" />

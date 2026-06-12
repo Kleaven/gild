@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import { Avatar, GILD_FONTS, ConfirmModal, useGildChat } from '@/components/gild';
 import type { Person, MemberRole } from '@/components/gild';
-import { updateMemberRole } from '@/app/actions';
-import { MessageCircle, UserMinus, Settings2 } from 'lucide-react';
+import { updateMemberRole, removeMember } from '@/app/actions';
+import { MessageCircle, UserMinus, Settings2 , UserX} from 'lucide-react';
 import { AdminPrivilegesUI } from './gild/AdminPrivilegesUI';
 
 interface StudioMembersProps {
@@ -22,6 +22,8 @@ export function StudioMembers({ community, members, currentUserId, currentUserRo
   const [isPending, setIsPending] = useState<string | null>(null);
   const [filter, setFilter] = useState('');
   const [showBanConfirm, setShowBanConfirm] = useState<{ id: string; name: string } | null>(null);
+  const [showKickConfirm, setShowKickConfirm] = useState<{ id: string; name: string } | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [privilegeModal, setPrivilegeModal] = useState<{ id: string; name: string; perms: any } | null>(null);
   const { openChatWithUser } = useGildChat();
   const filteredMembers = filter.trim() === ''
@@ -104,6 +106,42 @@ export function StudioMembers({ community, members, currentUserId, currentUserRo
         confirmLabel="Ban Member"
         isDestructive
       />
+
+      <ConfirmModal
+        isOpen={!!showKickConfirm}
+        onClose={() => setShowKickConfirm(null)}
+        onConfirm={async () => {
+          if (!showKickConfirm) return;
+          setActionError(null);
+          setIsPending(showKickConfirm.id);
+          try {
+            const res = await removeMember(community.id, showKickConfirm.id);
+            if (!res.ok) setActionError(res.error);
+          } finally {
+            setIsPending(null);
+            setShowKickConfirm(null);
+          }
+        }}
+        title="Remove Member"
+        message={`Remove ${showKickConfirm?.name} from this community? They can rejoin later unless you ban them instead.`}
+        confirmLabel="Remove"
+        isDestructive
+      />
+
+      {actionError && (
+        <div style={{
+          margin: '0 0 14px',
+          padding: '10px 14px',
+          borderRadius: 10,
+          background: 'oklch(0.96 0.03 25)',
+          border: '1px solid oklch(0.88 0.06 25)',
+          color: 'oklch(0.40 0.16 25)',
+          fontSize: 13,
+          fontWeight: 600,
+        }}>
+          {actionError}
+        </div>
+      )}
 
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
         <thead>
@@ -218,6 +256,7 @@ export function StudioMembers({ community, members, currentUserId, currentUserRo
                             <Settings2 size={14} />
                           </button>
                         )}
+                        {member.role !== 'banned' && (
                         <select
                           value={member.role}
                           disabled={!!isPending}
@@ -250,20 +289,69 @@ export function StudioMembers({ community, members, currentUserId, currentUserRo
                           <option value="tier1_member">Tier 1</option>
                           <option value="free_member">Free</option>
                         </select>
+                        )}
+                        {member.role === 'banned' ? (
+                          <button
+                            disabled={!!isPending}
+                            onClick={async () => {
+                              setActionError(null);
+                              setIsPending(member.user_id);
+                              try {
+                                await updateMemberRole({
+                                  communityId: community.id,
+                                  targetUserId: member.user_id,
+                                  newRole: 'free_member',
+                                });
+                              } catch {
+                                setActionError('Couldn’t unban that member. Please try again.');
+                              } finally {
+                                setIsPending(null);
+                              }
+                            }}
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 700,
+                              padding: '4px 10px',
+                              borderRadius: 6,
+                              border: '1px solid oklch(0.85 0.06 150)',
+                              background: 'oklch(0.96 0.04 150)',
+                              color: 'oklch(0.38 0.12 150)',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Unban
+                          </button>
+                        ) : (
+                          <button
+                            title="Ban Member"
+                            onClick={() => setShowBanConfirm({ id: member.user_id, name: member.display_name })}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: 'oklch(0.60 0.15 25)',
+                              cursor: 'pointer',
+                              padding: '2px',
+                              display: 'flex',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <UserMinus size={14} />
+                          </button>
+                        )}
                         <button
-                          title="Ban Member"
-                          onClick={() => setShowBanConfirm({ id: member.user_id, name: member.display_name })}
+                          title="Remove from community"
+                          onClick={() => setShowKickConfirm({ id: member.user_id, name: member.display_name })}
                           style={{
                             background: 'none',
                             border: 'none',
-                            color: 'oklch(0.60 0.15 25)',
+                            color: 'oklch(0.45 0.16 25)',
                             cursor: 'pointer',
                             padding: '2px',
                             display: 'flex',
                             alignItems: 'center',
                           }}
                         >
-                          <UserMinus size={14} />
+                          <UserX size={14} />
                         </button>
                       </div>
                     )}

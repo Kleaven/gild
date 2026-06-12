@@ -3,8 +3,8 @@
 // module (plain constants, no 'use client') keeps these pages out of the
 // gild component barrel's client bundle.
 
-import Link from 'next/link';
 import { GILD_FONTS } from '@/components/gild/styles';
+import { BackLink } from './BackLink';
 
 // ─── Owner-editable launch config ────────────────────────────────────────────
 // Update these three values before public launch, then redeploy. They are the
@@ -38,17 +38,7 @@ export function LegalDocument({
         color: '#1a1a1a',
       }}
     >
-      <Link
-        href="/"
-        style={{
-          color: muted,
-          textDecoration: 'none',
-          fontSize: 14,
-          fontWeight: 600,
-        }}
-      >
-        ← Back to {LEGAL.entity}
-      </Link>
+      <BackLink label={`Back to ${LEGAL.entity}`} />
 
       <h1
         style={{

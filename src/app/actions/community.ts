@@ -94,6 +94,51 @@ export async function updateMemberRole(input: UpdateMemberRoleInput): Promise<vo
   revalidatePath(`/c/${slug}/members`);
 }
 
+// Removes a member from the community entirely ("kick"). Admin+ only (RLS
+// enforces on DELETE); owners can never be kicked, and admins cannot kick
+// fellow admins — mirrors the update_member_role guards.
+export async function removeMember(
+  communityId: string,
+  targetUserId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const supabase = await getSupabaseServerClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+  if (error || !user) return { ok: false, error: 'Not signed in.' };
+  if (user.id === targetUserId) return { ok: false, error: 'You can’t remove yourself — use Leave Community.' };
+
+  const [{ data: callerRole }, { data: target }] = await Promise.all([
+    supabase.rpc('current_user_role', { p_community_id: communityId }),
+    supabase
+      .from('community_members')
+      .select('role')
+      .eq('community_id', communityId)
+      .eq('user_id', targetUserId)
+      .maybeSingle(),
+  ]);
+  if (!target) return { ok: false, error: 'That member was not found.' };
+  if (target.role === 'owner') return { ok: false, error: 'The owner can’t be removed.' };
+  if (callerRole !== 'owner' && target.role === 'admin') {
+    return { ok: false, error: 'Only the owner can remove an admin.' };
+  }
+
+  const { error: delError } = await supabase
+    .from('community_members')
+    .delete()
+    .eq('community_id', communityId)
+    .eq('user_id', targetUserId);
+  if (delError) {
+    console.error('[removeMember]', delError.message);
+    return { ok: false, error: 'Couldn’t remove the member. Please try again.' };
+  }
+
+  const slug = await resolveCommunitySlug(communityId);
+  revalidatePath(`/c/${slug}/members`);
+  return { ok: true };
+}
+
 export async function transferOwnership(
   communityId: string,
   newOwnerId: string,
