@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { GildChatProvider, GildChatDrawer, ChatNavButton } from '@/components/gild';
 import Link from 'next/link';
 import { getSupabaseServerClient } from '../../lib/auth/server';
 import { getUserCommunities } from '@/lib/community/queries';
@@ -24,7 +25,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const displayName = profile?.display_name ?? user.email ?? 'Account';
 
   return (
-    <>
+    <GildChatProvider
+      currentUser={{
+        id: user.id,
+        name: displayName,
+        avatarUrl: profile?.avatar_url ?? null,
+      }}
+    >
       <nav
         style={{
           display: 'flex',
@@ -57,6 +64,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           >
             Discover
           </Link>
+          <ChatNavButton />
           <Link
             href="/notifications"
             aria-label="Notifications"
@@ -73,6 +81,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </nav>
       {children}
-    </>
+      <GildChatDrawer currentUserId={user.id} />
+    </GildChatProvider>
   );
 }

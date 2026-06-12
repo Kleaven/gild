@@ -21,6 +21,7 @@ interface StudioMembersProps {
 export function StudioMembers({ community, members, currentUserId, currentUserRole }: StudioMembersProps) {
   const [isPending, setIsPending] = useState<string | null>(null);
   const [filter, setFilter] = useState('');
+  const { onlineUserIds } = useGildChat();
   const [showBanConfirm, setShowBanConfirm] = useState<{ id: string; name: string } | null>(null);
   const [showKickConfirm, setShowKickConfirm] = useState<{ id: string; name: string } | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -170,7 +171,7 @@ export function StudioMembers({ community, members, currentUserId, currentUserRo
               name: member.display_name,
               role: member.role as MemberRole,
               hue: (member.user_id.charCodeAt(0) * 10) % 360,
-              online: false, // We don't have realtime online status here yet
+              online: onlineUserIds.has(member.user_id),
             };
 
             return (

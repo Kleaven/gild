@@ -14,6 +14,8 @@ import { Avatar, GILD_FONTS } from '@/components/gild';
 import type { Person, MemberRole } from '@/components/gild';
 import { useDirectMessages } from '@/hooks';
 import { sendDirectMessage } from '@/app/actions';
+import { getDmConversations, markDmThreadRead } from '@/app/actions/dm';
+import type { Conversation } from '@/lib/dm';
 import { createClient } from '@/lib/supabase/browser';
 import type { DirectMessage, RecipientProfile } from '@/lib/dm';
 
@@ -37,7 +39,8 @@ type Props = {
 // component unmounts.
 
 export function GildChatDrawer({ currentUserId, onlineUserIds }: Props) {
-  const { isChatOpen, activeRecipientId, closeChat } = useGildChat();
+  const { isChatOpen, activeRecipientId, closeChat, openChat, onlineUserIds: ctxOnline } = useGildChat();
+  const online = onlineUserIds ?? ctxOnline;
 
   return (
     <AnimatePresence>
@@ -46,11 +49,187 @@ export function GildChatDrawer({ currentUserId, onlineUserIds }: Props) {
           key={activeRecipientId}
           currentUserId={currentUserId}
           recipientId={activeRecipientId}
-          isOnline={onlineUserIds?.has(activeRecipientId) ?? false}
+          isOnline={online.has(activeRecipientId)}
           onClose={closeChat}
+          onBack={openChat}
         />
       )}
+      {isChatOpen && !activeRecipientId && (
+        <ConversationListPanel key="dm-inbox" onlineUserIds={online} onClose={closeChat} />
+      )}
     </AnimatePresence>
+  );
+}
+
+// ─── ConversationListPanel ───────────────────────────────────────────────────
+// The DM inbox: every thread, newest first, with unread counts, presence dots
+// and the shared community for context ("who is this person?").
+
+function ConversationListPanel({
+  onlineUserIds,
+  onClose,
+}: {
+  onlineUserIds: Set<string>;
+  onClose: () => void;
+}) {
+  const { openChatWithUser } = useGildChat();
+  const [conversations, setConversations] = useState<Conversation[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getDmConversations().then((rows) => {
+      if (!cancelled) setConversations(rows);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose();
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return (
+    <motion.aside
+      role="dialog"
+      aria-label="Messages"
+      initial={{ x: 420 }}
+      animate={{ x: 0 }}
+      exit={{ x: 420 }}
+      transition={{ type: 'spring', stiffness: 380, damping: 36 }}
+      style={{
+        position: 'fixed',
+        top: 0,
+        right: 0,
+        bottom: 0,
+        width: 'min(400px, 100vw)',
+        background: '#fff',
+        borderLeft: '1px solid oklch(0.94 0.005 250)',
+        boxShadow: '-12px 0 32px oklch(0 0 0 / 0.06)',
+        display: 'flex',
+        flexDirection: 'column',
+        zIndex: 1001,
+        fontFamily: GILD_FONTS.sans,
+      }}
+    >
+      <header
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '16px 18px',
+          borderBottom: '1px solid oklch(0.96 0.005 250)',
+          flexShrink: 0,
+        }}
+      >
+        <h2 style={{ margin: 0, flex: 1, fontSize: 16, fontWeight: 700, fontFamily: GILD_FONTS.display, letterSpacing: '-0.01em' }}>
+          Messages
+        </h2>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close messages"
+          style={{
+            width: 32, height: 32, borderRadius: 8, background: 'transparent', border: 'none',
+            color: 'oklch(0.45 0.02 250)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+          }}
+        >
+          <X size={18} />
+        </button>
+      </header>
+
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        {conversations === null ? (
+          <p style={{ padding: '28px 18px', fontSize: 13, color: 'oklch(0.55 0.02 250)', textAlign: 'center' }}>
+            Loading conversations…
+          </p>
+        ) : conversations.length === 0 ? (
+          <div style={{ padding: '48px 24px', textAlign: 'center' }}>
+            <p style={{ fontSize: 28, margin: '0 0 10px' }} aria-hidden>💬</p>
+            <p style={{ fontSize: 14, fontWeight: 700, margin: '0 0 6px' }}>No messages yet</p>
+            <p style={{ fontSize: 13, color: 'oklch(0.55 0.02 250)', margin: 0, lineHeight: 1.6 }}>
+              Open any community’s Members tab and hit “Message” to start a conversation.
+            </p>
+          </div>
+        ) : (
+          conversations.map((c) => {
+            const person: Person = {
+              id: c.peer_id,
+              name: c.display_name,
+              role: 'free_member' as MemberRole,
+              hue: (c.display_name.charCodeAt(0) * 13) % 360,
+              online: onlineUserIds.has(c.peer_id),
+            };
+            return (
+              <button
+                key={c.peer_id}
+                onClick={() => openChatWithUser(c.peer_id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  width: '100%',
+                  padding: '13px 18px',
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: '1px solid oklch(0.97 0.003 250)',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  fontFamily: 'inherit',
+                }}
+              >
+                <Avatar person={person} size={40} presence />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {c.display_name}
+                    </span>
+                    {c.shared_community && (
+                      <span style={{ fontSize: 10.5, color: 'oklch(0.55 0.02 250)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        via {c.shared_community}
+                      </span>
+                    )}
+                  </div>
+                  <p style={{
+                    margin: '3px 0 0',
+                    fontSize: 12.5,
+                    color: c.unread_count > 0 ? 'oklch(0.25 0.02 250)' : 'oklch(0.52 0.02 250)',
+                    fontWeight: c.unread_count > 0 ? 600 : 400,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {c.last_from_me ? 'You: ' : ''}{c.last_message}
+                  </p>
+                </div>
+                {c.unread_count > 0 && (
+                  <span style={{
+                    minWidth: 20,
+                    height: 20,
+                    padding: '0 6px',
+                    borderRadius: 999,
+                    background: 'oklch(0.45 0.16 25)',
+                    color: '#fff',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}>
+                    {c.unread_count}
+                  </span>
+                )}
+              </button>
+            );
+          })
+        )}
+      </div>
+    </motion.aside>
   );
 }
 
@@ -63,12 +242,15 @@ function ChatPanel({
   recipientId,
   isOnline,
   onClose,
+  onBack,
 }: {
   currentUserId: string;
   recipientId: string;
   isOnline: boolean;
   onClose: () => void;
+  onBack?: () => void;
 }) {
+  const { refreshUnread } = useGildChat();
   const [recipient, setRecipient] = useState<RecipientProfile | null>(null);
   const [messages, setMessages] = useState<LocalMessage[]>([]);
   const [draft, setDraft] = useState('');
@@ -78,6 +260,11 @@ function ChatPanel({
   const timelineRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const supabase = createClient();
+
+  // ── Mark this thread read on open + clear the nav badge ─────────────────
+  useEffect(() => {
+    markDmThreadRead(recipientId).then(refreshUnread);
+  }, [recipientId, refreshUnread]);
 
   // ── Esc-to-close ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -272,6 +459,20 @@ function ChatPanel({
             flexShrink: 0,
           }}
         >
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              aria-label="Back to all messages"
+              style={{
+                width: 30, height: 30, borderRadius: 8, background: 'transparent', border: 'none',
+                color: 'oklch(0.45 0.02 250)', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', cursor: 'pointer', flexShrink: 0, fontSize: 17,
+              }}
+            >
+              ←
+            </button>
+          )}
           {recipientPerson && <Avatar person={recipientPerson} size={36} presence />}
           <div style={{ flex: 1, minWidth: 0, lineHeight: 1.25 }}>
             <h2

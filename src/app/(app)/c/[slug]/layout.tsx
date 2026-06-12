@@ -4,7 +4,7 @@ import { getCommunityContextBySlug } from '../../../../lib/community/context';
 import { isAccessGranted } from '@/lib/billing';
 import { requireAuth } from '@/lib/auth';
 import { getFlag } from '@/lib/feature-flags';
-import { StudioSidebar, NotificationListener, JoinGate, WelcomeHandler, GildChatProvider, GildChatDrawer } from '@/components/gild';
+import { StudioSidebar, NotificationListener, JoinGate, WelcomeHandler } from '@/components/gild';
 import type { Person } from '@/components/gild';
 import type { CommunityBillingState, SubscriptionStatus } from '@/lib/billing';
 import type { Plan } from '@/lib/billing';
@@ -131,7 +131,7 @@ export default async function CommunityLayout({ children, params }: Props) {
   }
 
   return (
-    <GildChatProvider>
+    <>
       <NotificationListener communityId={communityId} communitySlug={slug} />
       {billingBannerContent && (
         <div
@@ -179,7 +179,6 @@ export default async function CommunityLayout({ children, params }: Props) {
     </div>
     {/* Sliding chat overlay — anchored at layout root so it floats above
         all community-scoped pages without affecting URL state. */}
-    <GildChatDrawer currentUserId={profile.id} />
-    </GildChatProvider>
+    </>
   );
 }

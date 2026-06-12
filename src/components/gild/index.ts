@@ -17,4 +17,5 @@ export * from './PollRenderer';
 export { default as ReactionPicker } from './ReactionPicker';
 export * from './SpaceSettingsModal';
 export * from './GildChatProvider';
+export * from './ChatNavButton';
 export * from './GildChatDrawer';

@@ -87,3 +87,22 @@ export async function markMessageRead(messageId: string): Promise<void> {
 
   if (error) throw new Error(error.message);
 }
+
+// Marks every unread message FROM peerId TO the caller as read — called when
+// a thread is opened so the inbox badge clears for that conversation.
+export async function markThreadRead(peerId: string): Promise<void> {
+  const supabase = await getSupabaseServerClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) throw new Error('[gild] not authenticated');
+
+  const { error } = await supabase
+    .from('direct_messages')
+    .update({ read_at: new Date().toISOString() })
+    .eq('sender_id', peerId)
+    .eq('receiver_id', user.id)
+    .is('read_at', null);
+  if (error) throw new Error(error.message);
+}
