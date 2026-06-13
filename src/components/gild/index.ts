@@ -2,6 +2,7 @@ export * from './types';
 export * from './styles';
 export * from './GildPrimitives';
 export * from './GildDoodles';
+export * from './MakerCrowd';
 export * from './StudioPostCard';
 export * from './StudioSidebar';
 export * from './StudioRightRail';

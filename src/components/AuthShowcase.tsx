@@ -14,6 +14,7 @@ import {
   DoodleCamera,
   DoodleSprout,
   DOODLE_COLORS,
+  MakerFigure,
 } from '@/components/gild';
 import type { Person } from '@/components/gild';
 import { Check } from 'lucide-react';
@@ -260,8 +261,11 @@ export function AuthShowcase({ variant }: { variant: 'sign-in' | 'sign-up' }) {
           <Float bottom="11%" right="12%" rotate={-1.5} delay={0.7}>
             <DMCard />
           </Float>
+          <div style={{ position: 'absolute', bottom: '7%', left: '6%', transform: 'rotate(-3deg)' }}>
+            <MakerFigure file="guitarist" alt="A guitarist" size={132} />
+          </div>
           <p style={{
-            position: 'absolute', bottom: '3.5%', left: '50%', transform: 'translateX(-50%) rotate(-2deg)',
+            position: 'absolute', bottom: '3%', left: '50%', transform: 'translateX(-50%) rotate(-2deg)',
             fontFamily: 'var(--font-gochi), cursive', fontSize: 19, color: DOODLE_COLORS.ink,
             margin: 0, whiteSpace: 'nowrap',
           }}>
@@ -288,8 +292,11 @@ export function AuthShowcase({ variant }: { variant: 'sign-in' | 'sign-up' }) {
           <Float bottom="8%" right="14%" rotate={-1} delay={1.2}>
             <FeePill />
           </Float>
+          <div style={{ position: 'absolute', bottom: '6%', left: '5%', transform: 'rotate(3deg)' }}>
+            <MakerFigure file="potter" alt="A potter" size={128} />
+          </div>
           <p style={{
-            position: 'absolute', bottom: '3.5%', left: '50%', transform: 'translateX(-50%) rotate(-2deg)',
+            position: 'absolute', bottom: '3%', left: '50%', transform: 'translateX(-50%) rotate(-2deg)',
             fontFamily: 'var(--font-gochi), cursive', fontSize: 19, color: DOODLE_COLORS.ink,
             margin: 0, whiteSpace: 'nowrap',
           }}>
