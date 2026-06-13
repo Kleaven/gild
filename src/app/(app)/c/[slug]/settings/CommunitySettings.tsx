@@ -38,11 +38,6 @@ export default function CommunitySettings({ community }: Props) {
   const [isPrivate, setIsPrivate] = useState(community.is_private);
   const [category, setCategory] = useState(community.category || '');
   const [welcomeMessage, setWelcomeMessage] = useState(community.welcome_message || '');
-  const [pricingType, setPricingType] = useState<'free' | 'paid'>(community.pricing_type === 'paid' ? 'paid' : 'free');
-  const [priceAmount, setPriceAmount] = useState<string>(String(community.price_amount ?? 0));
-  const [pricingPeriod, setPricingPeriod] = useState<'one_time' | 'monthly' | 'yearly'>(
-    community.pricing_period === 'monthly' ? 'monthly' : community.pricing_period === 'yearly' ? 'yearly' : 'one_time',
-  );
   const [goodbyeMessage, setGoodbyeMessage] = useState(community.goodbye_message || '');
   const [rolePermissions, setRolePermissions] = useState(community.role_permissions || {
     member: { can_post: true, can_comment: true, can_react: true, can_invite: true },
@@ -71,9 +66,6 @@ export default function CommunitySettings({ community }: Props) {
           welcome_message: welcomeMessage || undefined,
           goodbye_message: goodbyeMessage || undefined,
           role_permissions: rolePermissions,
-          pricing_type: pricingType,
-          price_amount: pricingType === 'paid' ? Math.max(1, Number(priceAmount) || 0) : 0,
-          pricing_period: pricingPeriod,
         });
         if (!result.ok) {
           setUpdateError(result.message);
@@ -86,6 +78,16 @@ export default function CommunitySettings({ community }: Props) {
         setUpdateError(err instanceof Error ? err.message : 'Failed to update community');
       }
     });
+  }
+
+  async function handleRemoveAsset(type: 'logo' | 'banner') {
+    setUpdateError(null);
+    const result = await updateCommunity(community.id, type === 'logo' ? { logo_url: null } : { banner_url: null });
+    if (!result.ok) {
+      setUpdateError(result.message);
+      return;
+    }
+    window.location.reload();
   }
 
   async function handleAssetUpload(e: React.ChangeEvent<HTMLInputElement>, type: 'logo' | 'banner') {
@@ -142,6 +144,15 @@ export default function CommunitySettings({ community }: Props) {
                   <input type="file" accept="image/*" onChange={(e) => handleAssetUpload(e, 'logo')} hidden disabled={!!isUploading} />
                 </label>
               </div>
+              {community.logo_url ? (
+                <button type="button" onClick={() => handleRemoveAsset('logo')} style={removeAssetStyle}>
+                  Remove image — use accent color
+                </button>
+              ) : (
+                <p style={{ fontSize: 11.5, color: 'oklch(0.55 0.02 250)', margin: '8px 0 0' }}>
+                  No image — your initial on the accent color.
+                </p>
+              )}
             </div>
 
             <div>
@@ -161,15 +172,31 @@ export default function CommunitySettings({ community }: Props) {
                   <input type="file" accept="image/*" onChange={(e) => handleAssetUpload(e, 'banner')} hidden disabled={!!isUploading} />
                 </label>
               </div>
+              {community.banner_url ? (
+                <button type="button" onClick={() => handleRemoveAsset('banner')} style={removeAssetStyle}>
+                  Remove image — use accent gradient
+                </button>
+              ) : (
+                <p style={{ fontSize: 11.5, color: 'oklch(0.55 0.02 250)', margin: '8px 0 0' }}>
+                  No image — a gradient from your accent color.
+                </p>
+              )}
             </div>
           </div>
 
-          {/* Theme Color */}
+          {/* Accent color — hue drives highlights/badges/space dots everywhere,
+              and the icon/banner ONLY when no image is uploaded. */}
           <div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: 'oklch(0.40 0.02 250)', marginBottom: 12 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: 'oklch(0.40 0.02 250)', marginBottom: 6 }}>
               <Palette size={16} />
-              Theme Color (Hue)
+              Accent color
             </label>
+            <p style={{ fontSize: 12, color: 'oklch(0.52 0.02 250)', margin: '0 0 12px', lineHeight: 1.5 }}>
+              Colors highlights, badges, and space dots across your community
+              {community.logo_url || community.banner_url
+                ? ' — your uploaded images stay as-is.'
+                : ' — and your icon and banner while no images are uploaded.'}
+            </p>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <input
                 type="range"
@@ -179,14 +206,18 @@ export default function CommunitySettings({ community }: Props) {
                 onChange={(e) => setThemeHue(parseInt(e.target.value))}
                 style={{ flex: 1, accentColor: `oklch(0.55 0.15 ${themeHue})` }}
               />
-              <div style={{
-                width: 32,
-                height: 32,
-                borderRadius: 8,
-                background: `oklch(0.55 0.15 ${themeHue})`,
-                border: '2px solid #fff',
-                boxShadow: '0 0 0 1px oklch(0.90 0.01 250)',
-              }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{
+                  padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 700,
+                  background: `oklch(0.96 0.02 ${themeHue})`, color: `oklch(0.40 0.14 ${themeHue})`,
+                }}>badge</span>
+                <span style={{ width: 10, height: 10, borderRadius: 3, background: `oklch(0.62 0.16 ${themeHue})` }} />
+                <div style={{
+                  width: 28, height: 28, borderRadius: 8,
+                  background: `oklch(0.55 0.15 ${themeHue})`,
+                  border: '2px solid #fff', boxShadow: '0 0 0 1px oklch(0.90 0.01 250)',
+                }} />
+              </div>
             </div>
           </div>
         </div>
@@ -279,67 +310,11 @@ export default function CommunitySettings({ community }: Props) {
         </div>
 
         <section style={{ marginTop: 24, borderTop: '1px solid oklch(0.90 0.01 250)', paddingTop: 40 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 4px' }}>Membership Pricing</h2>
-          <p style={{ fontSize: 13, color: 'oklch(0.52 0.02 250)', margin: '0 0 20px', lineHeight: 1.5 }}>
-            What new members pay to join. This is exactly what the join page charges —
-            change it any time.
+          <h2 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 4px' }}>Pricing & payouts</h2>
+          <p style={{ fontSize: 13, color: 'oklch(0.52 0.02 250)', margin: 0, lineHeight: 1.6 }}>
+            Everything money lives in one place now — entry pricing, membership tiers, and your
+            Stripe payout account are all under <strong>Monetization</strong> in the sidebar.
           </p>
-
-          <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-            {(['free', 'paid'] as const).map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setPricingType(t)}
-                aria-pressed={pricingType === t}
-                style={{
-                  flex: 1,
-                  padding: '12px 16px',
-                  borderRadius: 12,
-                  border: pricingType === t ? '2px solid oklch(0.25 0.02 250)' : '1px solid oklch(0.90 0.01 250)',
-                  background: pricingType === t ? 'oklch(0.97 0.005 250)' : '#fff',
-                  fontSize: 14,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                }}
-              >
-                {t === 'free' ? 'Free to join' : 'Paid'}
-              </button>
-            ))}
-          </div>
-
-          {pricingType === 'paid' && (
-            <div style={{ display: 'flex', gap: 12 }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'oklch(0.40 0.02 250)', marginBottom: 8 }}>
-                  Price (USD)
-                </label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={priceAmount}
-                  onChange={(e) => setPriceAmount(e.target.value.replace(/[^0-9]/g, ''))}
-                  placeholder="12"
-                  style={inputStyle}
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'oklch(0.40 0.02 250)', marginBottom: 8 }}>
-                  Billing
-                </label>
-                <select
-                  value={pricingPeriod}
-                  onChange={(e) => setPricingPeriod(e.target.value as 'one_time' | 'monthly' | 'yearly')}
-                  style={{ ...inputStyle, cursor: 'pointer' }}
-                >
-                  <option value="one_time">One-time</option>
-                  <option value="monthly">Monthly</option>
-                  <option value="yearly">Yearly</option>
-                </select>
-              </div>
-            </div>
-          )}
         </section>
 
         <section style={{ marginTop: 24, borderTop: '1px solid oklch(0.90 0.01 250)', paddingTop: 40 }}>
@@ -542,4 +517,16 @@ const uploadIconStyle: React.CSSProperties = {
   cursor: 'pointer',
   border: '3px solid #fff',
   boxShadow: '0 2px 8px oklch(0 0 0 / 0.15)',
+};
+
+const removeAssetStyle: React.CSSProperties = {
+  marginTop: 8,
+  background: 'transparent',
+  border: 'none',
+  padding: 0,
+  fontSize: 11.5,
+  fontWeight: 600,
+  color: 'oklch(0.45 0.16 25)',
+  cursor: 'pointer',
+  fontFamily: 'inherit',
 };

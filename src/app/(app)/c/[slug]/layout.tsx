@@ -164,6 +164,7 @@ export default async function CommunityLayout({ children, params }: Props) {
           member_count: community.member_count,
           plan: community.plan,
           theme_hue: community.theme_hue ?? undefined,
+          logo_url: community.logo_url,
           welcome_message: community.welcome_message,
           goodbye_message: community.goodbye_message,
           is_private: community.is_private,

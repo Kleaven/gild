@@ -61,8 +61,8 @@ export default async function SpacePage({ params }: Props) {
     canPost = hasMinRole(role, 'moderator');
   }
 
-  // Derive a stable hue from the space ID
-  const spaceHue = spaceId.charCodeAt(0) * 10 % 360;
+  // Owner-chosen accent first; fall back to a stable derived hue.
+  const spaceHue = space.color_hue ?? (spaceId.charCodeAt(0) * 10 % 360);
 
   return (
     <FeedClient
@@ -71,6 +71,8 @@ export default async function SpacePage({ params }: Props) {
       communitySlug={slug}
       spaceId={spaceId}
       spaceName={space.name}
+      spaceIcon={space.icon}
+      spaceColorHue={space.color_hue}
       spaceDesc={space.description}
       spaceType={space.type}
       spaceHue={spaceHue}

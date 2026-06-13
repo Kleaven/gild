@@ -97,6 +97,8 @@ const updateSpaceSchema = z.object({
   isPrivate: z.boolean().optional(),
   minRole: z.enum(MEMBER_ROLES).optional(),
   role_permissions: z.record(z.string(), z.any()).optional(),
+  colorHue: z.number().int().min(0).max(360).nullable().optional(),
+  icon: z.string().max(16).nullable().optional(),
 });
 
 export async function createSpace(
@@ -179,6 +181,8 @@ export async function updateSpace(
   if (parsed.data.isPrivate !== undefined) updates.is_private = parsed.data.isPrivate;
   if (parsed.data.minRole !== undefined) updates.min_role = parsed.data.minRole;
   if (parsed.data.role_permissions !== undefined) updates.role_permissions = parsed.data.role_permissions;
+  if (parsed.data.colorHue !== undefined) updates.color_hue = parsed.data.colorHue;
+  if (parsed.data.icon !== undefined) updates.icon = parsed.data.icon === '' ? null : parsed.data.icon;
 
   if (Object.keys(updates).length === 0) return;
 

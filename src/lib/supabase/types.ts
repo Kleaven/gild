@@ -1482,10 +1482,12 @@ export type Database = {
       spaces: {
         Row: {
           allow_member_posts: boolean
+          color_hue: number | null
           community_id: string
           created_at: string
           deleted_at: string | null
           description: string | null
+          icon: string | null
           id: string
           is_private: boolean
           min_role: Database["public"]["Enums"]["member_role"]
@@ -1499,10 +1501,12 @@ export type Database = {
         }
         Insert: {
           allow_member_posts?: boolean
+          color_hue?: number | null
           community_id: string
           created_at?: string
           deleted_at?: string | null
           description?: string | null
+          icon?: string | null
           id?: string
           is_private?: boolean
           min_role?: Database["public"]["Enums"]["member_role"]
@@ -1516,10 +1520,12 @@ export type Database = {
         }
         Update: {
           allow_member_posts?: boolean
+          color_hue?: number | null
           community_id?: string
           created_at?: string
           deleted_at?: string | null
           description?: string | null
+          icon?: string | null
           id?: string
           is_private?: boolean
           min_role?: Database["public"]["Enums"]["member_role"]

@@ -10,6 +10,11 @@ import {
   DoodleStar,
   DoodleSpark,
   DoodleHeart,
+  DoodlePot,
+  DoodleGuitar,
+  DoodleCamera,
+  DoodleSprout,
+  DoodleDumbbell,
   DOODLE_COLORS,
 } from '@/components/gild';
 import type { Person } from '@/components/gild';
@@ -191,9 +196,14 @@ export function StudioLanding() {
         </div>
       </header>
 
-      {/* two quiet ambient accents — the type carries the hero now */}
+      {/* ambient accents + the niches themselves, sketched in the margins */}
       <DoodleStar style={{ top: 150, left: '6%' }} size={24} color={DOODLE_COLORS.warm} />
       <DoodleSpark style={{ top: 210, right: '8%' }} size={18} color={DOODLE_COLORS.green} />
+      <DoodlePot style={{ top: 320, left: '5%' }} size={38} color={DOODLE_COLORS.warm} />
+      <DoodleGuitar style={{ top: 470, left: '9%' }} size={34} color={DOODLE_COLORS.lilac} />
+      <DoodleCamera style={{ top: 330, right: '6%' }} size={34} color={DOODLE_COLORS.green} />
+      <DoodleSprout style={{ top: 480, right: '10%' }} size={30} color={DOODLE_COLORS.warm} />
+      <DoodleDumbbell style={{ top: 600, left: '4%' }} size={34} color={DOODLE_COLORS.green} />
 
       <main>
         {/* ── Hero ─────────────────────────────────────────────────────── */}
@@ -340,13 +350,13 @@ export function StudioLanding() {
                     <span style={{
                       padding: '1px 8px', borderRadius: 999, fontSize: 10, fontWeight: 600,
                       background: 'oklch(0.96 0.02 42)', color: 'oklch(0.36 0.10 42)',
-                    }}>Announcements</span>
+                    }}>Kiln Room</span>
                   </div>
-                  <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 4px' }}>Office hours moving to Thursdays</p>
+                  <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 4px' }}>Moon jar tutorial is LIVE 🏺</p>
                   <p style={{ fontSize: 12, color: 'oklch(0.40 0.02 250)', margin: '0 0 8px', lineHeight: 1.45 }}>
-                    We’re shifting weekly office hours to a more global-friendly slot. RSVP in the calendar…
+                    Full cone-6 glaze recipe + the throwing timelapse from my last firing. Who’s making one with me this weekend?!
                   </p>
-                  <Reactions items={[['✨', 24], ['❤️', 18]]} hue={42} />
+                  <Reactions items={[['🔥', 31], ['🏺', 18]]} hue={42} />
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

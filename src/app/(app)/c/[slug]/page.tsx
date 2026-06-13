@@ -1,14 +1,18 @@
 import { notFound, redirect } from 'next/navigation';
 import { getCommunityContextBySlug } from '../../../../lib/community/context';
+import { getSupabaseServerClient } from '@/lib/auth/server';
+import { confirmJoinCheckout } from '@/lib/billing/subscription';
 
 const SLUG_RE = /^[a-z0-9-]{3,50}$/;
 
 type Props = {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ payment?: string; session_id?: string }>;
 };
 
-export default async function CommunityHomePage({ params }: Props) {
+export default async function CommunityHomePage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const { payment, session_id: checkoutSessionId } = await searchParams;
 
   if (!SLUG_RE.test(slug)) {
     notFound();
@@ -18,6 +22,22 @@ export default async function CommunityHomePage({ params }: Props) {
 
   if (!community) {
     notFound();
+  }
+
+  // Returning from a paid-join Checkout → grant membership immediately,
+  // before the layout's join gate evaluates. Webhook remains the backstop.
+  if (payment === 'success' && checkoutSessionId) {
+    const supabase = await getSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      try {
+        await confirmJoinCheckout(community.id, checkoutSessionId, user.id);
+      } catch {
+        // non-fatal — webhook will grant
+      }
+    }
   }
 
   const firstSpace = spaces.find((s) => s.deleted_at === null);

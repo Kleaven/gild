@@ -16,6 +16,8 @@ interface Props {
     description: string | null;
     is_private: boolean;
     role_permissions: any;
+    color_hue?: number | null;
+    icon?: string | null;
   };
   isOpen: boolean;
   onClose: () => void;
@@ -26,11 +28,15 @@ export function SpaceSettingsModal({ communityId, communitySlug, space, isOpen, 
   const [name, setName] = useState(space.name);
   const [description, setDescription] = useState(space.description || '');
   const [isPrivate, setIsPrivate] = useState(space.is_private);
+  const [colorHue, setColorHue] = useState<number>(space.color_hue ?? 220);
+  const [useCustomColor, setUseCustomColor] = useState<boolean>(space.color_hue != null);
+  const [icon, setIcon] = useState(space.icon ?? '');
   const [rolePermissions, setRolePermissions] = useState(space.role_permissions || {
     member: { can_view: true, can_post: true, can_comment: true, can_react: true },
     admin: { can_view: true, can_post: true, can_comment: true, can_react: true }
   });
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -43,11 +49,13 @@ export function SpaceSettingsModal({ communityId, communitySlug, space, isOpen, 
           description,
           isPrivate,
           role_permissions: rolePermissions,
+          colorHue: useCustomColor ? colorHue : null,
+          icon: icon.trim() === '' ? null : icon.trim(),
         }, communityId);
         onClose();
         router.refresh();
-      } catch (err) {
-        console.error('Failed to update space', err);
+      } catch {
+        setError('Could not save the space. Please try again.');
       }
     });
   }
@@ -105,6 +113,56 @@ export function SpaceSettingsModal({ communityId, communitySlug, space, isOpen, 
                   style={{ ...inputStyle, resize: 'none' }}
                 />
               </label>
+
+              {/* Identity: emoji icon + accent hue (falls back to community accent) */}
+              <div style={{ display: 'grid', gridTemplateColumns: '88px 1fr', gap: 14 }}>
+                <label style={labelStyle}>
+                  Icon
+                  <input
+                    type="text"
+                    value={icon}
+                    onChange={(e) => setIcon(e.target.value)}
+                    placeholder="🏺"
+                    maxLength={4}
+                    style={{ ...inputStyle, textAlign: 'center', fontSize: 18 }}
+                  />
+                </label>
+                <div>
+                  <span style={{ ...labelStyle, display: 'block' }}>Space color</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6 }}>
+                    <button
+                      type="button"
+                      onClick={() => setUseCustomColor(!useCustomColor)}
+                      aria-pressed={useCustomColor}
+                      style={{
+                        padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 600,
+                        border: useCustomColor ? '1.5px solid oklch(0.25 0.02 250)' : '1px solid oklch(0.90 0.01 250)',
+                        background: useCustomColor ? 'oklch(0.97 0.005 250)' : '#fff',
+                        cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {useCustomColor ? 'Custom' : 'Community accent'}
+                    </button>
+                    {useCustomColor && (
+                      <>
+                        <input
+                          type="range"
+                          min="0"
+                          max="360"
+                          value={colorHue}
+                          onChange={(e) => setColorHue(parseInt(e.target.value))}
+                          style={{ flex: 1, accentColor: `oklch(0.55 0.15 ${colorHue})` }}
+                        />
+                        <span style={{ width: 18, height: 18, borderRadius: 5, flexShrink: 0, background: `oklch(0.62 0.16 ${colorHue})` }} />
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {error && (
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'oklch(0.45 0.16 25)' }}>{error}</p>
+              )}
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div 

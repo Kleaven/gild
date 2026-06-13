@@ -23,7 +23,7 @@ interface StudioSidebarProps {
     is_private?: boolean;
     slug: string;
   };
-  spaces: { id: string; name: string; hue?: number; [key: string]: unknown }[];
+  spaces: { id: string; name: string; hue?: number; color_hue?: number | null; icon?: string | null; [key: string]: unknown }[];
   currentUser: Person;
   showCourses?: boolean;
 }
@@ -160,15 +160,19 @@ export function StudioSidebar({
               color: isActive ? `oklch(0.20 0.02 ${community.theme_hue || 250})` : 'oklch(0.30 0.02 250)',
               fontWeight: isActive ? 600 : 400,
             }}>
-              <span style={{
-                width: 8,
-                height: 8,
-                borderRadius: 2,
-                background: `oklch(0.62 0.16 ${s.hue || community.theme_hue || 220})`,
-                boxShadow: isActive
-                  ? `0 0 0 3px oklch(0.62 0.16 ${s.hue || community.theme_hue || 220} / 0.18)`
-                  : 'none',
-              }}/>
+              {s.icon ? (
+                <span style={{ fontSize: 13, lineHeight: 1, width: 16, textAlign: 'center' }} aria-hidden>{s.icon}</span>
+              ) : (
+                <span style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: 2,
+                  background: `oklch(0.62 0.16 ${s.color_hue ?? s.hue ?? community.theme_hue ?? 220})`,
+                  boxShadow: isActive
+                    ? `0 0 0 3px oklch(0.62 0.16 ${s.color_hue ?? s.hue ?? community.theme_hue ?? 220} / 0.18)`
+                    : 'none',
+                }}/>
+              )}
               <span style={{ flex: 1 }}>{s.name}</span>
             </Link>
           );

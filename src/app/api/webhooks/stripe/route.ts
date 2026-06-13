@@ -117,9 +117,20 @@ async function handleSubscriptionDeleted(event: Stripe.Event): Promise<void> {
 }
 
 async function handleCheckoutSessionCompleted(event: Stripe.Event): Promise<void> {
-  // Tier checkouts complete on the connected account; tier assignment is driven
-  // off customer.subscription.* (which carry our metadata), so this is a no-op.
-  if (event.account) return;
+  // Connected-account checkouts: paid JOINS grant membership here; tier
+  // assignment is driven off customer.subscription.* instead.
+  if (event.account) {
+    const session = event.data.object as Stripe.Checkout.Session;
+    const m = session.metadata ?? {};
+    if (m.type === 'community_join' && m.communityId && m.userId && session.payment_status === 'paid') {
+      await db`
+        INSERT INTO public.community_members (community_id, user_id, role)
+        VALUES (${m.communityId}, ${m.userId}, 'free_member')
+        ON CONFLICT (community_id, user_id) DO NOTHING
+      `;
+    }
+    return;
+  }
 
   const session = event.data.object as Stripe.Checkout.Session;
   const { type, communityId, userId, targetType, targetId, plan } = session.metadata || {};

@@ -182,14 +182,25 @@ export async function createCommunityJoinSession(
   email: string,
 ): Promise<{ url: string }> {
   const appUrl = await getAppUrl();
-  const rows = await db<{ name: string; price_amount: number; price_currency: string; pricing_period: string; slug: string }[]>`
-    SELECT name, price_amount, price_currency, pricing_period, slug
+  const rows = await db<{
+    name: string; price_amount: number; price_currency: string; pricing_period: string; slug: string;
+    stripe_connect_account_id: string | null; stripe_connect_charges_enabled: boolean;
+  }[]>`
+    SELECT name, price_amount, price_currency, pricing_period, slug,
+           stripe_connect_account_id, stripe_connect_charges_enabled
     FROM public.communities
     WHERE id = ${communityId}
     LIMIT 1
   `;
   const community = rows[0];
   if (!community) throw new Error('[gild] community not found');
+
+  // Entry fees charge DIRECTLY on the creator's connected Stripe account —
+  // the same 0% rails as tiers. Without a payout account there is nowhere
+  // for the money to go, so paid joins are blocked until Connect is ready.
+  if (!community.stripe_connect_account_id || !community.stripe_connect_charges_enabled) {
+    throw new Error('[gild] this community can’t accept payments yet — the owner hasn’t finished payout setup');
+  }
 
   const isRecurring = community.pricing_period === 'monthly' || community.pricing_period === 'yearly';
 
@@ -214,7 +225,7 @@ export async function createCommunityJoinSession(
       },
       quantity: 1,
     }],
-    success_url: `${appUrl}/c/${community.slug}?welcome=1&payment=success`,
+    success_url: `${appUrl}/c/${community.slug}?welcome=1&payment=success&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${appUrl}/c/${community.slug}?payment=cancelled`,
     metadata: { 
       communityId, 
@@ -224,10 +235,43 @@ export async function createCommunityJoinSession(
     subscription_data: isRecurring ? {
       metadata: { communityId, userId, type: 'community_join' }
     } : undefined,
-  });
+  }, { stripeAccount: community.stripe_connect_account_id });
 
   if (!session.url) throw new Error('[gild] checkout session has no URL');
   return { url: session.url };
+}
+
+// Confirms a paid-join Checkout on return from Stripe and grants membership
+// immediately — webhook-independent, mirroring tier confirm-on-return.
+// Validates the session's metadata against the signed-in caller; idempotent.
+export async function confirmJoinCheckout(
+  communityId: string,
+  sessionId: string,
+  userId: string,
+): Promise<boolean> {
+  const rows = await db<{ stripe_connect_account_id: string | null }[]>`
+    SELECT stripe_connect_account_id FROM public.communities WHERE id = ${communityId} LIMIT 1
+  `;
+  const account = rows[0]?.stripe_connect_account_id;
+  if (!account) return false;
+
+  let session;
+  try {
+    session = await stripe.checkout.sessions.retrieve(sessionId, undefined, { stripeAccount: account });
+  } catch {
+    return false;
+  }
+
+  const m = session.metadata ?? {};
+  if (m.type !== 'community_join' || m.communityId !== communityId || m.userId !== userId) return false;
+  if (session.payment_status !== 'paid') return false;
+
+  await db`
+    INSERT INTO public.community_members (community_id, user_id, role)
+    VALUES (${communityId}, ${userId}, 'free_member')
+    ON CONFLICT (community_id, user_id) DO NOTHING
+  `;
+  return true;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

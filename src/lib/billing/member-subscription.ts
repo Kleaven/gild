@@ -300,6 +300,19 @@ export async function handleConnectSubscriptionUpsert(event: Stripe.Event): Prom
 
 export async function handleConnectSubscriptionDeleted(event: Stripe.Event): Promise<void> {
   const sub = event.data.object as Stripe.Subscription;
+
+  // Recurring JOIN subscription ended → the membership itself lapses.
+  const m = sub.metadata ?? {};
+  if (m.type === 'community_join' && m.communityId && m.userId) {
+    await db`
+      DELETE FROM public.community_members
+      WHERE community_id = ${m.communityId}
+        AND user_id = ${m.userId}
+        AND role NOT IN ('owner', 'admin', 'moderator')
+    `;
+    return;
+  }
+
   const meta = tierMeta(sub);
   if (!meta) return;
 

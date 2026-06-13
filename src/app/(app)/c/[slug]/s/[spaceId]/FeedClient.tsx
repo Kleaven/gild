@@ -52,6 +52,8 @@ type Props = {
   communitySlug: string;
   spaceId: string;
   spaceName: string;
+  spaceIcon?: string | null;
+  spaceColorHue?: number | null;
   spaceDesc: string | null;
   spaceType: string;
   spaceHue: number;
@@ -91,6 +93,8 @@ export default function FeedClient({
   communitySlug,
   spaceId,
   spaceName,
+  spaceIcon,
+  spaceColorHue,
   spaceDesc,
   spaceType,
   spaceHue,
@@ -251,7 +255,7 @@ export default function FeedClient({
             <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
               <span style={{ width: 10, height: 10, borderRadius: 3, background: `oklch(0.62 0.16 ${spaceHue})`, marginTop: 8, flexShrink: 0 }} />
               <div>
-                <h1 style={{ fontFamily: GILD_FONTS.display, fontSize: 26, fontWeight: 800, letterSpacing: '-0.03em', margin: '0 0 4px' }}>#{spaceName}</h1>
+                <h1 style={{ fontFamily: GILD_FONTS.display, fontSize: 26, fontWeight: 800, letterSpacing: '-0.03em', margin: '0 0 4px' }}>{spaceIcon ? `${spaceIcon} ` : '#'}{spaceName}</h1>
                 {spaceDesc && <p style={{ fontSize: 13, color: 'oklch(0.45 0.02 250)', margin: 0, lineHeight: 1.5 }}>{spaceDesc}</p>}
                 <div style={{ display: 'flex', gap: 14, marginTop: 8, fontFamily: GILD_FONTS.mono, fontSize: 11, color: 'oklch(0.50 0.02 250)' }}>
                   <span>{optimisticPosts.length} posts</span>
@@ -380,7 +384,9 @@ export default function FeedClient({
           name: spaceName,
           description: spaceDesc,
           is_private: isPrivate,
-          role_permissions: rolePermissions
+          role_permissions: rolePermissions,
+          color_hue: spaceColorHue,
+          icon: spaceIcon
         }}
       />
     </>

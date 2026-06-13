@@ -15,12 +15,20 @@ import {
   deactivateTierAction,
   reorderTiersAction,
 } from '@/app/actions/monetization';
+import { updateCommunity } from '@/app/actions';
+
+type EntryPricing = {
+  type: 'free' | 'paid';
+  amount: number;
+  period: 'one_time' | 'monthly' | 'yearly';
+};
 
 interface Props {
   communityId: string;
   communitySlug: string;
   initialStatus: ConnectStatus;
   initialTiers: Tier[];
+  initialPricing: EntryPricing;
 }
 
 type EditState =
@@ -28,7 +36,7 @@ type EditState =
   | { mode: 'create' }
   | { mode: 'edit'; tier: Tier };
 
-export function MonetizationManager({ communityId, initialStatus, initialTiers }: Props) {
+export function MonetizationManager({ communityId, initialStatus, initialTiers, initialPricing }: Props) {
   const router = useRouter();
   const [status] = useState(initialStatus);
   const [edit, setEdit] = useState<EditState>({ mode: 'closed' });
@@ -46,6 +54,40 @@ export function MonetizationManager({ communityId, initialStatus, initialTiers }
   }, [initialTiers]);
   const dragId = useRef<string | null>(null);
   const [reordering, setReordering] = useState(false);
+
+  // ── Entry pricing (what new members pay to join) ──────────────────────────
+  const [entryType, setEntryType] = useState<'free' | 'paid'>(initialPricing.type);
+  const [entryAmount, setEntryAmount] = useState<string>(String(initialPricing.amount || ''));
+  const [entryPeriod, setEntryPeriod] = useState<EntryPricing['period']>(initialPricing.period);
+  const [entrySaving, setEntrySaving] = useState(false);
+  const [entrySaved, setEntrySaved] = useState(false);
+
+  async function handleSaveEntryPricing() {
+    setError(null);
+    setEntrySaved(false);
+    if (entryType === 'paid' && (!Number(entryAmount) || Number(entryAmount) < 1)) {
+      setError('Set a price of at least $1 for a paid community.');
+      return;
+    }
+    setEntrySaving(true);
+    try {
+      const result = await updateCommunity(communityId, {
+        pricing_type: entryType,
+        price_amount: entryType === 'paid' ? Number(entryAmount) : 0,
+        pricing_period: entryPeriod,
+      });
+      if (!result.ok) {
+        setError(result.message);
+        return;
+      }
+      setEntrySaved(true);
+      setTimeout(() => setEntrySaved(false), 2500);
+    } catch {
+      setError('Couldn’t save entry pricing. Please try again.');
+    } finally {
+      setEntrySaving(false);
+    }
+  }
 
   function handleDrop(targetId: string) {
     const src = dragId.current;
@@ -184,6 +226,92 @@ export function MonetizationManager({ communityId, initialStatus, initialTiers }
             behind them.
           </p>
         )}
+      </section>
+
+      {/* ── Entry pricing ──────────────────────────────────────────────── */}
+      <section style={{ ...cardStyle, marginTop: 20 }}>
+        <div style={{ marginBottom: 14 }}>
+          <h2 style={{ fontFamily: GILD_FONTS.display, fontSize: 18, fontWeight: 800, margin: 0 }}>Entry pricing</h2>
+          <p style={{ fontSize: 13, color: 'oklch(0.55 0.02 250)', margin: '2px 0 0', lineHeight: 1.5 }}>
+            What new members pay to join — charged on <strong>your</strong> Stripe account at the
+            join page, 0% to Gild. Tiers below are separate upgrades members buy once inside.
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, marginBottom: entryType === 'paid' ? 14 : 0 }}>
+          {(['free', 'paid'] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setEntryType(t)}
+              disabled={t === 'paid' && !connected}
+              aria-pressed={entryType === t}
+              title={t === 'paid' && !connected ? 'Connect your payout account first' : undefined}
+              style={{
+                flex: 1,
+                padding: '11px 16px',
+                borderRadius: 12,
+                border: entryType === t ? '2px solid oklch(0.25 0.02 250)' : '1px solid oklch(0.90 0.01 250)',
+                background: entryType === t ? 'oklch(0.97 0.005 250)' : '#fff',
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: t === 'paid' && !connected ? 'default' : 'pointer',
+                opacity: t === 'paid' && !connected ? 0.5 : 1,
+                fontFamily: 'inherit',
+              }}
+            >
+              {t === 'free' ? 'Free to join' : 'Paid to join'}
+            </button>
+          ))}
+        </div>
+
+        {!connected && (
+          <p style={{ fontSize: 12.5, color: 'oklch(0.50 0.10 75)', margin: '10px 0 0', fontWeight: 600 }}>
+            Paid joining unlocks once your payout account above is connected — that’s where the
+            money lands.
+          </p>
+        )}
+
+        {entryType === 'paid' && (
+          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: 130 }}>
+              <label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: 'oklch(0.40 0.02 250)', marginBottom: 6 }}>
+                Price (USD)
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={entryAmount}
+                onChange={(e) => setEntryAmount(e.target.value.replace(/[^0-9]/g, ''))}
+                placeholder="12"
+                style={entryInput}
+              />
+            </div>
+            <div style={{ flex: 1, minWidth: 130 }}>
+              <label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: 'oklch(0.40 0.02 250)', marginBottom: 6 }}>
+                Billing
+              </label>
+              <select
+                value={entryPeriod}
+                onChange={(e) => setEntryPeriod(e.target.value as EntryPricing['period'])}
+                style={{ ...entryInput, cursor: 'pointer' }}
+              >
+                <option value="one_time">One-time</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 16 }}>
+          <button onClick={handleSaveEntryPricing} disabled={entrySaving} style={primaryBtn(entrySaving)}>
+            {entrySaving ? 'Saving…' : 'Save entry pricing'}
+          </button>
+          {entrySaved && (
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'oklch(0.42 0.14 150)' }}>Saved ✓</span>
+          )}
+        </div>
       </section>
 
       {/* ── Tiers ──────────────────────────────────────────────────────── */}
@@ -456,4 +584,15 @@ const input: React.CSSProperties = {
   width: '100%', padding: '10px 14px', borderRadius: 10,
   border: '1px solid oklch(0.90 0.01 250)', fontSize: 14, outline: 'none',
   fontFamily: 'inherit', boxSizing: 'border-box',
+};
+
+const entryInput: React.CSSProperties = {
+  width: '100%',
+  padding: '10px 14px',
+  borderRadius: 10,
+  border: '1px solid oklch(0.90 0.01 250)',
+  fontSize: 14,
+  outline: 'none',
+  fontFamily: 'inherit',
+  boxSizing: 'border-box',
 };

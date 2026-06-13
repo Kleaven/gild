@@ -56,4 +56,8 @@ export type UpdateSpaceInput = {
   isPrivate?: boolean;
   minRole?: Database['public']['Enums']['member_role'];
   role_permissions?: Record<string, unknown>;
+  /** Accent hue 0–360; null clears back to the community accent. */
+  colorHue?: number | null;
+  /** Emoji shown beside the space name; null clears it. */
+  icon?: string | null;
 };

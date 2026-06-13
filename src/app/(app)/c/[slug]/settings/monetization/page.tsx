@@ -42,6 +42,14 @@ export default async function MonetizationPage({ params, searchParams }: Props) 
       communitySlug={slug}
       initialStatus={status}
       initialTiers={tiers}
+      initialPricing={{
+        type: community.pricing_type === 'paid' ? 'paid' : 'free',
+        amount: Number(community.price_amount ?? 0),
+        period:
+          community.pricing_period === 'monthly' ? 'monthly'
+          : community.pricing_period === 'yearly' ? 'yearly'
+          : 'one_time',
+      }}
     />
   );
 }

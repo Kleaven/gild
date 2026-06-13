@@ -9,6 +9,10 @@ import {
   DoodleSpark,
   DoodleHeart,
   DoodleScribbleLine,
+  DoodlePot,
+  DoodleGuitar,
+  DoodleCamera,
+  DoodleSprout,
   DOODLE_COLORS,
 } from '@/components/gild';
 import type { Person } from '@/components/gild';
@@ -47,13 +51,13 @@ function PostCard() {
         <span style={{
           padding: '1px 8px', borderRadius: 999, fontSize: 10, fontWeight: 600,
           background: 'oklch(0.96 0.02 42)', color: 'oklch(0.36 0.10 42)',
-        }}>Announcements</span>
+        }}>Synth Lab</span>
       </div>
-      <p style={{ fontSize: 13.5, fontWeight: 600, margin: '0 0 4px' }}>Office hours moving to Thursdays</p>
+      <p style={{ fontSize: 13.5, fontWeight: 600, margin: '0 0 4px' }}>Patch breakdown just dropped 🎛️</p>
       <p style={{ fontSize: 12, color: 'oklch(0.42 0.02 250)', margin: '0 0 10px', lineHeight: 1.5 }}>
-        Shifting to a global-friendly slot — RSVP in the calendar…
+        Rebuilt the Blade Runner brass on a $99 synth — preset pack inside. Crank it and tell me what you hear!
       </p>
-      <Reactions items={[['✨', 24], ['❤️', 18]]} hue={42} />
+      <Reactions items={[['🎛️', 27], ['🔥', 19]]} hue={42} />
     </div>
   );
 }
@@ -100,7 +104,7 @@ function DMCard() {
         background: 'oklch(0.96 0.01 250)', fontSize: 12, lineHeight: 1.5,
         color: 'oklch(0.28 0.02 250)',
       }}>
-        see you at office hours? 👋
+        the kiln opening did NOT disappoint 🏺 starting mine tonight!!
       </p>
     </div>
   );
@@ -225,11 +229,22 @@ export function AuthShowcase({ variant }: { variant: 'sign-in' | 'sign-up' }) {
         background: 'oklch(0.90 0.06 150 / 0.45)', filter: 'blur(90px)', pointerEvents: 'none',
       }} />
 
-      {/* doodles */}
-      <DoodleStar style={{ top: '7%', left: '10%' }} size={26} color={DOODLE_COLORS.warm} />
-      <DoodleSpark style={{ top: '14%', right: '12%' }} size={18} color={DOODLE_COLORS.green} />
-      <DoodleHeart style={{ bottom: '10%', right: '14%' }} size={22} color={DOODLE_COLORS.warm} />
-      <DoodleScribbleLine style={{ bottom: '16%', left: '8%' }} w={64} color={DOODLE_COLORS.lilac} />
+      {/* doodles — the niches sketched into the margins */}
+      <DoodleStar style={{ top: '6%', left: '8%' }} size={22} color={DOODLE_COLORS.warm} />
+      <DoodleSpark style={{ top: '13%', right: '10%' }} size={16} color={DOODLE_COLORS.green} />
+      {variant === 'sign-in' ? (
+        <>
+          <DoodleGuitar style={{ top: '36%', left: '6%' }} size={34} color={DOODLE_COLORS.lilac} />
+          <DoodleCamera style={{ bottom: '28%', right: '8%' }} size={30} color={DOODLE_COLORS.green} />
+        </>
+      ) : (
+        <>
+          <DoodlePot style={{ top: '38%', left: '7%' }} size={36} color={DOODLE_COLORS.warm} />
+          <DoodleSprout style={{ bottom: '32%', right: '6%' }} size={28} color={DOODLE_COLORS.green} />
+        </>
+      )}
+      <DoodleHeart style={{ bottom: '9%', right: '13%' }} size={20} color={DOODLE_COLORS.warm} />
+      <DoodleScribbleLine style={{ bottom: '15%', left: '8%' }} w={64} color={DOODLE_COLORS.lilac} />
 
       {variant === 'sign-in' ? (
         <>
@@ -268,7 +283,7 @@ export function AuthShowcase({ variant }: { variant: 'sign-in' | 'sign-up' }) {
             <JoinToast person={mira} label="Mira just joined ✨" />
           </Float>
           <Float bottom="17%" left="20%" rotate={1} delay={3.1}>
-            <JoinToast person={reza} label="Reza said hi in #introductions" />
+            <JoinToast person={reza} label="Reza earned the Glazing 101 cert 🏆" />
           </Float>
           <Float bottom="8%" right="14%" rotate={-1} delay={1.2}>
             <FeePill />

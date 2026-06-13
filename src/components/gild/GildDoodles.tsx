@@ -111,3 +111,70 @@ export function DoodleArrowStraight({ style, color = INK, w = 70, rotate = 0 }: 
     </svg>
   );
 }
+
+// ─── Niche doodles ───────────────────────────────────────────────────────────
+// Hand-drawn line sketches of the crafts that live on Gild — same ink style
+// as the ambient doodles (single stroke, round caps, slightly imperfect).
+
+export function DoodlePot({ style, color = INK_WARM, size = 34 }: DoodleProps & { size?: number }) {
+  return (
+    <svg viewBox="0 0 40 40" width={size} height={size} fill="none"
+      stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
+      style={{ position: 'absolute', ...style }}>
+      <path d="M14 8 C 13 11, 13 12, 11 13 C 7 16, 6 22, 9 27 C 12 32, 17 34, 20 34 C 23 34, 28 32, 31 27 C 34 22, 33 16, 29 13 C 27 12, 27 11, 26 8" />
+      <path d="M14 8 C 17 9.5, 23 9.5, 26 8" />
+      <path d="M12 20 C 15 22, 25 22, 28 20" />
+    </svg>
+  );
+}
+
+export function DoodleGuitar({ style, color = INK_WARM, size = 36 }: DoodleProps & { size?: number }) {
+  return (
+    <svg viewBox="0 0 40 40" width={size} height={size} fill="none"
+      stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
+      style={{ position: 'absolute', ...style }}>
+      <path d="M25 4 L 33 12 M27 3 L 30 6 M30 6 L 34 10 M34 10 L 37 7" />
+      <path d="M25 6 L 16 15 C 14 17, 13 17, 11 18 C 6 21, 4 28, 8 32 C 12 36, 19 34, 22 29 C 23 27, 23 26, 25 24 L 34 15" />
+      <circle cx="14" cy="26" r="3.4" />
+    </svg>
+  );
+}
+
+export function DoodleCamera({ style, color = INK_WARM, size = 34 }: DoodleProps & { size?: number }) {
+  return (
+    <svg viewBox="0 0 40 40" width={size} height={size} fill="none"
+      stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
+      style={{ position: 'absolute', ...style }}>
+      <rect x="5" y="13" width="30" height="20" rx="4" />
+      <path d="M14 13 L 16 8 L 24 8 L 26 13" />
+      <circle cx="20" cy="23" r="5.5" />
+      <circle cx="30" cy="18" r="1.1" />
+    </svg>
+  );
+}
+
+export function DoodleSprout({ style, color = INK_WARM, size = 32 }: DoodleProps & { size?: number }) {
+  return (
+    <svg viewBox="0 0 40 40" width={size} height={size} fill="none"
+      stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
+      style={{ position: 'absolute', ...style }}>
+      <path d="M20 35 C 20 28, 20 22, 20 17" />
+      <path d="M20 17 C 20 11, 24 7, 30 7 C 30 13, 26 17, 20 17 Z" />
+      <path d="M20 23 C 20 19, 16 16, 11 16 C 11 20, 15 23, 20 23 Z" />
+      <path d="M13 35 C 16 33, 24 33, 27 35" />
+    </svg>
+  );
+}
+
+export function DoodleDumbbell({ style, color = INK_WARM, size = 36 }: DoodleProps & { size?: number }) {
+  return (
+    <svg viewBox="0 0 40 40" width={size} height={size} fill="none"
+      stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
+      style={{ position: 'absolute', ...style }}>
+      <path d="M13 17 L 27 17 M13 23 L 27 23" />
+      <rect x="7" y="12" width="5" height="16" rx="2" />
+      <rect x="28" y="12" width="5" height="16" rx="2" />
+      <path d="M3 16 L 3 24 M37 16 L 37 24" />
+    </svg>
+  );
+}

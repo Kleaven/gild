@@ -38,7 +38,8 @@ export function Avatar({
       boxShadow: ring ? `0 0 0 2px ${ring}` : 'none',
       flexShrink: 0,
       fontFamily: GILD_FONTS.sans,
-      overflow: 'hidden',
+      // No overflow:hidden — it clipped the presence dot sitting on the edge.
+      // The <img> clips itself with its own borderRadius.
     }}>
       {person.avatar_url ? (
         // eslint-disable-next-line @next/next/no-img-element
