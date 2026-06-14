@@ -31,7 +31,7 @@ const FAINT = 'oklch(0.55 0.02 250)';
 
 const jordan: Person = { id: 'jordan', name: 'Jordan Lee', role: 'owner', hue: 42, online: true, initial: 'JL' };
 const mira: Person = { id: 'mira', name: 'Mira Patel', hue: 280, online: true, initial: 'MP', role: 'free_member' };
-const sasha: Person = { id: 'sasha', name: 'Sasha Wu', hue: 150, online: true, initial: 'SW', role: 'free_member' };
+const theo: Person = { id: 'theo', name: 'Theo Marsh', hue: 30, online: true, initial: 'TM', role: 'free_member' };
 const reza: Person = { id: 'reza', name: 'Reza Khan', hue: 200, online: true, initial: 'RK', role: 'free_member' };
 
 const cardBase: React.CSSProperties = {
@@ -69,7 +69,7 @@ function PresenceCard() {
         <span className="as-pulse" style={{ width: 7, height: 7, borderRadius: '50%', background: 'oklch(0.62 0.18 150)', display: 'inline-block' }} />
         <span style={{ fontSize: 9.5, fontWeight: 700, color: 'oklch(0.42 0.14 150)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Live now</span>
       </div>
-      {[mira, sasha, reza].map((p) => (
+      {[mira, theo, reza].map((p) => (
         <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3.5px 0' }}>
           <Avatar person={p} size={19} presence />
           <span style={{ fontSize: 12, color: 'oklch(0.30 0.02 250)' }}>{p.name.split(' ')[0]}</span>
@@ -93,9 +93,9 @@ function DMCard() {
   return (
     <div style={{ ...cardBase, padding: '13px 15px', width: 226 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <Avatar person={sasha} size={22} presence />
+        <Avatar person={theo} size={22} presence />
         <div>
-          <p style={{ fontSize: 12, fontWeight: 700, margin: 0 }}>Sasha Wu</p>
+          <p style={{ fontSize: 12, fontWeight: 700, margin: 0 }}>Theo Marsh</p>
           <p style={{ fontSize: 9.5, color: FAINT, margin: 0 }}>Direct message</p>
         </div>
       </div>
@@ -126,7 +126,7 @@ function WelcomeCard() {
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <div style={{ display: 'flex' }}>
-          {[mira, sasha, reza, jordan].map((person, i) => (
+          {[mira, theo, reza, jordan].map((person, i) => (
             <span key={person.id} style={{ marginLeft: i === 0 ? 0 : -7, display: 'inline-flex', border: '2px solid #fff', borderRadius: '50%' }}>
               <Avatar person={person} size={22} />
             </span>
@@ -143,7 +143,7 @@ function NicheCard() {
     <div style={{ ...cardBase, padding: '14px 16px', width: 224 }}>
       <p style={{ fontSize: 9.5, fontWeight: 700, margin: '0 0 9px', color: FAINT, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Find your niche</p>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-        {['🏺 Ceramics', '🎸 Guitar', '📈 Trading', '🧶 Fiber arts', '🎬 Film'].map((n) => (
+        {['🏺 Ceramics', '🤖 AI automations', '💼 Sales', '🎨 Arts', '🎸 Guitar', '📈 Trading'].map((n) => (
           <span key={n} style={{
             padding: '4px 9px', borderRadius: 999, border: HAIRLINE,
             fontSize: 10.5, fontWeight: 600, color: 'oklch(0.32 0.02 250)',

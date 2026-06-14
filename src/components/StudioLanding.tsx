@@ -148,7 +148,7 @@ export function StudioLanding() {
 
   const mockOnline: Person[] = [
     { id: 'mira', name: 'Mira Patel', hue: 280, online: true, initial: 'MP', role: 'free_member' },
-    { id: 'sasha', name: 'Sasha Wu', hue: 150, online: true, initial: 'SW', role: 'free_member' },
+    { id: 'theo', name: 'Theo Marsh', hue: 30, online: true, initial: 'TM', role: 'free_member' },
     { id: 'reza', name: 'Reza Khan', hue: 200, online: true, initial: 'RK', role: 'free_member' },
   ];
 
@@ -281,7 +281,7 @@ export function StudioLanding() {
             margin: '14px auto 56px',
             maxWidth: 720,
           }}>
-            {['🏺 Ceramics', '💻 Indie hackers', '🎸 Guitar', '📈 Trading', '🧶 Fiber arts', '🏋️ Strength', '🎬 Filmmaking', '🌱 Permaculture'].map((n) => (
+            {['🏺 Ceramics', '🤖 AI automations', '💼 Sales', '🎨 Arts', '💻 Indie hackers', '🎸 Guitar', '📈 Trading', '🧶 Fiber arts', '🏋️ Strength', '🎬 Filmmaking', '🌱 Permaculture'].map((n) => (
               <span key={n} style={{
                 padding: '6px 13px',
                 borderRadius: 999,
