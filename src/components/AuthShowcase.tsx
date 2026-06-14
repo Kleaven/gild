@@ -14,7 +14,6 @@ import {
   DoodleCamera,
   DoodleSprout,
   DOODLE_COLORS,
-  MakerFigure,
 } from '@/components/gild';
 import type { Person } from '@/components/gild';
 import { Check } from 'lucide-react';
@@ -187,6 +186,97 @@ function JoinToast({ person, label }: { person: Person; label: string }) {
   );
 }
 
+function CourseProgressCard() {
+  return (
+    <div style={{ ...cardBase, padding: '14px 16px', width: 212 }}>
+      <p style={{ fontSize: 9.5, fontWeight: 700, margin: '0 0 9px', color: FAINT, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Wheel Throwing 101</p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ width: 26, height: 26, borderRadius: 8, flexShrink: 0, background: 'oklch(0.95 0.05 150)', color: 'oklch(0.40 0.12 150)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Check size={14} strokeWidth={3} />
+        </span>
+        <div style={{ flex: 1 }}>
+          <p style={{ fontSize: 12, fontWeight: 700, margin: 0 }}>Module 02 unlocked</p>
+          <div style={{ height: 6, borderRadius: 999, background: 'oklch(0.94 0.01 250)', marginTop: 5, overflow: 'hidden' }}>
+            <span style={{ display: 'block', height: '100%', width: '66%', background: 'oklch(0.62 0.16 150)' }} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PollCard() {
+  const opts: [string, number][] = [['Raku', 62], ['Cone 6', 38]];
+  return (
+    <div style={{ ...cardBase, padding: '14px 16px', width: 202 }}>
+      <p style={{ fontSize: 12, fontWeight: 700, margin: '0 0 10px' }}>Next firing — which glaze?</p>
+      {opts.map(([label, pct]) => (
+        <div key={label} style={{ marginBottom: 7 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 600, marginBottom: 3 }}>
+            <span>{label}</span><span>{pct}%</span>
+          </div>
+          <div style={{ height: 7, borderRadius: 999, background: 'oklch(0.95 0.01 250)', overflow: 'hidden' }}>
+            <span style={{ display: 'block', height: '100%', width: `${pct}%`, background: 'oklch(0.62 0.16 280)' }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EventCard() {
+  return (
+    <div style={{ ...cardBase, padding: '12px 15px', width: 200, display: 'flex', gap: 12, alignItems: 'center' }}>
+      <div style={{ textAlign: 'center', flexShrink: 0 }}>
+        <p style={{ fontSize: 9, fontWeight: 700, color: 'oklch(0.50 0.16 25)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Thu</p>
+        <p style={{ fontFamily: GILD_FONTS.display, fontSize: 21, fontWeight: 800, margin: 0, lineHeight: 1 }}>14</p>
+      </div>
+      <div style={{ borderLeft: HAIRLINE, paddingLeft: 12 }}>
+        <p style={{ fontSize: 12, fontWeight: 700, margin: 0 }}>Live throwing workshop</p>
+        <p style={{ fontSize: 10.5, color: FAINT, margin: '2px 0 0' }}>7:00 PM · 23 going</p>
+      </div>
+    </div>
+  );
+}
+
+function CertBadge() {
+  return (
+    <div style={{ ...cardBase, padding: '11px 15px', width: 'auto', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+      <span style={{ fontSize: 18 }} aria-hidden>🏆</span>
+      <div>
+        <p style={{ fontSize: 11.5, fontWeight: 700, margin: 0 }}>Certificate earned</p>
+        <p style={{ fontSize: 9.5, color: FAINT, margin: 0 }}>Glazing 101 · verified</p>
+      </div>
+    </div>
+  );
+}
+
+function TierMiniCard() {
+  return (
+    <div style={{ ...cardBase, padding: '13px 15px', width: 192 }}>
+      <p style={{ fontSize: 9.5, fontWeight: 700, margin: '0 0 7px', color: FAINT, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Your tiers</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0' }}>
+        <span style={{ fontSize: 12, fontWeight: 600 }}>🌱 Apprentice</span>
+        <span style={{ fontFamily: GILD_FONTS.mono, fontWeight: 800, fontSize: 12.5 }}>$5</span>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0 0', borderTop: HAIRLINE }}>
+        <span style={{ fontSize: 12, fontWeight: 700, color: 'oklch(0.40 0.14 300)' }}>🏺 Master</span>
+        <span style={{ fontFamily: GILD_FONTS.mono, fontWeight: 800, fontSize: 12.5 }}>$20</span>
+      </div>
+    </div>
+  );
+}
+
+function ReactionBurst() {
+  return (
+    <div style={{ ...cardBase, borderRadius: 999, padding: '7px 14px', width: 'auto', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+      <span style={{ fontSize: 14 }} aria-hidden>🔥</span>
+      <span style={{ fontSize: 12.5, fontWeight: 800, fontFamily: GILD_FONTS.mono }}>+31</span>
+      <span style={{ fontSize: 11, color: FAINT, fontWeight: 600 }}>reacted</span>
+    </div>
+  );
+}
+
 // A floating, slightly-tilted slot in the collage.
 function Float({
   top, left, right, bottom, rotate, delay, z,
@@ -249,52 +339,64 @@ export function AuthShowcase({ variant }: { variant: 'sign-in' | 'sign-up' }) {
 
       {variant === 'sign-in' ? (
         <>
-          <Float top="16%" left="50%" rotate={-2} delay={0} z={3}>
+          <Float top="6%" left="6%" rotate={-3} delay={1.4}>
+            <ReactionBurst />
+          </Float>
+          <Float top="11%" left="50%" rotate={-2} delay={0} z={3}>
             <div style={{ transform: 'translateX(-50%)' }}><PostCard /></div>
           </Float>
-          <Float top="42%" right="7%" rotate={2.5} delay={1.2} z={2}>
+          <Float top="36%" right="6%" rotate={2.5} delay={1.2} z={2}>
             <PresenceCard />
           </Float>
-          <Float bottom="17%" left="9%" rotate={1.5} delay={2.1} z={2}>
+          <Float top="40%" left="6%" rotate={-2} delay={0.5} z={2}>
+            <EventCard />
+          </Float>
+          <Float bottom="29%" right="7%" rotate={2} delay={2.4} z={2}>
+            <CourseProgressCard />
+          </Float>
+          <Float bottom="27%" left="7%" rotate={1.5} delay={1.8} z={2}>
             <RevenueCard />
           </Float>
-          <Float bottom="11%" right="12%" rotate={-1.5} delay={0.7}>
-            <DMCard />
+          <Float bottom="9%" left="50%" rotate={-1.5} delay={0.9} z={3}>
+            <div style={{ transform: 'translateX(-50%)' }}><DMCard /></div>
           </Float>
-          <div style={{ position: 'absolute', bottom: '7%', left: '6%', transform: 'rotate(-3deg)' }}>
-            <MakerFigure file="guitarist" alt="A guitarist" size={132} />
-          </div>
           <p style={{
-            position: 'absolute', bottom: '3%', left: '50%', transform: 'translateX(-50%) rotate(-2deg)',
+            position: 'absolute', bottom: '2.5%', left: '50%', transform: 'translateX(-50%) rotate(-2deg)',
             fontFamily: 'var(--font-gochi), cursive', fontSize: 19, color: DOODLE_COLORS.ink,
-            margin: 0, whiteSpace: 'nowrap',
+            margin: 0, whiteSpace: 'nowrap', zIndex: 4,
           }}>
             right where you left it
           </p>
         </>
       ) : (
         <>
-          <Float top="16%" left="50%" rotate={1.2} delay={0} z={3}>
+          <Float top="11%" left="50%" rotate={1.2} delay={0} z={3}>
             <div style={{ transform: 'translateX(-50%)' }}><WelcomeCard /></div>
           </Float>
-          <Float top="9%" left="6%" rotate={-2.5} delay={1.6} z={2}>
+          <Float top="7%" left="5%" rotate={-2.5} delay={1.6} z={2}>
             <NicheCard />
           </Float>
-          <Float top="46%" right="7%" rotate={2} delay={0.9} z={2}>
+          <Float top="35%" right="6%" rotate={2} delay={0.9} z={2}>
+            <TierMiniCard />
+          </Float>
+          <Float top="39%" left="6%" rotate={-2} delay={2.0} z={2}>
             <DMCard />
           </Float>
-          <Float bottom="26%" left="9%" rotate={-1.5} delay={2.4}>
+          <Float bottom="30%" right="7%" rotate={1.5} delay={1.2} z={2}>
+            <PollCard />
+          </Float>
+          <Float bottom="31%" left="8%" rotate={-1.5} delay={2.6}>
+            <CertBadge />
+          </Float>
+          <Float bottom="20%" left="20%" rotate={1.5} delay={3.1}>
             <JoinToast person={mira} label="Mira just joined ✨" />
           </Float>
-          <Float bottom="17%" left="20%" rotate={1} delay={3.1}>
-            <JoinToast person={reza} label="Reza earned the Glazing 101 cert 🏆" />
+          <Float bottom="9%" left="9%" rotate={-1} delay={2.2}>
+            <JoinToast person={reza} label="Reza shipped their first course 🎉" />
           </Float>
-          <Float bottom="8%" right="14%" rotate={-1} delay={1.2}>
+          <Float bottom="8%" right="13%" rotate={-1} delay={1.0}>
             <FeePill />
           </Float>
-          <div style={{ position: 'absolute', bottom: '6%', left: '5%', transform: 'rotate(3deg)' }}>
-            <MakerFigure file="potter" alt="A potter" size={128} />
-          </div>
           <p style={{
             position: 'absolute', bottom: '3%', left: '50%', transform: 'translateX(-50%) rotate(-2deg)',
             fontFamily: 'var(--font-gochi), cursive', fontSize: 19, color: DOODLE_COLORS.ink,

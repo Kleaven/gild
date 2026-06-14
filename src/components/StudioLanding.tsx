@@ -16,7 +16,6 @@ import {
   DoodleSprout,
   DoodleDumbbell,
   DOODLE_COLORS,
-  MakerCrowd,
 } from '@/components/gild';
 import type { Person } from '@/components/gild';
 import { Check, Lock, ArrowRight, Sparkles } from 'lucide-react';
@@ -272,12 +271,6 @@ export function StudioLanding() {
           <p className="gild-rise gild-d3" style={{ fontSize: 13, color: FAINT, margin: '0 0 34px' }}>
             Free to join as a member · creators keep 100% · 14-day creator trial
           </p>
-
-          {/* The makers themselves — bespoke art, appears once dropped into
-              /public/personas (load-gated, so nothing shows until then). */}
-          <div className="gild-rise gild-d3" style={{ margin: '0 auto', maxWidth: 820 }}>
-            <MakerCrowd height={128} />
-          </div>
 
           {/* Niche strip — the people, not the plumbing */}
           <div className="gild-rise gild-d3" style={{
