@@ -246,6 +246,38 @@ function ReactionBurst() {
   );
 }
 
+// Sign-in only — an upcoming live event in the community.
+function EventCard() {
+  return (
+    <div style={{ ...cardBase, padding: '12px 15px', width: 200, display: 'flex', gap: 12, alignItems: 'center' }}>
+      <div style={{ textAlign: 'center', flexShrink: 0 }}>
+        <p style={{ fontSize: 9, fontWeight: 700, color: 'oklch(0.50 0.16 25)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Thu</p>
+        <p style={{ fontFamily: GILD_FONTS.display, fontSize: 21, fontWeight: 800, margin: 0, lineHeight: 1 }}>14</p>
+      </div>
+      <div style={{ borderLeft: HAIRLINE, paddingLeft: 12 }}>
+        <p style={{ fontSize: 12, fontWeight: 700, margin: 0 }}>Live throwing workshop</p>
+        <p style={{ fontSize: 10.5, color: FAINT, margin: '2px 0 0' }}>7:00 PM · 23 going</p>
+      </div>
+    </div>
+  );
+}
+
+// Sign-up only — a creator milestone (the "what you'll build" mood).
+function MilestoneCard() {
+  return (
+    <div style={{ ...cardBase, padding: '14px 16px', width: 208 }}>
+      <p style={{ fontSize: 9.5, fontWeight: 700, margin: '0 0 9px', color: FAINT, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Milestone</p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+        <span style={{ width: 30, height: 30, borderRadius: 9, flexShrink: 0, fontSize: 15, background: 'oklch(0.95 0.05 42)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-hidden>🎉</span>
+        <div>
+          <p style={{ fontSize: 12.5, fontWeight: 700, margin: 0 }}>First $100 earned</p>
+          <p style={{ fontSize: 10.5, color: FAINT, margin: 0 }}>3 members joined Master</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Niche communities you could join — the new niches shown as real communities.
 function DiscoverStack() {
   const rows: { emoji: string; name: string; niche: string; members: string; price: string; hue: number }[] = [
@@ -357,7 +389,7 @@ export function AuthShowcase({ variant }: { variant: 'sign-in' | 'sign-up' }) {
             <PresenceCard />
           </Float>
           <Float top="40%" left="6%" rotate={-2} delay={0.5} z={2}>
-            <DiscoverStack />
+            <EventCard />
           </Float>
           <Float bottom="29%" right="7%" rotate={2} delay={2.4} z={2}>
             <CourseProgressCard />
@@ -388,7 +420,7 @@ export function AuthShowcase({ variant }: { variant: 'sign-in' | 'sign-up' }) {
             <TierMiniCard />
           </Float>
           <Float top="39%" left="6%" rotate={-2} delay={2.0} z={2}>
-            <DMCard />
+            <MilestoneCard />
           </Float>
           <Float bottom="30%" right="7%" rotate={1.5} delay={1.2} z={2}>
             <PollCard />
