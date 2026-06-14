@@ -166,24 +166,26 @@ export function StudioLanding() {
         position: 'sticky',
         top: 0,
         zIndex: 50,
-        display: 'flex',
+        // 1fr auto 1fr keeps the nav truly centred regardless of how wide the
+        // logo or the auth buttons are (space-between let it drift left).
+        display: 'grid',
+        gridTemplateColumns: '1fr auto 1fr',
         alignItems: 'center',
-        justifyContent: 'space-between',
         padding: '13px clamp(20px, 4vw, 32px)',
         borderBottom: HAIRLINE,
         background: 'oklch(1 0 0 / 0.82)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
       }}>
-        <Link href="/" aria-label="Gild home" style={{ display: 'flex', textDecoration: 'none', color: 'inherit' }}>
+        <Link href="/" aria-label="Gild home" style={{ display: 'flex', justifySelf: 'start', textDecoration: 'none', color: 'inherit' }}>
           <Wordmark size={22} />
         </Link>
-        <nav className="gild-nav-links" aria-label="Page sections" style={{ display: 'flex', gap: 26, fontSize: 13.5, fontWeight: 500 }}>
+        <nav className="gild-nav-links" aria-label="Page sections" style={{ display: 'flex', justifySelf: 'center', gap: 26, fontSize: 13.5, fontWeight: 500 }}>
           <a href="#product" style={{ color: MUTED, textDecoration: 'none' }}>Product</a>
           <a href="#how" style={{ color: MUTED, textDecoration: 'none' }}>How it works</a>
           <a href="#pricing" style={{ color: MUTED, textDecoration: 'none' }}>Pricing</a>
         </nav>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center', fontSize: 13.5 }}>
+        <div style={{ display: 'flex', justifySelf: 'end', gap: 12, alignItems: 'center', fontSize: 13.5 }}>
           <Link href="/sign-in" style={{ color: 'oklch(0.30 0.02 250)', textDecoration: 'none', fontWeight: 500 }}>Sign in</Link>
           <Link href="/sign-up" className="gild-cta" style={{
             padding: '8px 16px',

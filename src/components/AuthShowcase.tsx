@@ -138,22 +138,6 @@ function WelcomeCard() {
   );
 }
 
-function NicheCard() {
-  return (
-    <div style={{ ...cardBase, padding: '14px 16px', width: 224 }}>
-      <p style={{ fontSize: 9.5, fontWeight: 700, margin: '0 0 9px', color: FAINT, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Find your niche</p>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-        {['🏺 Ceramics', '🤖 AI automations', '💼 Sales', '🎨 Arts', '🎸 Guitar', '📈 Trading'].map((n) => (
-          <span key={n} style={{
-            padding: '4px 9px', borderRadius: 999, border: HAIRLINE,
-            fontSize: 10.5, fontWeight: 600, color: 'oklch(0.32 0.02 250)',
-          }}>{n}</span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function FeePill() {
   return (
     <div style={{
@@ -224,21 +208,6 @@ function PollCard() {
   );
 }
 
-function EventCard() {
-  return (
-    <div style={{ ...cardBase, padding: '12px 15px', width: 200, display: 'flex', gap: 12, alignItems: 'center' }}>
-      <div style={{ textAlign: 'center', flexShrink: 0 }}>
-        <p style={{ fontSize: 9, fontWeight: 700, color: 'oklch(0.50 0.16 25)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Thu</p>
-        <p style={{ fontFamily: GILD_FONTS.display, fontSize: 21, fontWeight: 800, margin: 0, lineHeight: 1 }}>14</p>
-      </div>
-      <div style={{ borderLeft: HAIRLINE, paddingLeft: 12 }}>
-        <p style={{ fontSize: 12, fontWeight: 700, margin: 0 }}>Live throwing workshop</p>
-        <p style={{ fontSize: 10.5, color: FAINT, margin: '2px 0 0' }}>7:00 PM · 23 going</p>
-      </div>
-    </div>
-  );
-}
-
 function CertBadge() {
   return (
     <div style={{ ...cardBase, padding: '11px 15px', width: 'auto', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
@@ -273,6 +242,45 @@ function ReactionBurst() {
       <span style={{ fontSize: 14 }} aria-hidden>🔥</span>
       <span style={{ fontSize: 12.5, fontWeight: 800, fontFamily: GILD_FONTS.mono }}>+31</span>
       <span style={{ fontSize: 11, color: FAINT, fontWeight: 600 }}>reacted</span>
+    </div>
+  );
+}
+
+// Niche communities you could join — the new niches shown as real communities.
+function DiscoverStack() {
+  const rows: { emoji: string; name: string; niche: string; members: string; price: string; hue: number }[] = [
+    { emoji: '🤖', name: 'Prompt Forge', niche: 'AI automations', members: '2,481', price: '$19', hue: 280 },
+    { emoji: '💼', name: "Closer's Club", niche: 'Sales', members: '1,204', price: '$29', hue: 150 },
+    { emoji: '🎨', name: 'The Life Studio', niche: 'Arts', members: '890', price: 'Free', hue: 42 },
+  ];
+  return (
+    <div style={{ ...cardBase, padding: '13px 15px', width: 238 }}>
+      <p style={{ fontSize: 9.5, fontWeight: 700, margin: '0 0 8px', color: FAINT, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+        Communities to join
+      </p>
+      {rows.map((r, i) => (
+        <div
+          key={r.name}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0',
+            borderTop: i === 0 ? 'none' : '1px solid oklch(0.96 0.005 250)',
+          }}
+        >
+          <span style={{
+            width: 30, height: 30, borderRadius: 9, flexShrink: 0, fontSize: 15,
+            background: `oklch(0.95 0.05 ${r.hue})`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }} aria-hidden>{r.emoji}</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 12, fontWeight: 700, margin: 0, lineHeight: 1.2 }}>{r.name}</p>
+            <p style={{ fontSize: 10, color: FAINT, margin: 0 }}>{r.niche} · {r.members}</p>
+          </div>
+          <span style={{
+            fontSize: 11, fontWeight: 800, fontFamily: GILD_FONTS.mono, whiteSpace: 'nowrap',
+            color: r.price === 'Free' ? 'oklch(0.50 0.02 250)' : 'oklch(0.40 0.12 150)',
+          }}>{r.price === 'Free' ? 'Free' : `${r.price}/mo`}</span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -349,7 +357,7 @@ export function AuthShowcase({ variant }: { variant: 'sign-in' | 'sign-up' }) {
             <PresenceCard />
           </Float>
           <Float top="40%" left="6%" rotate={-2} delay={0.5} z={2}>
-            <EventCard />
+            <DiscoverStack />
           </Float>
           <Float bottom="29%" right="7%" rotate={2} delay={2.4} z={2}>
             <CourseProgressCard />
@@ -374,7 +382,7 @@ export function AuthShowcase({ variant }: { variant: 'sign-in' | 'sign-up' }) {
             <div style={{ transform: 'translateX(-50%)' }}><WelcomeCard /></div>
           </Float>
           <Float top="7%" left="5%" rotate={-2.5} delay={1.6} z={2}>
-            <NicheCard />
+            <DiscoverStack />
           </Float>
           <Float top="35%" right="6%" rotate={2} delay={0.9} z={2}>
             <TierMiniCard />
