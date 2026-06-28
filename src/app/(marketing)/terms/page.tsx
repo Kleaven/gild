@@ -37,13 +37,14 @@ export default function TermsPage() {
       <Section heading="3. Subscriptions, trials, and billing">
         <ul style={ul}>
           <li>
-            Paid plans are billed in US dollars through our payment processor, Stripe. {LEGAL.entity}{' '}
-            never charges transaction fees on payments between you and your members.
+            Payments are processed in US dollars through Stripe. On the Free plan, {LEGAL.entity}{' '}
+            retains a 5% platform fee on payments between you and your members. On the Pro plan,{' '}
+            {LEGAL.entity} retains 0% — you keep everything except Stripe’s own processing fees.
           </li>
           <li>
-            Paid plans include a 14-day free trial. A valid payment method is required to start a
-            trial. Unless you cancel before the trial ends, your plan converts to a paid
-            subscription automatically.
+            The Free plan is free and requires no payment method. The Pro plan ($29/month) begins
+            when you upgrade and is billed immediately — there is no trial period. You can cancel at
+            any time.
           </li>
           <li>
             Subscriptions renew automatically each billing period until cancelled. You can cancel at

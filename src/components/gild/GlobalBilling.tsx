@@ -77,7 +77,7 @@ export function GlobalBilling({ user }: Props) {
       <header style={{ marginBottom: 48 }}>
         <h1 style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.03em', margin: '0 0 8px' }}>Billing & Subscription</h1>
         <p style={{ color: 'oklch(0.55 0.02 250)', margin: 0, fontSize: 16 }}>
-          Manage your platform-level subscription and community creation limits.
+          Manage your Gild Pro subscription and payment method.
         </p>
       </header>
 
@@ -274,7 +274,7 @@ export function GlobalBilling({ user }: Props) {
       <footer style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid oklch(0.96 0.005 250)', display: 'flex', justifyContent: 'center' }}>
          <p style={{ fontSize: 13, color: 'oklch(0.55 0.02 250)', display: 'flex', alignItems: 'center', gap: 8 }}>
             <ShieldCheck size={16} />
-            Secure payments by Stripe. 14-day free trial on all plans.
+            Secure payments by Stripe. Cancel anytime.
          </p>
       </footer>
     </div>

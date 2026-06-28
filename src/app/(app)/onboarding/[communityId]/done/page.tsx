@@ -36,7 +36,7 @@ export default async function DonePage({ params }: Props) {
           You&apos;re all set!
         </h1>
         <p style={{ fontSize: 14, color: '#888' }}>
-          Step 7 of 7 — Your community is live and ready.
+          Step 6 of 6 — Your community is live and ready.
         </p>
       </div>
 
@@ -53,7 +53,7 @@ export default async function DonePage({ params }: Props) {
         }}
       >
         <SummaryRow label="Community" value={community.name} />
-        <SummaryRow label="Plan" value={`${planLabel} — 14-day free trial`} />
+        <SummaryRow label="Plan" value={planLabel} />
         <SummaryRow
           label="Spaces"
           value={spaces.length > 0 ? spaces.map((s) => `#${s.name}`).join(', ') : 'None yet'}

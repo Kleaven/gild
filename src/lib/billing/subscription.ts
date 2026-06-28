@@ -113,8 +113,8 @@ export async function createCheckoutSession(
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${appUrl}${returnPath}?checkout=success`,
     cancel_url: `${appUrl}${returnPath}?checkout=cancelled`,
+    // No trial — the Free plan is the trial. Pro charges on upgrade.
     subscription_data: {
-      trial_period_days: 14,
       metadata: { targetId, plan, targetType },
     },
     metadata: { targetId, plan, targetType },

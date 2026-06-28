@@ -26,7 +26,7 @@ export default async function PlanPage({ params }: Props) {
         You&apos;re on Gild Free
       </h1>
       <p style={{ fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 28 }}>
-        Build and even charge your members for free — we only take 5%. Upgrade to Pro anytime to keep 100%.
+        Step 2 of 6 — build and even charge your members for free; we only take 5%. Upgrade to Pro anytime to keep 100%.
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>

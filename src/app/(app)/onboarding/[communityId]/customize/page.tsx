@@ -29,7 +29,7 @@ export default async function CustomizePage({ params }: Props) {
         Customize your community
       </h1>
       <p style={{ fontSize: 14, color: 'oklch(0.55 0.02 250)', textAlign: 'center', marginBottom: 28 }}>
-        Step 4 of 7 — Add branding and pick your spaces.
+        Step 3 of 6 — Add branding and pick your spaces.
       </p>
 
       <CustomizeClient
