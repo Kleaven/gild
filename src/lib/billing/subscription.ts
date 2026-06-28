@@ -37,10 +37,9 @@ export type CheckoutReturnContext = 'settings' | 'onboarding' | 'global' | 'bill
 // Supports plan switching (upgrade/downgrade) for existing subscriptions.
 
 export async function createCheckoutSession(
-  targetId: string, // communityId OR userId
+  targetId: string, // communityId
   plan: Plan,
   email: string,
-  targetType: 'community' | 'platform',
   returnContext: CheckoutReturnContext = 'settings',
 ): Promise<{ url: string }> {
   const appUrl = await getAppUrl();
@@ -50,7 +49,7 @@ export async function createCheckoutSession(
   if (!priceId) throw new Error('[gild] this plan has no subscription to check out');
 
   // Step 1 — Fetch current billing state
-  const tableIdent = targetType === 'community' ? 'communities' : 'profiles';
+  const tableIdent = 'communities';
   const rows = await db<BillingRow[]>`
     SELECT id, stripe_customer_id, stripe_subscription_id, subscription_status, plan
     FROM public.${db(tableIdent)}
@@ -58,7 +57,7 @@ export async function createCheckoutSession(
     LIMIT 1
   `;
   const entity = rows[0];
-  if (!entity) throw new Error(`[gild] ${targetType} not found`);
+  if (!entity) throw new Error('[gild] community not found');
 
   // Step 2 — Handle Plan Switching for active subscriptions
   if (
@@ -67,12 +66,12 @@ export async function createCheckoutSession(
   ) {
     // If they are already on this plan, just return a portal URL
     if (entity.plan === plan) {
-      return createBillingPortalSession(targetId, targetType, returnContext);
+      return createBillingPortalSession(targetId, returnContext);
     }
 
     // Otherwise, use Stripe Checkout to switch plans (upgrade/downgrade)
     // We update the existing subscription instead of creating a new one.
-    const returnPath = await getReturnPath(targetId, targetType, returnContext);
+    const returnPath = await getReturnPath(targetId, returnContext);
     const session = await stripe.checkout.sessions.create({
       customer: entity.stripe_customer_id!,
       mode: 'subscription',
@@ -80,9 +79,9 @@ export async function createCheckoutSession(
       success_url: `${appUrl}${returnPath}?checkout=success`,
       cancel_url: `${appUrl}${returnPath}?checkout=cancelled`,
       subscription_data: {
-        metadata: { targetId, plan, targetType },
+        metadata: { targetId, plan, targetType: 'community' },
       },
-      metadata: { targetId, plan, targetType },
+      metadata: { targetId, plan, targetType: 'community' },
     });
 
     if (!session.url) throw new Error('[gild] checkout session has no URL');
@@ -94,7 +93,7 @@ export async function createCheckoutSession(
   if (!entity.stripe_customer_id) {
     const customer = await stripe.customers.create({
       email: email,
-      metadata: { targetId, targetType },
+      metadata: { targetId, targetType: 'community' },
     });
     await db`
       UPDATE public.${db(tableIdent)}
@@ -106,7 +105,7 @@ export async function createCheckoutSession(
     customerId = entity.stripe_customer_id;
   }
 
-  const returnPath = await getReturnPath(targetId, targetType, returnContext);
+  const returnPath = await getReturnPath(targetId, returnContext);
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: 'subscription',
@@ -115,9 +114,9 @@ export async function createCheckoutSession(
     cancel_url: `${appUrl}${returnPath}?checkout=cancelled`,
     // No trial — the Free plan is the trial. Pro charges on upgrade.
     subscription_data: {
-      metadata: { targetId, plan, targetType },
+      metadata: { targetId, plan, targetType: 'community' },
     },
-    metadata: { targetId, plan, targetType },
+    metadata: { targetId, plan, targetType: 'community' },
     allow_promotion_codes: true,
   });
 
@@ -129,11 +128,10 @@ export async function createCheckoutSession(
 
 export async function createBillingPortalSession(
   targetId: string,
-  targetType: 'community' | 'platform',
   returnContext: CheckoutReturnContext = 'settings',
 ): Promise<{ url: string }> {
   const appUrl = await getAppUrl();
-  const tableIdent = targetType === 'community' ? 'communities' : 'profiles';
+  const tableIdent = 'communities';
   const rows = await db<{ stripe_customer_id: string | null }[]>`
     SELECT stripe_customer_id
     FROM public.${db(tableIdent)}
@@ -145,7 +143,7 @@ export async function createBillingPortalSession(
     throw new Error('[gild] no billing account found — complete checkout first');
   }
 
-  const portalReturnPath = await getReturnPath(targetId, targetType, returnContext);
+  const portalReturnPath = await getReturnPath(targetId, returnContext);
   const session = await stripe.billingPortal.sessions.create({
     customer: row.stripe_customer_id,
     return_url: `${appUrl}${portalReturnPath}`,
@@ -158,9 +156,8 @@ export async function createBillingPortalSession(
 
 export async function cancelSubscription(
   targetId: string,
-  targetType: 'community' | 'platform',
 ): Promise<void> {
-  const tableIdent = targetType === 'community' ? 'communities' : 'profiles';
+  const tableIdent = 'communities';
   const rows = await db<{ stripe_subscription_id: string | null }[]>`
     SELECT stripe_subscription_id
     FROM public.${db(tableIdent)}
@@ -297,11 +294,8 @@ export async function confirmJoinCheckout(
 // after they finish Stripe checkout).
 async function getReturnPath(
   targetId: string,
-  targetType: 'community' | 'platform',
   context: CheckoutReturnContext,
 ): Promise<string> {
-  if (targetType === 'platform') return '/settings/billing';
-
   if (context === 'onboarding') return `/onboarding/${targetId}/checkout`;
 
   const { resolveCommunitySlug } = await import('../community/context');
