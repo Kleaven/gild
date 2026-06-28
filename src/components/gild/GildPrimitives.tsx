@@ -42,7 +42,6 @@ export function Avatar({
       // The <img> clips itself with its own borderRadius.
     }}>
       {person.avatar_url ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={person.avatar_url}
           alt={person.name}

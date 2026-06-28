@@ -25,6 +25,7 @@ export function StudioMembers({ community, members, currentUserId, currentUserRo
   const [showBanConfirm, setShowBanConfirm] = useState<{ id: string; name: string } | null>(null);
   const [showKickConfirm, setShowKickConfirm] = useState<{ id: string; name: string } | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- JSON permissions blob
   const [privilegeModal, setPrivilegeModal] = useState<{ id: string; name: string; perms: any } | null>(null);
   const { openChatWithUser } = useGildChat();
   const filteredMembers = filter.trim() === ''
@@ -241,7 +242,7 @@ export function StudioMembers({ community, members, currentUserId, currentUserRo
                         {member.role === 'admin' && currentUserRole === 'owner' && (
                           <button
                             title="Manage Privileges"
-                            onClick={() => setPrivilegeModal({ id: member.user_id, name: member.display_name, perms: (member as any).permissions || {} })}
+                            onClick={() => setPrivilegeModal({ id: member.user_id, name: member.display_name, perms: (member as { permissions?: unknown }).permissions || {} })}
                             style={{
                               background: 'none',
                               border: 'none',
@@ -262,7 +263,7 @@ export function StudioMembers({ community, members, currentUserId, currentUserRo
                           value={member.role}
                           disabled={!!isPending}
                           onChange={async (e) => {
-                            const newRole = e.target.value as any;
+                            const newRole = e.target.value as Exclude<MemberRole, "owner">;
                             setIsPending(member.user_id);
                             try {
                               await updateMemberRole({

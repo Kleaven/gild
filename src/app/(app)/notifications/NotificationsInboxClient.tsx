@@ -271,6 +271,7 @@ export default function NotificationsInboxClient({ initialNotifications, showAll
                 href: n.resource_url as string,
                 onClick: () => (unread ? handleMarkRead(n.id) : undefined),
               }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- empty props for non-link div row
             : ({} as any);
 
           return (

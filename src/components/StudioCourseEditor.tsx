@@ -3,7 +3,7 @@
 import React, { useState, useTransition, useOptimistic } from 'react';
 import { useRouter } from 'next/navigation';
 import { GILD_FONTS } from '@/components/gild';
-import type { CourseWithModules } from '@/lib/courses';
+import type { CourseWithModules, LessonMeta } from '@/lib/courses';
 import { updateCourse, deleteCourse, createModule, updateModule, deleteModule, createLesson, updateLesson, deleteLesson, setModuleTier } from '@/app/actions/courses';
 import { uploadMedia } from '@/app/actions/media';
 import { 
@@ -44,7 +44,7 @@ interface StudioCourseEditorProps {
 export function StudioCourseEditor({ communityId, communitySlug, course, tiers = [] }: StudioCourseEditorProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'settings' | 'curriculum'>('curriculum');
-  const [editingLesson, setEditingLesson] = useState<any>(null);
+  const [editingLesson, setEditingLesson] = useState<LessonMeta | null>(null);
 
   const handleLessonSaved = () => {
     router.refresh();
@@ -418,7 +418,7 @@ function curriculumReducer(state: ModuleT[], action: OptimisticAction): ModuleT[
   }
 }
 
-function CurriculumPanel({ communityId, course, tiers = [], onEditLesson }: StudioCourseEditorProps & { onEditLesson: (lesson: any) => void }) {
+function CurriculumPanel({ communityId, course, tiers = [], onEditLesson }: StudioCourseEditorProps & { onEditLesson: (lesson: LessonMeta) => void }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -596,7 +596,7 @@ function ModuleItem({ module, communityId, courseId, onEditLesson, onDeleteModul
   module: ModuleT,
   communityId: string,
   courseId: string,
-  onEditLesson: (lesson: any) => void,
+  onEditLesson: (lesson: LessonMeta) => void,
   onDeleteModule: (moduleId: string) => void,
   onAddLesson: (moduleId: string, position: number) => void,
   onDeleteLesson: (moduleId: string, lessonId: string) => void,
@@ -767,7 +767,7 @@ function ModuleItem({ module, communityId, courseId, onEditLesson, onDeleteModul
   );
 }
 
-function LessonItem({ lesson, communityId, courseId, onEdit, onDelete, onTogglePublish }: { lesson: any, communityId: string, courseId: string, onEdit: (lesson: any) => void, onDelete: () => void, onTogglePublish: (next: boolean) => void }) {
+function LessonItem({ lesson, communityId, courseId, onEdit, onDelete, onTogglePublish }: { lesson: LessonMeta, communityId: string, courseId: string, onEdit: (lesson: LessonMeta) => void, onDelete: () => void, onTogglePublish: (next: boolean) => void }) {
   const router = useRouter();
   const [quizOpen, setQuizOpen] = useState(false);
   // Temp (optimistic) lessons aren't persisted yet, so quiz authoring — which

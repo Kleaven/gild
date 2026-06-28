@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { GILD_FONTS } from '@/components/gild';
+import type { LessonMeta } from '@/lib/courses';
 import { updateLesson } from '@/app/actions/courses';
 import { uploadMedia } from '@/app/actions/media';
 import { X, Save, Video, Image as ImageIcon, FileText, Plus, Trash2 } from 'lucide-react';
@@ -9,7 +10,7 @@ import { X, Save, Video, Image as ImageIcon, FileText, Plus, Trash2 } from 'luci
 interface LessonEditorModalProps {
   communityId: string;
   courseId: string;
-  lesson: any;
+  lesson: LessonMeta & { body?: string | null };
   isOpen: boolean;
   onClose: () => void;
   onSaved: () => void;

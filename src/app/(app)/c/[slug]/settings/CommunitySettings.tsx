@@ -19,6 +19,7 @@ interface Props {
     category: string | null;
     welcome_message: string | null;
     goodbye_message: string | null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- JSON permissions blob (DB Json column)
     role_permissions: any;
     pricing_type?: string | null;
     price_amount?: number | null;

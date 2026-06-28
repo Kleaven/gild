@@ -20,7 +20,7 @@ export default async function HealthPage() {
   ];
 
   for (const key of requiredEnv) {
-    const val = (env as any)[key];
+    const val = (env as Record<string, string | undefined>)[key];
     status.push({
       name: key,
       ok: !!val && val !== 'placeholder',
@@ -43,7 +43,7 @@ export default async function HealthPage() {
     try {
       await db.unsafe(`SELECT 1 FROM public.${table} LIMIT 1`);
       status.push({ name: `Table: ${table}`, ok: true, message: 'Exists', type: 'db' });
-    } catch (err) {
+    } catch {
       status.push({ name: `Table: ${table}`, ok: false, message: 'Missing or Error', type: 'db' });
     }
   }
@@ -62,7 +62,7 @@ export default async function HealthPage() {
     try {
       await db.unsafe(`SELECT ${check.column} FROM public.${check.table} LIMIT 1`);
       status.push({ name: `Column: ${check.table}.${check.column}`, ok: true, message: 'Exists', type: 'db' });
-    } catch (err) {
+    } catch {
       status.push({ name: `Column: ${check.table}.${check.column}`, ok: false, message: 'Missing', type: 'db' });
     }
   }
@@ -79,7 +79,7 @@ export default async function HealthPage() {
         message: error ? error.message : 'Exists',
         type: 'storage',
       });
-    } catch (err) {
+    } catch {
       status.push({ name: `Bucket: ${bucketName}`, ok: false, message: 'Error checking', type: 'storage' });
     }
   }
@@ -95,7 +95,7 @@ export default async function HealthPage() {
         message: rows.length > 0 ? 'Defined' : 'Missing',
         type: 'rpc',
       });
-    } catch (err) {
+    } catch {
       status.push({ name: `RPC: ${rpc}`, ok: false, message: 'Error checking', type: 'rpc' });
     }
   }

@@ -281,7 +281,7 @@ export function GlobalBilling({ user }: Props) {
   );
 }
 
-function PricingCard({ name, price, features, recommended = false, active, onSelect, disabled }: any) {
+function PricingCard({ name, price, features, recommended = false, active, onSelect, disabled }: { name: string; price: string; features: string[]; recommended?: boolean; active: boolean; onSelect: () => void; disabled: boolean }) {
   return (
     <div style={{
       background: '#fff',

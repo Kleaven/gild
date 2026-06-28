@@ -111,7 +111,6 @@ export default function CustomizeClient({
           }}
         >
           {logoPreview ? (
-            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={logoPreview}
               alt="Logo preview"
@@ -157,7 +156,6 @@ export default function CustomizeClient({
           }}
         >
           {bannerPreview ? (
-            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={bannerPreview}
               alt="Banner preview"

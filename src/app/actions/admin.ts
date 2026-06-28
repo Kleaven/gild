@@ -50,7 +50,7 @@ export async function initializeInfrastructure(): Promise<{ ok: boolean; message
   for (const bucketName of buckets) {
     const { error: getError } = await serviceClient.storage.getBucket(bucketName);
     
-    if (getError && (getError as any).message?.includes('not found')) {
+    if (getError && (getError as { message?: string }).message?.includes('not found')) {
       const { error: createError } = await serviceClient.storage.createBucket(bucketName, {
         public: true,
       });
@@ -133,8 +133,8 @@ export async function getOverridesForFlag(flagName: FlagName) {
 
   if (error) return { error: error.message };
 
-  const result = (data || []).map((row: any) => ({
-    communityId: row.community_id,
+  const result = (data || []).map((row: { community_id: string | null; communities: { name: string | null } | null; is_enabled: boolean }) => ({
+    communityId: row.community_id ?? "",
     communityName: row.communities?.name || 'Unknown',
     enabled: row.is_enabled
   }));

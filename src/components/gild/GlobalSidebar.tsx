@@ -22,7 +22,7 @@ interface Community {
   theme_hue?: number;
 }
 
-interface GlobalSidebarProps {
+export interface GlobalSidebarProps {
   user: {
     id: string;
     display_name: string;

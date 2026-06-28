@@ -64,6 +64,7 @@ type Props = {
   canPin?: boolean;
   canPost?: boolean;
   allowMemberPosts?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- JSON permissions blob (DB Json column)
   rolePermissions?: any;
   isPrivate?: boolean;
   currentUserRole?: string;
@@ -152,8 +153,8 @@ export default function FeedClient({
       title: title || null,
       body,
       media_urls: mediaUrls || null,
-      type: type as any,
-      poll_options: pollOptions as any,
+      type: type as OptimisticFeedPost['type'],
+      poll_options: pollOptions as OptimisticFeedPost['poll_options'],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       deleted_at: null,

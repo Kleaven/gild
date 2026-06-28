@@ -34,11 +34,13 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // Type and lint errors now FAIL the build — the safety net is on. The
+  // codebase is tsc-clean and eslint-clean; keep it that way.
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   experimental: {
     serverActions: {

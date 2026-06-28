@@ -6,13 +6,13 @@
 export function hasPermission(
   role: string | undefined,
   permission: string,
-  config: Record<string, any> | undefined
+  config: Record<string, unknown> | undefined
 ): boolean {
   if (!role) return false;
   if (role === 'owner') return true;
   if (role === 'banned') return false;
 
-  const rolePerms = config?.[role];
+  const rolePerms = config?.[role] as Record<string, unknown> | undefined;
   if (!rolePerms) return false;
 
   return !!rolePerms[permission];

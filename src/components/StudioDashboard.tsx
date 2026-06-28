@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { GILD_FONTS } from '@/components/gild';
+import type { Person } from '@/components/gild';
 import type { DashboardStats } from '@/lib/community';
 import { 
   Users, 
@@ -20,7 +21,7 @@ interface StudioDashboardProps {
     subscription_status: string | null;
   };
   stats: DashboardStats;
-  onlineUsers?: any[];
+  onlineUsers?: Person[];
 }
 
 export function StudioDashboard({ 

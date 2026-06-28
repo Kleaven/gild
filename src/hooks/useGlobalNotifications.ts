@@ -24,7 +24,7 @@ export function useGlobalNotifications(communityId: string, communitySlug: strin
           table: 'posts',
           filter: `community_id=eq.${communityId}`,
         },
-        (payload: any) => {
+        (payload: { new: { id?: string; title?: string | null; space_id?: string } }) => {
           const newPost = payload.new;
           // Don't toast if we are already in the space feed for this post
           if (pathname.includes(`/s/${newPost.space_id}`)) return;

@@ -23,7 +23,7 @@ export default async function NotificationsPage() {
     .order('joined_at', { ascending: true });
 
   const rows = (memberships ?? [])
-    .map((m: any) => ({
+    .map((m: { community_id: string; broadcast_opt_out: boolean | null; community: { name: string | null; slug: string | null; theme_hue: number | null } | null }) => ({
       communityId: m.community_id as string,
       name: (m.community?.name as string) || 'Untitled',
       slug: (m.community?.slug as string) || '',
