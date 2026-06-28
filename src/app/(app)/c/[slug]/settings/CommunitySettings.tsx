@@ -5,6 +5,7 @@ import { updateCommunity, deleteCommunity, uploadCommunityAsset } from '@/app/ac
 import { GILD_FONTS, DeleteCommunityModal } from '@/components/gild';
 import { Camera, Image as ImageIcon, Palette } from 'lucide-react';
 import { RolePermissionsEditor } from '@/components/gild';
+import CustomDomainCard from './CustomDomainCard';
 
 interface Props {
   community: {
@@ -23,6 +24,13 @@ interface Props {
     price_amount?: number | null;
     pricing_period?: string | null;
   };
+  customDomain?: {
+    isPro: boolean;
+    slug: string;
+    initialDomain: string | null;
+    initialStatus: 'pending' | 'active' | 'error' | null;
+    initialDns: { type: 'A' | 'CNAME'; name: string; value: string } | null;
+  } | null;
 }
 
 const NICHES = [
@@ -31,7 +39,7 @@ const NICHES = [
   'Crypto & Web3', 'AI & Machine Learning', 'Gaming', 'Personal Development'
 ];
 
-export default function CommunitySettings({ community }: Props) {
+export default function CommunitySettings({ community, customDomain }: Props) {
   const [name, setName] = useState(community.name);
   const [description, setDescription] = useState(community.description || '');
   const [themeHue, setThemeHue] = useState(community.theme_hue || 250);
@@ -222,6 +230,18 @@ export default function CommunitySettings({ community }: Props) {
           </div>
         </div>
       </section>
+
+      {customDomain && (
+        <CustomDomainCard
+          communityId={community.id}
+          slug={customDomain.slug}
+          isPro={customDomain.isPro}
+          themeHue={themeHue}
+          initialDomain={customDomain.initialDomain}
+          initialStatus={customDomain.initialStatus}
+          initialDns={customDomain.initialDns}
+        />
+      )}
 
       <form onSubmit={handleUpdate} style={{ display: 'flex', flexDirection: 'column', gap: 20, marginBottom: 40, borderTop: '1px solid oklch(0.90 0.01 250)', paddingTop: 40 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>Basic Info</h2>

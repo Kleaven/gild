@@ -80,7 +80,7 @@ export default async function AdminOverviewPage() {
       >
         <StatCard label="Total Communities" value={stats.totalCommunities} />
         <StatCard label="Total Users"        value={stats.totalUsers} />
-        <StatCard label="Hobby"              value={stats.hobbyCount} />
+        <StatCard label="Free"               value={stats.freeCount} />
         <StatCard label="Pro"                value={stats.proCount} />
         <StatCard label="Trialing"           value={stats.trialingCount} />
         <StatCard label="Active"             value={stats.activeCount} />

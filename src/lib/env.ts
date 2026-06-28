@@ -17,13 +17,21 @@ const serverSchema = z.object({
   // (connected-account events: member tier subscriptions). Set once the Connect
   // endpoint exists in Stripe; the route verifies against both secrets.
   STRIPE_CONNECT_WEBHOOK_SECRET: z.string().startsWith('whsec_').optional(),
-  STRIPE_HOBBY_PRICE_ID: z.string().min(1),
+  // Retired with the Free/Pro pricing move — Free has no Stripe price. Kept
+  // optional so existing deployments with the var set still validate.
+  STRIPE_HOBBY_PRICE_ID: z.string().optional(),
   STRIPE_PRO_PRICE_ID: z.string().min(1),
   CRON_SECRET: z.string().min(1),
   RESEND_API_KEY: z.string().min(1),
   RESEND_FROM_EMAIL: z.string().email(),
   GOOGLE_CLIENT_ID: z.string().min(1),
   GOOGLE_CLIENT_SECRET: z.string().min(1),
+  // Vercel Domains API — used by the Pro custom-domain feature to register
+  // creators' domains for automatic SSL. All optional: when unset, the custom
+  // domain feature surfaces a "not configured" error instead of crashing.
+  VERCEL_API_TOKEN: z.string().min(1).optional(),
+  VERCEL_PROJECT_ID: z.string().min(1).optional(),
+  VERCEL_TEAM_ID: z.string().min(1).optional(),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   // Sentry — optional. Source-map upload skipped if any are missing.
   SENTRY_AUTH_TOKEN: z.string().optional(),
@@ -66,6 +74,9 @@ const SERVER_KEYS = new Set<string>([
   'RESEND_FROM_EMAIL',
   'GOOGLE_CLIENT_ID',
   'GOOGLE_CLIENT_SECRET',
+  'VERCEL_API_TOKEN',
+  'VERCEL_PROJECT_ID',
+  'VERCEL_TEAM_ID',
   'NODE_ENV',
   'SENTRY_AUTH_TOKEN',
   'SENTRY_ORG',
@@ -139,6 +150,9 @@ function validateEnv(): Env {
     RESEND_FROM_EMAIL: '',
     GOOGLE_CLIENT_ID: '',
     GOOGLE_CLIENT_SECRET: '',
+    VERCEL_API_TOKEN: undefined,
+    VERCEL_PROJECT_ID: undefined,
+    VERCEL_TEAM_ID: undefined,
     NODE_ENV: 'development',
     SENTRY_AUTH_TOKEN: undefined,
     SENTRY_ORG: undefined,

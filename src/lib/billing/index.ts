@@ -16,8 +16,10 @@ export type { CheckoutReturnContext } from './subscription';
 export {
   isAccessGranted,
   isPro,
-  isHobby,
+  isFree,
   getPlanLabel,
+  canUseCustomDomain,
+  canRemoveGildBadge,
 } from './gates';
 export type { CommunityBillingState, SubscriptionStatus } from './gates';
 export {

@@ -20,6 +20,14 @@ export {
 export { getDashboardStats } from './dashboard';
 export type { DashboardStats } from './dashboard';
 
+export {
+  getCustomDomainState,
+  setCustomDomain,
+  verifyCustomDomain,
+  removeCustomDomain,
+} from './domains';
+export type { CustomDomainState, CustomDomainStatus, DnsInstruction, DomainResult } from './domains';
+
 export type {
   Community,
   CommunityMember,

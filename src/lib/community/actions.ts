@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { getSupabaseServerClient } from '../auth/server';
 import { checkRateLimit } from '../rate-limit/index';
 import { getMemberLimit } from '../billing/gates';
+import type { Plan } from '../billing/plans';
 import type { Database } from '../supabase/types';
 import type { CreateCommunityInput, UpdateMemberRoleInput } from './types';
 
@@ -39,7 +40,6 @@ const updateMemberRoleSchema = z.object({
 // message stripped in production builds.
 export type CreateCommunityResult =
   | { ok: true; communityId: string }
-  | { ok: false; code: 'subscription_required'; message: string }
   | { ok: false; code: 'slug_taken'; message: string }
   | { ok: false; code: 'rate_limited'; message: string }
   | { ok: false; code: 'validation_failed'; message: string };
@@ -76,20 +76,10 @@ export async function createCommunity(
     };
   }
 
-  // Paywall — the most common reason a real user hits this Server Action
-  // and fails. Surfacing as a structured response lets the form render an
-  // "Upgrade →" CTA instead of crashing to a generic 500.
-  const { data: hasSubscription } = await supabase.rpc('has_platform_subscription', {
-    p_user_id: user.id,
-  });
-  if (!hasSubscription) {
-    return {
-      ok: false,
-      code: 'subscription_required',
-      message: 'A valid Gild subscription is required to create a community.',
-    };
-  }
-
+  // No paywall — communities are created on the Free plan with no card and no
+  // subscription. Monetization is the 5% fee on member sales (Free) or the $29
+  // Pro upgrade (0% fee); neither gates creation. `communities.plan` defaults
+  // to 'free'.
   const { data: communityId, error } = await supabase.rpc('create_community', {
     p_name: name,
     p_slug: slug,
@@ -153,7 +143,9 @@ export async function joinCommunity(
     };
   }
 
-  const limit = getMemberLimit(communityData.plan as any);
+  // Free and Pro are both unlimited now, so this never trips — kept as a guard
+  // in case plan-based caps ever return.
+  const limit = getMemberLimit(communityData.plan as Plan);
   if (communityData.member_count >= limit) {
     return {
       ok: false,

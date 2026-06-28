@@ -57,7 +57,7 @@ export async function captureServerEvent({
 export async function trackSubscriptionStartedServer(input: {
   distinctId: string;
   communityId: string | null;
-  plan: 'hobby' | 'pro';
+  plan: 'free' | 'pro';
   trial: boolean;
 }): Promise<void> {
   await captureServerEvent({
