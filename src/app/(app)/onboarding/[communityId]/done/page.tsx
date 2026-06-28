@@ -26,7 +26,7 @@ export default async function DonePage({ params }: Props) {
     redirect(`/onboarding/${communityId}/plan`);
   }
 
-  const planLabel = getPlanLabel(community.plan as 'hobby' | 'pro');
+  const planLabel = getPlanLabel(community.plan as 'free' | 'pro');
 
   return (
     <>

@@ -12,6 +12,12 @@ import {
   updateCommunity as libUpdateCommunity,
   deleteCommunity as libDeleteCommunity,
 } from '../../lib/community/actions';
+import {
+  setCustomDomain as libSetCustomDomain,
+  verifyCustomDomain as libVerifyCustomDomain,
+  removeCustomDomain as libRemoveCustomDomain,
+  type DomainResult,
+} from '../../lib/community/domains';
 import type { CreateCommunityResult, DeleteCommunityResult, JoinCommunityResult, UpdateCommunityInput, UpdateCommunityResult } from '../../lib/community/actions';
 import type { CreateCommunityInput, UpdateMemberRoleInput } from '../../lib/community/types';
 
@@ -207,6 +213,51 @@ export async function deleteCommunity(communityId: string): Promise<DeleteCommun
     revalidatePath(`/c/${slug}`);
   }
 
+  return result;
+}
+
+// ─── Custom domain (Pro) ─────────────────────────────────────────────────────
+// All three delegate owner + Pro gating to the lib (which re-proves it against
+// the DB row); these wrappers only handle the session check + revalidation.
+export async function setCommunityDomain(
+  communityId: string,
+  domain: string,
+): Promise<DomainResult> {
+  const supabase = await getSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: 'Not signed in.' };
+
+  const result = await libSetCustomDomain(communityId, user.id, domain);
+  if (result.ok) {
+    const slug = await resolveCommunitySlug(communityId);
+    revalidatePath(`/c/${slug}/settings`);
+  }
+  return result;
+}
+
+export async function verifyCommunityDomain(communityId: string): Promise<DomainResult> {
+  const supabase = await getSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: 'Not signed in.' };
+
+  const result = await libVerifyCustomDomain(communityId, user.id);
+  if (result.ok) {
+    const slug = await resolveCommunitySlug(communityId);
+    revalidatePath(`/c/${slug}/settings`);
+  }
+  return result;
+}
+
+export async function removeCommunityDomain(communityId: string): Promise<DomainResult> {
+  const supabase = await getSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: 'Not signed in.' };
+
+  const result = await libRemoveCustomDomain(communityId, user.id);
+  if (result.ok) {
+    const slug = await resolveCommunitySlug(communityId);
+    revalidatePath(`/c/${slug}/settings`);
+  }
   return result;
 }
 

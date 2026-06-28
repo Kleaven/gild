@@ -12,7 +12,7 @@ export function trackSignup(source: SignupSource): void {
   posthog.capture('signup_completed', { source });
 }
 
-export function trackCommunityCreated(communityId: string, plan: 'hobby' | 'pro' | 'trial'): void {
+export function trackCommunityCreated(communityId: string, plan: 'free' | 'pro' | 'trial'): void {
   posthog.capture('community_created', { community_id: communityId, plan });
 }
 

@@ -4,7 +4,7 @@ import { getCommunityContextBySlug } from '../../../../lib/community/context';
 import { isAccessGranted } from '@/lib/billing';
 import { requireAuth } from '@/lib/auth';
 import { getFlag } from '@/lib/feature-flags';
-import { StudioSidebar, NotificationListener, JoinGate, WelcomeHandler } from '@/components/gild';
+import { StudioSidebar, NotificationListener, JoinGate, WelcomeHandler, PoweredByGildBadge } from '@/components/gild';
 import type { Person } from '@/components/gild';
 import type { CommunityBillingState, SubscriptionStatus } from '@/lib/billing';
 import type { Plan } from '@/lib/billing';
@@ -40,23 +40,29 @@ export default async function CommunityLayout({ children, params }: Props) {
 
   const communityId = community.id;
 
+  // Free communities carry a subtle "Powered by Gild" badge; Pro hides it.
+  const showGildBadge = community.plan !== 'pro';
+
   // Join Gate — non-members must join to see community content
   if (!membership) {
     return (
-      <JoinGate
-        community={{
-          id: community.id,
-          slug: community.slug,
-          name: community.name,
-          description: community.description,
-          member_count: community.member_count,
-          welcome_message: community.welcome_message,
-          theme_hue: community.theme_hue ?? undefined,
-          pricing_type: community.pricing_type as 'free' | 'paid',
-          price_amount: Number(community.price_amount || 0),
-          price_currency: community.price_currency,
-        }}
-      />
+      <>
+        <JoinGate
+          community={{
+            id: community.id,
+            slug: community.slug,
+            name: community.name,
+            description: community.description,
+            member_count: community.member_count,
+            welcome_message: community.welcome_message,
+            theme_hue: community.theme_hue ?? undefined,
+            pricing_type: community.pricing_type as 'free' | 'paid',
+            price_amount: Number(community.price_amount || 0),
+            price_currency: community.price_currency,
+          }}
+        />
+        {showGildBadge && <PoweredByGildBadge />}
+      </>
     );
   }
 
@@ -180,6 +186,7 @@ export default async function CommunityLayout({ children, params }: Props) {
     </div>
     {/* Sliding chat overlay — anchored at layout root so it floats above
         all community-scoped pages without affecting URL state. */}
+    {showGildBadge && <PoweredByGildBadge />}
     </>
   );
 }

@@ -3,6 +3,7 @@ import 'server-only';
 import { headers } from 'next/headers';
 import { stripe } from './stripe';
 import { PLANS } from './catalog';
+import { FREE_PLAN_FEE_PERCENT } from './gates';
 import type { Plan } from './plans';
 import db from '../db';
 import { env } from '../env';
@@ -44,6 +45,10 @@ export async function createCheckoutSession(
 ): Promise<{ url: string }> {
   const appUrl = await getAppUrl();
 
+  // Only paid plans (Pro) have a Stripe price — Free has no subscription.
+  const priceId = PLANS[plan].priceId;
+  if (!priceId) throw new Error('[gild] this plan has no subscription to check out');
+
   // Step 1 — Fetch current billing state
   const tableIdent = targetType === 'community' ? 'communities' : 'profiles';
   const rows = await db<BillingRow[]>`
@@ -71,7 +76,7 @@ export async function createCheckoutSession(
     const session = await stripe.checkout.sessions.create({
       customer: entity.stripe_customer_id!,
       mode: 'subscription',
-      line_items: [{ price: PLANS[plan].priceId, quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${appUrl}${returnPath}?checkout=success`,
       cancel_url: `${appUrl}${returnPath}?checkout=cancelled`,
       subscription_data: {
@@ -105,7 +110,7 @@ export async function createCheckoutSession(
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: 'subscription',
-    line_items: [{ price: PLANS[plan].priceId, quantity: 1 }],
+    line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${appUrl}${returnPath}?checkout=success`,
     cancel_url: `${appUrl}${returnPath}?checkout=cancelled`,
     subscription_data: {
@@ -183,10 +188,10 @@ export async function createCommunityJoinSession(
 ): Promise<{ url: string }> {
   const appUrl = await getAppUrl();
   const rows = await db<{
-    name: string; price_amount: number; price_currency: string; pricing_period: string; slug: string;
+    name: string; price_amount: number; price_currency: string; pricing_period: string; slug: string; plan: string;
     stripe_connect_account_id: string | null; stripe_connect_charges_enabled: boolean;
   }[]>`
-    SELECT name, price_amount, price_currency, pricing_period, slug,
+    SELECT name, price_amount, price_currency, pricing_period, slug, plan,
            stripe_connect_account_id, stripe_connect_charges_enabled
     FROM public.communities
     WHERE id = ${communityId}
@@ -195,14 +200,18 @@ export async function createCommunityJoinSession(
   const community = rows[0];
   if (!community) throw new Error('[gild] community not found');
 
-  // Entry fees charge DIRECTLY on the creator's connected Stripe account —
-  // the same 0% rails as tiers. Without a payout account there is nowhere
-  // for the money to go, so paid joins are blocked until Connect is ready.
+  // Entry fees charge DIRECTLY on the creator's connected Stripe account.
+  // Without a payout account there is nowhere for the money to go, so paid
+  // joins are blocked until Connect is ready.
   if (!community.stripe_connect_account_id || !community.stripe_connect_charges_enabled) {
     throw new Error('[gild] this community can’t accept payments yet — the owner hasn’t finished payout setup');
   }
 
   const isRecurring = community.pricing_period === 'monthly' || community.pricing_period === 'yearly';
+  const unitAmount = Math.round(community.price_amount * 100);
+
+  // Free communities pay the platform fee; Pro keeps 100% (fee omitted).
+  const takesFee = community.plan === 'free';
 
   const session = await stripe.checkout.sessions.create({
     mode: isRecurring ? 'subscription' : 'payment',
@@ -212,11 +221,11 @@ export async function createCommunityJoinSession(
         currency: community.price_currency.toLowerCase(),
         product_data: {
           name: `Access to ${community.name}`,
-          description: isRecurring 
+          description: isRecurring
             ? `Recurring ${community.pricing_period} membership for ${community.name}.`
             : `One-time payment for lifetime access to the ${community.name} community.`,
         },
-        unit_amount: Math.round(community.price_amount * 100),
+        unit_amount: unitAmount,
         ...(isRecurring && {
           recurring: {
             interval: community.pricing_period === 'monthly' ? 'month' : 'year',
@@ -227,13 +236,20 @@ export async function createCommunityJoinSession(
     }],
     success_url: `${appUrl}/c/${community.slug}?welcome=1&payment=success&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${appUrl}/c/${community.slug}?payment=cancelled`,
-    metadata: { 
-      communityId, 
-      userId, 
-      type: 'community_join' 
+    metadata: {
+      communityId,
+      userId,
+      type: 'community_join'
     },
+    // One-time payments: fixed application fee. Recurring: percent fee.
+    ...(!isRecurring && takesFee && {
+      payment_intent_data: {
+        application_fee_amount: Math.round(unitAmount * FREE_PLAN_FEE_PERCENT / 100),
+      },
+    }),
     subscription_data: isRecurring ? {
-      metadata: { communityId, userId, type: 'community_join' }
+      metadata: { communityId, userId, type: 'community_join' },
+      ...(takesFee && { application_fee_percent: FREE_PLAN_FEE_PERCENT }),
     } : undefined,
   }, { stripeAccount: community.stripe_connect_account_id });
 

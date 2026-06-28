@@ -57,7 +57,7 @@ export function StudioDashboard({
               textTransform: 'uppercase',
               letterSpacing: '0.04em'
             }}>
-              {community.plan || 'Hobby'}
+              {community.plan || 'Free'}
             </span>
           </div>
           <p style={{ color: 'oklch(0.55 0.02 250)', margin: 0, fontSize: 15 }}>

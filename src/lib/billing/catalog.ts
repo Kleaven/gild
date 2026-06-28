@@ -6,39 +6,39 @@ import type { Plan } from './plans';
 export interface PlanConfig {
   id: Plan;
   name: string;
-  priceId: string;
+  priceId: string | null;
   unitAmountCents: number;
   monthlyUsd: number;
   features: string[];
 }
 
 export const PLANS: Record<Plan, PlanConfig> = {
-  hobby: {
-    id: 'hobby',
-    name: 'Hobby',
-    priceId: env.STRIPE_HOBBY_PRICE_ID,
-    unitAmountCents: 2900,
-    monthlyUsd: 29,
+  free: {
+    id: 'free',
+    name: 'Free',
+    priceId: null,
+    unitAmountCents: 0,
+    monthlyUsd: 0,
     features: [
-      'Up to 100 members',
+      'Unlimited members',
       'Unlimited spaces',
-      'Course hosting',
-      'Community feed',
+      'Courses, quizzes & certificates',
+      'Paid memberships & community feed',
+      'Analytics dashboard',
+      '5% per member transaction',
     ],
   },
   pro: {
     id: 'pro',
     name: 'Pro',
     priceId: env.STRIPE_PRO_PRICE_ID,
-    unitAmountCents: 5900,
-    monthlyUsd: 59,
+    unitAmountCents: 2900,
+    monthlyUsd: 29,
     features: [
-      'Unlimited members',
-      'Unlimited spaces',
-      'Course hosting',
-      'Community feed',
-      'Advanced analytics',
-      'Custom domain',
+      'Everything in Free',
+      '0% platform fees — keep 100%',
+      'Your own custom domain',
+      'Remove Gild branding',
       'Priority support',
     ],
   },
@@ -46,7 +46,7 @@ export const PLANS: Record<Plan, PlanConfig> = {
 
 export function getPlanByPriceId(priceId: string): Plan | null {
   for (const [plan, config] of Object.entries(PLANS)) {
-    if (config.priceId === priceId) return plan as Plan;
+    if (config.priceId && config.priceId === priceId) return plan as Plan;
   }
   return null;
 }

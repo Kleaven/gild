@@ -1,5 +1,12 @@
 import type { Plan } from './plans';
 
+/**
+ * Platform fee taken on member→creator transactions for FREE communities.
+ * Pro communities pay 0% (creator keeps 100% minus Stripe's own processing).
+ * This is the single source of truth for the take rate.
+ */
+export const FREE_PLAN_FEE_PERCENT = 5;
+
 export type SubscriptionStatus =
   | 'trialing'
   | 'active'
@@ -29,41 +36,52 @@ export function isPro(state: CommunityBillingState): boolean {
   return state.plan === 'pro' && isAccessGranted(state);
 }
 
-/** True only if plan is 'hobby' AND subscription is active/trialing. */
-export function isHobby(state: CommunityBillingState): boolean {
-  return state.plan === 'hobby' && isAccessGranted(state);
+/** True only if the community is on the Free plan (no paid subscription). */
+export function isFree(state: CommunityBillingState): boolean {
+  return state.plan === 'free';
 }
 
 /** Human-readable plan label for display. */
 export function getPlanLabel(plan: Plan): string {
-  return plan === 'hobby' ? 'Hobby' : 'Pro';
+  return plan === 'free' ? 'Free' : 'Pro';
 }
 
 // ─── Tier Enforcement ────────────────────────────────────────────────────────
+//
+// Free and Pro share the full member-facing product. Pro differentiates on
+// creator-side perks (0% fee, custom domain, badge removal) — NOT on member
+// count: both plans get unlimited members so a free community can grow freely.
+
+const UNLIMITED = Number.MAX_SAFE_INTEGER;
 
 export const GILD_PLAN_LIMITS = {
-  hobby: {
-    maxMembers: 100,
+  free: {
+    maxMembers: UNLIMITED,
     allowCustomDomain: false,
-    allowAnalytics: false,
+    allowAnalytics: true, // Analytics is free on every plan — the basic dashboard is table stakes.
   },
   pro: {
-    maxMembers: 1000000, // Effectively unlimited
+    maxMembers: UNLIMITED,
     allowCustomDomain: true,
     allowAnalytics: true,
   }
 };
 
-export function canHaveUnlimitedMembers(plan: Plan): boolean {
-  return plan === 'pro';
+export function canHaveUnlimitedMembers(_plan: Plan): boolean {
+  return true; // Every plan now has unlimited members.
 }
 
 export function canUseCustomDomain(plan: Plan): boolean {
   return plan === 'pro';
 }
 
-export function canAccessAnalytics(plan: Plan): boolean {
+/** Pro communities can hide the "Powered by Gild" badge. */
+export function canRemoveGildBadge(plan: Plan): boolean {
   return plan === 'pro';
+}
+
+export function canAccessAnalytics(_plan: Plan): boolean {
+  return true; // Analytics is available on every plan.
 }
 
 export function getMemberLimit(plan: Plan): number {
@@ -74,13 +92,13 @@ export type GildFeature = 'analytics' | 'custom_domain' | 'unlimited_members' | 
 
 export function isFeatureAllowed(plan: Plan, feature: GildFeature): boolean {
   switch (feature) {
-    case 'analytics':
     case 'custom_domain':
-    case 'unlimited_members':
     case 'priority_support':
       return plan === 'pro';
+    case 'analytics':
     case 'courses':
-      return true; // Hobby and Pro both get courses
+    case 'unlimited_members':
+      return true; // Free and Pro both get analytics, courses, and unlimited members
     default:
       return false;
   }

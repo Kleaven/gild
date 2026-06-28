@@ -1,11 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { createCommunity } from '@/app/actions';
 import { trackCommunityCreated } from '@/lib/analytics/events';
-import { MessageSquare, Heart, Info, Lock, Globe, Crown, ArrowRight } from 'lucide-react';
-import { GILD_FONTS } from './styles';
+import { MessageSquare, Heart, Info, Lock, Globe } from 'lucide-react';
 
 const NICHES = [
   'Business', 'Technology', 'Health & Fitness', 'Arts & Design',
@@ -42,7 +40,6 @@ export function CreateCommunityForm({ onSuccess, submitLabel = 'Create community
   const [priceCurrency] = useState('USD');
   const [pricingPeriod, setPricingPeriod] = useState<'one_time' | 'monthly' | 'yearly'>('one_time');
   const [error, setError] = useState<string | null>(null);
-  const [paywallMessage, setPaywallMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   function handleNameChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -54,7 +51,6 @@ export function CreateCommunityForm({ onSuccess, submitLabel = 'Create community
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setPaywallMessage(null);
     setLoading(true);
     try {
       const result = await createCommunity({
@@ -73,25 +69,15 @@ export function CreateCommunityForm({ onSuccess, submitLabel = 'Create community
       });
 
       if (result.ok) {
-        // Communities are created in 'trial' state on a paid plan — the trial
-        // converts to a real subscription only after Stripe checkout succeeds.
-        trackCommunityCreated(result.communityId, pricingType === 'free' ? 'hobby' : 'trial');
+        // Communities are always created on the Free plan ($0, no card).
+        // Upgrading to Pro happens later, in-app.
+        trackCommunityCreated(result.communityId, 'free');
         onSuccess(result.communityId, slug);
         return;
       }
 
       // Predictable business-rule failures — render inline rather than throw.
-      switch (result.code) {
-        case 'subscription_required':
-          setPaywallMessage(result.message);
-          break;
-        case 'slug_taken':
-        case 'rate_limited':
-        case 'validation_failed':
-        default:
-          setError(result.message);
-          break;
-      }
+      setError(result.message);
     } catch (err) {
       // Reserved for the unexpected — auth corruption, DB errors, etc.
       setError(err instanceof Error ? err.message : 'Failed to create community');
@@ -292,93 +278,6 @@ export function CreateCommunityForm({ onSuccess, submitLabel = 'Create community
         </div>
       </div>
 
-      {paywallMessage && (
-        <div
-          role="alert"
-          style={{
-            padding: '20px 22px',
-            background: 'linear-gradient(135deg, oklch(0.98 0.04 75), oklch(0.96 0.06 75))',
-            border: '1px solid oklch(0.85 0.10 75)',
-            borderRadius: 16,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 14,
-            fontFamily: GILD_FONTS.sans,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-            <div
-              aria-hidden="true"
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 10,
-                background: 'oklch(0.94 0.08 75)',
-                color: 'oklch(0.40 0.14 75)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              <Crown size={20} />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <h3
-                style={{
-                  margin: 0,
-                  fontFamily: GILD_FONTS.display,
-                  fontSize: 16,
-                  fontWeight: 800,
-                  letterSpacing: '-0.01em',
-                  color: 'oklch(0.25 0.05 75)',
-                }}
-              >
-                Subscription required
-              </h3>
-              <p style={{ margin: '4px 0 0', fontSize: 13, color: 'oklch(0.40 0.04 75)', lineHeight: 1.5 }}>
-                {paywallMessage} Your draft is still here — just upgrade and submit again.
-              </p>
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <Link
-              href="/settings/billing"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '10px 16px',
-                borderRadius: 10,
-                background: 'oklch(0.30 0.04 75)',
-                color: '#fff',
-                textDecoration: 'none',
-                fontSize: 13,
-                fontWeight: 700,
-              }}
-            >
-              Upgrade to Gild Pro <ArrowRight size={14} />
-            </Link>
-            <button
-              type="button"
-              onClick={() => setPaywallMessage(null)}
-              style={{
-                padding: '10px 16px',
-                borderRadius: 10,
-                background: 'transparent',
-                border: '1px solid oklch(0.85 0.04 75)',
-                color: 'oklch(0.40 0.04 75)',
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-              }}
-            >
-              Dismiss
-            </button>
-          </div>
-        </div>
-      )}
 
       {error && (
         <div style={{

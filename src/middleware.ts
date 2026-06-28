@@ -32,6 +32,31 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  // ── Custom domains (Pro) ──────────────────────────────────────────────────
+  // If the request arrives on a creator's own domain, transparently rewrite it
+  // to that community's subtree. Anonymous viewing is allowed here (public-
+  // facing brand site); per-page gating still applies for private communities.
+  const host = ((request.headers.get('host') ?? '').split(':')[0] ?? '').toLowerCase();
+  let primaryHost = '';
+  try { primaryHost = new URL(process.env.NEXT_PUBLIC_APP_URL ?? '').hostname.toLowerCase(); } catch { /* noop */ }
+  const isPlatformHost =
+    !host ||
+    host === primaryHost ||
+    host === 'localhost' ||
+    host.endsWith('.vercel.app');
+
+  if (!isPlatformHost) {
+    const { data: slug } = await supabase.rpc('resolve_custom_domain', { p_domain: host });
+    if (typeof slug === 'string' && slug.length > 0) {
+      const rewriteUrl = request.nextUrl.clone();
+      rewriteUrl.pathname = `/c/${slug}${pathname === '/' ? '' : pathname}`;
+      const rewritten = NextResponse.rewrite(rewriteUrl, { request });
+      supabaseResponse.cookies.getAll().forEach((c) => rewritten.cookies.set(c));
+      return rewritten;
+    }
+    // Unknown domain pointing at us — let it fall through to a normal 404.
+  }
+
   // ── Admin routes ────────────────────────────────────────────────────────────
   if (pathname.startsWith('/admin')) {
     if (

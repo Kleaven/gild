@@ -5,7 +5,7 @@ import { FEATURE_FLAGS, type FlagName } from '../feature-flags/flags';
 export type AdminStats = {
   totalCommunities: number;
   totalUsers: number;
-  hobbyCount: number;
+  freeCount: number;
   proCount: number;
   trialingCount: number;
   activeCount: number;
@@ -27,7 +27,7 @@ export type AdminCommunityRow = {
 type StatsRow = {
   total_communities: number;
   total_users: number;
-  hobby_count: number;
+  free_count: number;
   pro_count: number;
   trialing_count: number;
   active_count: number;
@@ -62,7 +62,7 @@ export async function getAdminStats(): Promise<AdminStats> {
     SELECT
       (SELECT count(*) FROM communities)::int                          AS total_communities,
       (SELECT count(*) FROM profiles)::int                             AS total_users,
-      (SELECT count(*) FROM communities WHERE plan = 'hobby')::int     AS hobby_count,
+      (SELECT count(*) FROM communities WHERE plan = 'free')::int      AS free_count,
       (SELECT count(*) FROM communities WHERE plan = 'pro')::int       AS pro_count,
       (SELECT count(*) FROM communities
        WHERE subscription_status = 'trialing')::int                    AS trialing_count,
@@ -74,14 +74,14 @@ export async function getAdminStats(): Promise<AdminStats> {
   const row = rows[0];
   if (!row) {
     return {
-      totalCommunities: 0, totalUsers: 0, hobbyCount: 0, proCount: 0,
+      totalCommunities: 0, totalUsers: 0, freeCount: 0, proCount: 0,
       trialingCount: 0, activeCount: 0, pastDueCount: 0,
     };
   }
   return {
     totalCommunities: Number(row.total_communities),
     totalUsers: Number(row.total_users),
-    hobbyCount: Number(row.hobby_count),
+    freeCount: Number(row.free_count),
     proCount: Number(row.pro_count),
     trialingCount: Number(row.trialing_count),
     activeCount: Number(row.active_count),

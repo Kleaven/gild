@@ -81,7 +81,7 @@ export default async function BillingPage({ params }: Props) {
             Current Status: {status.toUpperCase()}
           </div>
           <h2 style={{ margin: 0, fontSize: 24, fontWeight: 800, fontFamily: GILD_FONTS.display }}>
-            {currentPlanId === 'pro' ? 'Gild Pro' : currentPlanId === 'hobby' ? 'Gild Hobby' : 'Gild Free'}
+            {currentPlanId === 'pro' ? 'Gild Pro' : 'Gild Free'}
           </h2>
           <p style={{ margin: '4px 0 0', color: 'oklch(0.50 0.02 250)', fontSize: 15 }}>
             Your community is currently on the {currentPlanId} plan.

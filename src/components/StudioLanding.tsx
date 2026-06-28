@@ -767,24 +767,24 @@ export function StudioLanding() {
               One flat fee. Zero take rate.
             </h2>
             <p style={{ fontSize: 17, color: MUTED, margin: '0 auto', maxWidth: 480, lineHeight: 1.55 }}>
-              Every feature on every plan. The only difference is how big you grow.
+              Start free — build, teach, and even charge your members. Upgrade to Pro when you want to keep 100%.
             </p>
           </div>
 
           <div className="gild-pricing" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'stretch' }}>
             {[
               {
-                name: 'Hobby',
-                price: 29,
-                blurb: 'For communities finding their footing.',
-                features: ['Up to 100 members', 'Unlimited spaces & courses', 'Membership tiers — 0% fees', 'Custom logo & theme'],
+                name: 'Free',
+                price: 0,
+                blurb: 'Everything you need to start. We only take 5%.',
+                features: ['Unlimited members', 'Courses, quizzes & certificates', 'Paid memberships & tiers', '5% per member transaction'],
                 hot: false,
               },
               {
                 name: 'Pro',
-                price: 59,
-                blurb: 'For communities ready to scale.',
-                features: ['Unlimited members', 'Unlimited spaces & courses', 'Membership tiers — 0% fees', 'Custom logo & theme', 'Priority support'],
+                price: 29,
+                blurb: 'Keep 100% and make it your own.',
+                features: ['Everything in Free', '0% platform fees — keep 100%', 'Your own custom domain', 'Remove Gild branding', 'Priority support'],
                 hot: true,
               },
             ].map((plan, i) => (
@@ -832,13 +832,13 @@ export function StudioLanding() {
                   color: plan.hot ? '#fff' : INK,
                   border: plan.hot ? 'none' : '1px solid oklch(0.86 0.01 250)',
                 }}>
-                  Start 14-day free trial
+                  {plan.hot ? 'Upgrade to Pro' : 'Start free'}
                 </Link>
               </article>
             ))}
           </div>
           <p data-reveal className="gild-reveal" style={{ textAlign: 'center', fontSize: 13, color: FAINT, marginTop: 22 }}>
-            Members never pay Gild anything. Cancel your trial in one click.
+            No card to start. Members never pay Gild anything. Cancel Pro in one click.
           </p>
         </section>
 

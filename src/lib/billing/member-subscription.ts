@@ -3,6 +3,7 @@ import 'server-only';
 import { headers } from 'next/headers';
 import type Stripe from 'stripe';
 import { stripe } from './stripe';
+import { FREE_PLAN_FEE_PERCENT } from './gates';
 import db from '../db';
 import { env } from '../env';
 
@@ -57,13 +58,14 @@ async function getMemberBilling(communityId: string, userId: string): Promise<Me
 
 type CommunityPayout = {
   slug: string;
+  plan: string;
   stripe_connect_account_id: string | null;
   stripe_connect_charges_enabled: boolean;
 };
 
 async function getCommunityPayout(communityId: string): Promise<CommunityPayout | null> {
   const rows = await db<CommunityPayout[]>`
-    SELECT slug, stripe_connect_account_id, stripe_connect_charges_enabled
+    SELECT slug, plan, stripe_connect_account_id, stripe_connect_charges_enabled
     FROM public.communities WHERE id = ${communityId} LIMIT 1
   `;
   return rows[0] ?? null;
@@ -86,6 +88,9 @@ export async function startOrSwitchTier(
   if (!account || !community.stripe_connect_charges_enabled) {
     throw new Error('[gild] this community is not set up to accept payments yet');
   }
+
+  // Free communities pay the platform fee on tier subscriptions; Pro keeps 100%.
+  const takesFee = community.plan === 'free';
 
   const member = await getMemberBilling(communityId, userId);
   if (!member) throw new Error('[gild] join the community before subscribing to a tier');
@@ -119,6 +124,8 @@ export async function startOrSwitchTier(
           items: [{ id: itemId, price: tier.stripe_price_id }],
           proration_behavior: 'create_prorations',
           cancel_at_period_end: false,
+          // Reflect the community's CURRENT plan on switch: 5% on Free, 0% on Pro.
+          application_fee_percent: takesFee ? FREE_PLAN_FEE_PERCENT : 0,
           metadata,
         },
         { stripeAccount: account },
@@ -144,8 +151,11 @@ export async function startOrSwitchTier(
         : { customer_email: email }),
       success_url: `${appUrl}${safePath}?tier=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}${safePath}?tier=cancelled`,
-      // 0% application fee — omitted entirely, creator keeps 100%.
-      subscription_data: { metadata },
+      // Free: 5% platform fee. Pro: omitted entirely, creator keeps 100%.
+      subscription_data: {
+        metadata,
+        ...(takesFee && { application_fee_percent: FREE_PLAN_FEE_PERCENT }),
+      },
       metadata,
     },
     { stripeAccount: account },

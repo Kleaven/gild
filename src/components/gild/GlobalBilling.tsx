@@ -128,7 +128,7 @@ export function GlobalBilling({ user }: Props) {
                 Current Plan
               </p>
               <h2 style={{ fontSize: 24, fontWeight: 800, margin: 0, letterSpacing: '-0.02em' }}>
-                {user.plan === 'pro' ? 'Gild Pro' : user.plan === 'hobby' ? 'Gild Hobby' : 'Free Tier'}
+                {user.plan === 'pro' ? 'Gild Pro' : 'Gild Free'}
               </h2>
             </div>
           </div>
@@ -253,18 +253,18 @@ export function GlobalBilling({ user }: Props) {
       <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 20 }}>Change your plan</h3>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
         <PricingCard
-          name="Hobby"
-          price="$29"
-          features={['Up to 100 members', 'Unlimited spaces & courses', 'Custom logo & theme', '0% transaction fees']}
-          active={user.plan === 'hobby'}
-          onSelect={() => handlePlanAction('hobby')}
+          name="Free"
+          price="$0"
+          features={['Unlimited members', 'Courses, quizzes & certificates', 'Paid memberships', 'Analytics dashboard', '5% per member transaction']}
+          active={user.plan !== 'pro'}
+          onSelect={() => setShowCancelConfirm(true)}
           disabled={isPending}
         />
         <PricingCard
           name="Pro"
-          price="$59"
+          price="$29"
           recommended
-          features={['Unlimited members', 'Unlimited spaces & courses', 'Custom logo & theme', '0% transaction fees', 'Priority support']}
+          features={['Everything in Free', '0% platform fees — keep 100%', 'Custom domain', 'Remove Gild branding', 'Priority support']}
           active={user.plan === 'pro'}
           onSelect={() => handlePlanAction('pro')}
           disabled={isPending}

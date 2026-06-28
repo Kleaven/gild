@@ -110,7 +110,7 @@ async function handleSubscriptionDeleted(event: Stripe.Event): Promise<void> {
   await db`
     UPDATE public.${db(table)}
     SET subscription_status = 'canceled',
-        plan                = 'hobby',
+        plan                = 'free',
         updated_at          = now()
     WHERE id = ${entity.id}
   `;
@@ -156,7 +156,7 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event): Promise<void
         stripe_customer_id = ${extractCustomerId(session.customer!)},
         stripe_subscription_id = ${typeof session.subscription === 'string' ? session.subscription : session.subscription?.id || null},
         subscription_status = ${status},
-        plan = ${plan || 'hobby'},
+        plan = ${plan || 'free'},
         updated_at = now()
       WHERE id = ${targetId}
     `;
