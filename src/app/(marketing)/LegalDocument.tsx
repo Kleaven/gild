@@ -14,7 +14,9 @@ export const LEGAL = {
   // Contact address for legal / privacy enquiries and data-rights requests.
   contactEmail: 'support@gild.app',
   // Human-readable effective date shown at the top of each document.
-  effectiveDate: 'May 29, 2026',
+  effectiveDate: 'June 28, 2026',
+  // Jurisdiction whose law governs the Terms. Finalise with the real entity.
+  jurisdiction: 'Singapore',
 } as const;
 
 const muted = 'oklch(0.50 0.02 250)';

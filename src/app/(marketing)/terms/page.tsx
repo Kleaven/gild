@@ -120,6 +120,25 @@ export default function TermsPage() {
           acceptance of the revised Terms.
         </p>
       </Section>
+
+      <Section heading="11. Governing law">
+        <p style={p}>
+          These Terms are governed by the laws of {LEGAL.jurisdiction}, without regard to its
+          conflict-of-laws rules. You agree to the exclusive jurisdiction of the courts located in{' '}
+          {LEGAL.jurisdiction} for any dispute arising out of or relating to these Terms or the
+          service.
+        </p>
+      </Section>
+
+      <Section heading="12. Contact">
+        <p style={p}>
+          Questions about these Terms? Contact {LEGAL.entity} at{' '}
+          <a href={`mailto:${LEGAL.contactEmail}`} style={{ color: '#111', fontWeight: 600 }}>
+            {LEGAL.contactEmail}
+          </a>
+          .
+        </p>
+      </Section>
     </LegalDocument>
   );
 }
