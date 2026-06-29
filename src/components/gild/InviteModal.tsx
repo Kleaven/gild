@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useTransition } from 'react';
-import { X, Copy, Check, Link as LinkIcon, Mail, Users, Shield, Trash2, Plus } from 'lucide-react';
+import { X, Copy, Check, Link as LinkIcon, Users, Shield, Trash2, Plus } from 'lucide-react';
 import { GILD_FONTS } from './styles';
 import {
   createSharedInviteLink,
@@ -248,23 +248,6 @@ export function InviteModal({ communityId, communitySlug, communityName, isPriva
               </ul>
             )}
           </div>
-
-          {/* Email invitations — still a stub. The infrastructure for
-              one-shot per-recipient email invites (public.invitations
-              table + Resend integration) is a future feature. */}
-          <div style={emailStubStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Mail size={16} color="oklch(0.50 0.02 250)" />
-              <div>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'oklch(0.30 0.02 250)' }}>
-                  Email invites coming soon
-                </p>
-                <p style={{ margin: '2px 0 0', fontSize: 12, color: 'oklch(0.55 0.02 250)' }}>
-                  For now, paste the shared link above into your existing email tool.
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -348,12 +331,6 @@ const emptyStyle: React.CSSProperties = {
   padding: '20px', textAlign: 'center',
   background: 'oklch(0.98 0.005 250)',
   border: '1px dashed oklch(0.90 0.01 250)', borderRadius: 10,
-};
-const emailStubStyle: React.CSSProperties = {
-  padding: '14px 16px',
-  background: 'oklch(0.985 0.005 250)',
-  border: '1px solid oklch(0.93 0.005 250)',
-  borderRadius: 10,
 };
 const errorChipStyle: React.CSSProperties = {
   margin: '0 0 10px', padding: '10px 12px', borderRadius: 8,
