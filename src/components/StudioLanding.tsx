@@ -271,7 +271,7 @@ export function StudioLanding() {
           </div>
 
           <p className="gild-rise gild-d3" style={{ fontSize: 13, color: FAINT, margin: '0 0 34px' }}>
-            Free to join as a member · creators keep 100% · 14-day creator trial
+            Free to join as a member · creators keep 100% · no card to start
           </p>
 
           {/* Niche strip — the people, not the plumbing */}
@@ -889,7 +889,7 @@ export function StudioLanding() {
               Start your community <ArrowRight size={19} />
             </Link>
             <p style={{ fontSize: 12.5, color: 'oklch(0.65 0.01 250)', margin: '18px 0 0' }}>
-              14-day free trial · 0% transaction fees · cancel anytime
+              Start free · 0% fees on Pro · cancel anytime
             </p>
           </div>
         </section>

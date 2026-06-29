@@ -50,7 +50,7 @@ export async function createComment(input: CreateCommentInput): Promise<{ commen
   // ─── Permission Check ──────────────────────────────────────────────────────
   // Space-level AND community-level permissions, resolved against the caller's
   // actual role. Either layer can deny commenting.
-  const space = (post as any).spaces;
+  const space = (post as { spaces?: { permissions?: Record<string, string> | null } | null }).spaces;
   const { data: callerRole, error: callerRoleErr } = await supabase.rpc('current_user_role', {
     p_community_id: post.community_id,
   });
@@ -198,7 +198,7 @@ export async function toggleVote(
       .eq('id', post.space_id)
       .single();
     
-    const requiredRole = normalizeRole((space?.permissions as any)?.react);
+    const requiredRole = normalizeRole((space?.permissions as Record<string, string> | undefined)?.react);
     const { data: hasPerm } = await supabase.rpc('user_has_min_role', {
       p_community_id: communityId,
       p_min_role: requiredRole,
@@ -228,7 +228,7 @@ export async function toggleVote(
       .eq('id', parentPost.space_id)
       .single();
 
-    const requiredRole = normalizeRole((targetSpace?.permissions as any)?.react);
+    const requiredRole = normalizeRole((targetSpace?.permissions as Record<string, string> | undefined)?.react);
     const { data: hasPerm } = await supabase.rpc('user_has_min_role', {
       p_community_id: communityId,
       p_min_role: requiredRole,

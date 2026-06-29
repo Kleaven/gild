@@ -195,7 +195,7 @@ export function StudioSidebar({
           ...(showCourses ? [{ label: 'Courses', href: `/c/${community.slug}/courses` }] : []),
           { label: 'Search', href: `/c/${community.slug}/search` },
           ...(currentUser.role !== 'owner' ? [{ label: 'Leave Community', onClick: () => setIsLeaveModalOpen(true), danger: true }] : []),
-        ].map((item: any) => {
+        ].map((item: { label: string; href?: string; onClick?: () => void; danger?: boolean; primary?: boolean }) => {
           if (item.onClick) {
             return (
               <button key={item.label} onClick={item.onClick} style={{
@@ -220,7 +220,7 @@ export function StudioSidebar({
           }
           const isActive = pathname === item.href;
           return (
-            <Link key={item.label} href={item.href} style={{
+            <Link key={item.label} href={item.href ?? "#"} style={{
               display: 'flex',
               alignItems: 'center',
               padding: '5px 10px',

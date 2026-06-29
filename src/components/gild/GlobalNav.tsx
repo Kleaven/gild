@@ -6,7 +6,9 @@ import { GlobalSidebar } from './GlobalSidebar';
 import { Menu } from 'lucide-react';
 
 interface GlobalNavProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- forwarded straight to GlobalSidebar
   user: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- forwarded straight to GlobalSidebar
   communities: any;
 }
 

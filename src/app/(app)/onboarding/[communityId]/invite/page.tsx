@@ -31,7 +31,7 @@ export default async function InvitePage({ params }: Props) {
         Invite your members
       </h1>
       <p style={{ fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 28 }}>
-        Step 6 of 7 — Share your invite link to get people in.
+        Step 5 of 6 — Share your invite link to get people in.
       </p>
 
       <div

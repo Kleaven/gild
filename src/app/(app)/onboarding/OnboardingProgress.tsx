@@ -2,10 +2,12 @@
 
 import { usePathname } from 'next/navigation';
 
+// Free is the default path: Community → Plan → Customize → Spaces → Invite →
+// Done. Checkout is not a step — it's a transient Stripe redirect only Pro
+// upgraders hit, so it's not shown in the progress.
 const STEPS = [
   { path: '/onboarding', label: 'Community' },
   { path: '/plan', label: 'Plan' },
-  { path: '/checkout', label: 'Checkout' },
   { path: '/customize', label: 'Customize' },
   { path: '/spaces', label: 'Spaces' },
   { path: '/invite', label: 'Invite' },

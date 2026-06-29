@@ -166,7 +166,7 @@ const PostForm = forwardRef<HTMLFormElement, Props>(({ communityId, hue = 250, c
       } else {
         setLocalError(res.error || 'Upload failed');
       }
-    } catch (err) {
+    } catch {
       setLocalError('Upload failed');
     } finally {
       setIsUploading(false);

@@ -216,7 +216,7 @@ export function CreateCommunityForm({ onSuccess, submitLabel = 'Create community
                     id="community-billing-cycle"
                     name="billing-cycle"
                     value={pricingPeriod}
-                    onChange={(e) => setPricingPeriod(e.target.value as any)}
+                    onChange={(e) => setPricingPeriod(e.target.value as 'one_time' | 'monthly' | 'yearly')}
                     style={inputStyle}
                   >
                     <option value="one_time">One-time</option>

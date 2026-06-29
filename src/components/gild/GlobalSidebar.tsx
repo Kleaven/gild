@@ -10,8 +10,7 @@ import {
   Plus,
   ChevronRight,
   Search,
-  User,
-  CreditCard
+  User
 } from 'lucide-react';
 
 interface Community {
@@ -22,7 +21,7 @@ interface Community {
   theme_hue?: number;
 }
 
-interface GlobalSidebarProps {
+export interface GlobalSidebarProps {
   user: {
     id: string;
     display_name: string;
@@ -206,13 +205,7 @@ export function GlobalSidebar({ user, communities, isOpen, onClose }: GlobalSide
               href="/settings" 
               active={pathname === '/settings'}
             />
-            <SidebarItem 
-              icon={<CreditCard size={18} />} 
-              label="Billing & Subscription" 
-              href="/settings/billing" 
-              active={pathname === '/settings/billing'}
-            />
-            <button 
+            <button
               onClick={handleLogout}
               style={{
                 width: '100%',

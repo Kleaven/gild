@@ -6,6 +6,7 @@ import { getSupabaseBrowserClient } from '@/lib/auth/client';
 
 export function SecurityPanel() {
   const [mfaStatus, setMfaStatus] = useState<'none' | 'partial' | 'full'>('none');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase MFA enroll response shape
   const [enrollmentData, setEnrollmentData] = useState<any>(null);
   const [otpCode, setOtpCode] = useState('');
   const [error, setError] = useState<string | null>(null);

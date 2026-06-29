@@ -51,7 +51,7 @@ export default async function OnboardingPage() {
         Create your community
       </h1>
       <p style={{ fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 28 }}>
-        Step 1 of 7 — Let&apos;s start with the basics.
+        Step 1 of 6 — Let&apos;s start with the basics.
       </p>
       <CommunityForm />
     </>

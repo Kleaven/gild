@@ -26,7 +26,6 @@ export default function PlanSelector({ communityId, plan, label, returnContext, 
         const { url } = await createCheckoutSession(
           communityId,
           plan,
-          'community',
           returnContext,
         );
         router.push(url);

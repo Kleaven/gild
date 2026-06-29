@@ -155,7 +155,7 @@ export default async function BillingPage({ params }: Props) {
 
               <PlanSelector 
                 communityId={communityId} 
-                plan={plan.id as any} 
+                plan={plan.id} 
                 label={isCurrent ? 'Plan Active' : 'Switch to ' + plan.name}
                 returnContext="billing"
                 disabled={isCurrent}

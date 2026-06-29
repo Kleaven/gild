@@ -33,7 +33,7 @@ export default async function SpacesPage({ params }: Props) {
         Create your first spaces
       </h1>
       <p style={{ fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 28 }}>
-        Step 5 of 7 — Spaces are channels where your community talks.
+        Step 4 of 6 — Spaces are channels where your community talks.
       </p>
       <SpacesStep communityId={communityId} initialSpaces={spaceNames} />
     </>

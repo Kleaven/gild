@@ -15,6 +15,7 @@ interface Props {
     name: string;
     description: string | null;
     is_private: boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- JSON permissions blob (DB Json column)
     role_permissions: any;
     color_hue?: number | null;
     icon?: string | null;

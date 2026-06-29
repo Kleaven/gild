@@ -34,16 +34,17 @@ export default function TermsPage() {
         </p>
       </Section>
 
-      <Section heading="3. Subscriptions, trials, and billing">
+      <Section heading="3. Subscriptions and billing">
         <ul style={ul}>
           <li>
-            Paid plans are billed in US dollars through our payment processor, Stripe. {LEGAL.entity}{' '}
-            never charges transaction fees on payments between you and your members.
+            Payments are processed in US dollars through Stripe. On the Free plan, {LEGAL.entity}{' '}
+            retains a 5% platform fee on payments between you and your members. On the Pro plan,{' '}
+            {LEGAL.entity} retains 0% — you keep everything except Stripe’s own processing fees.
           </li>
           <li>
-            Paid plans include a 14-day free trial. A valid payment method is required to start a
-            trial. Unless you cancel before the trial ends, your plan converts to a paid
-            subscription automatically.
+            The Free plan is free and requires no payment method. The Pro plan ($29/month) begins
+            when you upgrade and is billed immediately — there is no trial period. You can cancel at
+            any time.
           </li>
           <li>
             Subscriptions renew automatically each billing period until cancelled. You can cancel at
@@ -58,7 +59,32 @@ export default function TermsPage() {
         </ul>
       </Section>
 
-      <Section heading="4. Acceptable use">
+      <Section heading="4. Selling to your members and payouts">
+        <ul style={ul}>
+          <li>
+            Community owners may charge members for access or membership tiers. To receive payments,
+            an owner must connect a Stripe account and agree to Stripe&rsquo;s Connected Account
+            Agreement. Payments are made directly to the owner&rsquo;s connected Stripe account.
+          </li>
+          <li>
+            {LEGAL.entity} charges a 5% platform fee on payments to communities on the Free plan, and
+            0% on the Pro plan. Stripe&rsquo;s own processing fees apply in all cases and are deducted
+            by Stripe.
+          </li>
+          <li>
+            Owners are solely responsible for what they sell — delivering the access, content, or
+            services offered; setting and honouring a refund policy with their own members; and
+            handling any taxes arising from their sales. {LEGAL.entity} is not the seller and is not
+            responsible for an owner&rsquo;s offerings or for disputes between owners and members.
+          </li>
+          <li>
+            Members pay owners for access to their communities. {LEGAL.entity} does not guarantee any
+            community&rsquo;s content, availability, or results.
+          </li>
+        </ul>
+      </Section>
+
+      <Section heading="5. Acceptable use">
         <p style={p}>You agree not to:</p>
         <ul style={ul}>
           <li>Violate any law or infringe the rights of others;</li>
@@ -69,7 +95,7 @@ export default function TermsPage() {
         </ul>
       </Section>
 
-      <Section heading="5. Your content">
+      <Section heading="6. Your content">
         <p style={p}>
           You retain ownership of the content you post. You grant {LEGAL.entity} a worldwide,
           non-exclusive, royalty-free licence to host, store, reproduce, and display your content
@@ -78,7 +104,7 @@ export default function TermsPage() {
         </p>
       </Section>
 
-      <Section heading="6. Intellectual property">
+      <Section heading="7. Intellectual property">
         <p style={p}>
           The {LEGAL.entity} name, logo, software, and design are owned by {LEGAL.entity} and
           protected by intellectual-property laws. These Terms grant you no right to use them except
@@ -86,7 +112,7 @@ export default function TermsPage() {
         </p>
       </Section>
 
-      <Section heading="7. Termination">
+      <Section heading="8. Termination">
         <p style={p}>
           You may stop using the service and delete your account at any time. We may suspend or
           terminate access if you breach these Terms or use the service in a way that risks harm to
@@ -95,7 +121,7 @@ export default function TermsPage() {
         </p>
       </Section>
 
-      <Section heading="8. Disclaimers">
+      <Section heading="9. Disclaimers">
         <p style={p}>
           The service is provided &ldquo;as is&rdquo; and &ldquo;as available&rdquo; without
           warranties of any kind, whether express or implied, including fitness for a particular
@@ -103,7 +129,7 @@ export default function TermsPage() {
         </p>
       </Section>
 
-      <Section heading="9. Limitation of liability">
+      <Section heading="10. Limitation of liability">
         <p style={p}>
           To the maximum extent permitted by law, {LEGAL.entity} will not be liable for indirect,
           incidental, special, consequential, or punitive damages, or for lost profits or data. Our
@@ -112,11 +138,47 @@ export default function TermsPage() {
         </p>
       </Section>
 
-      <Section heading="10. Changes to these Terms">
+      <Section heading="11. Indemnification">
+        <p style={p}>
+          You agree to indemnify and hold harmless {LEGAL.entity} and its officers, employees, and
+          partners from any claims, damages, losses, and expenses (including reasonable legal fees)
+          arising out of your content, your community, your sales to members, your use of the
+          service, or your breach of these Terms or of any law or third-party right.
+        </p>
+      </Section>
+
+      <Section heading="12. Third-party services">
+        <p style={p}>
+          {LEGAL.entity} relies on third-party services — including Stripe for payments and payouts —
+          to operate. Your use of those features may be subject to the third party&rsquo;s own terms,
+          and {LEGAL.entity} is not responsible for third-party services it does not control.
+        </p>
+      </Section>
+
+      <Section heading="13. Changes to these Terms">
         <p style={p}>
           We may update these Terms from time to time. If we make material changes, we will provide
           reasonable notice. Your continued use of the service after changes take effect constitutes
           acceptance of the revised Terms.
+        </p>
+      </Section>
+
+      <Section heading="14. Governing law">
+        <p style={p}>
+          These Terms are governed by the laws of {LEGAL.jurisdiction}, without regard to its
+          conflict-of-laws rules. You agree to the exclusive jurisdiction of the courts located in{' '}
+          {LEGAL.jurisdiction} for any dispute arising out of or relating to these Terms or the
+          service.
+        </p>
+      </Section>
+
+      <Section heading="15. Contact">
+        <p style={p}>
+          Questions about these Terms? Contact {LEGAL.entity} at{' '}
+          <a href={`mailto:${LEGAL.contactEmail}`} style={{ color: '#111', fontWeight: 600 }}>
+            {LEGAL.contactEmail}
+          </a>
+          .
         </p>
       </Section>
     </LegalDocument>
