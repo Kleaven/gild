@@ -1,14 +1,19 @@
 import { notFound } from 'next/navigation';
 import { getCommunityContextBySlug } from '@/lib/community/context';
 import { PLANS, type PlanConfig } from '@/lib/billing';
+import { confirmCommunitySubscription } from '@/lib/billing/subscription';
 import { GILD_FONTS } from '@/components/gild';
 import PlanSelector from '@/app/(app)/onboarding/[communityId]/plan/PlanSelector';
 import { CreditCard, Check, Crown } from 'lucide-react';
 
-type Props = { params: Promise<{ slug: string }> };
+type Props = {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ checkout?: string; session_id?: string }>;
+};
 
-export default async function BillingPage({ params }: Props) {
+export default async function BillingPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const { checkout, session_id: sessionId } = await searchParams;
 
   const { community, membership } = await getCommunityContextBySlug(slug);
   if (!community) notFound();
@@ -20,8 +25,18 @@ export default async function BillingPage({ params }: Props) {
     notFound();
   }
 
-  const currentPlanId = community.plan || 'free';
-  const status = community.subscription_status || 'none';
+  let currentPlanId = community.plan || 'free';
+  let status = community.subscription_status || 'none';
+
+  // Returning from a Pro-upgrade Checkout → flip to Pro immediately so the
+  // upgrade never depends on webhook timing/config. Webhook is the backstop.
+  if (checkout === 'success' && sessionId) {
+    const ok = await confirmCommunitySubscription(communityId, sessionId).catch(() => false);
+    if (ok) {
+      currentPlanId = 'pro';
+      status = 'active';
+    }
+  }
 
   return (
     <div style={{

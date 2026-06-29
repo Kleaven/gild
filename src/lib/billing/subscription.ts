@@ -76,7 +76,7 @@ export async function createCheckoutSession(
       customer: entity.stripe_customer_id!,
       mode: 'subscription',
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${appUrl}${returnPath}?checkout=success`,
+      success_url: `${appUrl}${returnPath}?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}${returnPath}?checkout=cancelled`,
       subscription_data: {
         metadata: { targetId, plan, targetType: 'community' },
@@ -110,7 +110,7 @@ export async function createCheckoutSession(
     customer: customerId,
     mode: 'subscription',
     line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${appUrl}${returnPath}?checkout=success`,
+    success_url: `${appUrl}${returnPath}?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${appUrl}${returnPath}?checkout=cancelled`,
     // No trial — the Free plan is the trial. Pro charges on upgrade.
     subscription_data: {
@@ -283,6 +283,46 @@ export async function confirmJoinCheckout(
     INSERT INTO public.community_members (community_id, user_id, role)
     VALUES (${communityId}, ${userId}, 'free_member')
     ON CONFLICT (community_id, user_id) DO NOTHING
+  `;
+  return true;
+}
+
+// Confirms an OWNER's Pro-upgrade Checkout on return from Stripe — flips the
+// community to Pro immediately so the upgrade never depends on webhook timing
+// or config (the webhook stays as the backstop). This is the PLATFORM-account
+// session (not a connected account). Idempotent; validates the session's
+// metadata against the target community so a session can't be replayed onto
+// another community.
+export async function confirmCommunitySubscription(
+  communityId: string,
+  sessionId: string,
+): Promise<boolean> {
+  let session;
+  try {
+    session = await stripe.checkout.sessions.retrieve(sessionId);
+  } catch {
+    return false;
+  }
+
+  const m = session.metadata ?? {};
+  if (m.targetType !== 'community' || m.targetId !== communityId) return false;
+  if (session.status !== 'complete' && session.payment_status !== 'paid') return false;
+
+  const customerId = typeof session.customer === 'string'
+    ? session.customer
+    : session.customer?.id ?? null;
+  const subId = typeof session.subscription === 'string'
+    ? session.subscription
+    : session.subscription?.id ?? null;
+
+  await db`
+    UPDATE public.communities
+    SET stripe_customer_id     = COALESCE(${customerId}, stripe_customer_id),
+        stripe_subscription_id = COALESCE(${subId}, stripe_subscription_id),
+        subscription_status    = 'active',
+        plan                   = 'pro',
+        updated_at             = now()
+    WHERE id = ${communityId}
   `;
   return true;
 }

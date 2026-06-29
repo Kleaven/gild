@@ -59,20 +59,6 @@ export default async function InvitePage({ params }: Props) {
         </span>
       </div>
 
-      <p
-        style={{
-          fontSize: 13,
-          color: '#aaa',
-          textAlign: 'center',
-          marginBottom: 28,
-          border: '1.5px dashed #e8e8e8',
-          borderRadius: 8,
-          padding: 16,
-        }}
-      >
-        Email invites &amp; CSV import coming soon
-      </p>
-
       <Link
         href={`/onboarding/${communityId}/done`}
         style={{
